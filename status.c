@@ -107,8 +107,7 @@ void msg_add(char* new_msg){
     num_msgs--;
     msg_add(m);
   }
-  newmsg = true;
-  qckmv = false;
+  newmsg=true;
 }
 
 /*Same as msg_add, but with more arguments*/

@@ -154,8 +154,7 @@ struct creature_t{
 
   char *name;
   char *exam_text;
-
-  bool legendary;
+  
   bool is_asleep;
   bool is_immobile;
   bool can_fly;
@@ -190,7 +189,7 @@ struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 void creature_data_init();
 struct creature_t *creature_create_from_data(int index);
 struct creature_t *creature_spawn(int creature_id, struct map_t *map);
-void damage_creature(struct creature_t *target, struct creature_t *source);
+void damage_creature(struct creature_t *target, char *source, int dmg);
 void creature_place_on_map(struct creature_t *creature, map_t *map);
 int creature_see_distance(struct creature_t *creature);
 bool creature_is_visible(struct creature_t *target, struct creature_t *seer);
