@@ -259,7 +259,7 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
     quit("Error: Cannot spawn creature on NULL Map");}
   if(creature_id < 0 || creature_id > CREATURE_TYPE_MAX){
     quit("Error: Cannot spawn creature with unknown id");}
-
+  
   struct creature_t *c = creature_create_from_data(creature_id);
   set_dlevel(c, map->dlevel);
   set_level(c, map->dlevel);
@@ -271,9 +271,39 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
 
 /* This method handles how a creature takes damage.
  */
-void damage_creature(struct creature_t *target, char *source, int dmg){
+void damage_creature(struct creature_t *target, struct creature_t *source){
   if(target == NULL){return;}
   
+  char target_name[MAX_NAME_LEN] = "It";
+  char source_name[MAX_NAME_LEN] = "It";
+  
+  //Figure out what to call the source and the target
+  if(target == player)
+    {
+      strcpy(target_name, "You");
+    }
+  else if(creature_is_visible(target, player)){
+    if(!target->legendary){
+      sprintf(target_name, "The %s", target->name);
+    }
+    else{
+      strcpy(target_name, target->name);
+    }
+  }
+  if(source == player){
+    strcpy(source_name, "You");
+  }
+  else if(creature_is_visible(source, player)){
+    if(!source->legendary){
+      sprintf(source_name, "The %s", source->name);
+    }
+    else{
+      strcpy(source_name, source->name);
+    }
+  }
+  
+  //Deal the damage
+  int dmg = creature_get_damage(source);
   target->health -= dmg;
   if(target->health <= 0){
     if(target->kill == NULL){
@@ -284,15 +314,11 @@ void damage_creature(struct creature_t *target, char *source, int dmg){
 
   //Damage message
   if(dmg == 0){
-    msg_addf("%s is hit, but it does nothing!", target->name);
+    msg_addf("The attack does nothing!", target_name);
   }else if(source == NULL){
-    msg_addf("%s is hit!", target->name);}
+    msg_addf("%s is hit!", target_name);}
   else{
-    msg_addf("%s is hit by %s!", target->name, source);}
-
-  //If the target is the player, stop quickmove
-  if(target == player){
-    qckmv = false;}
+    msg_addf("%s is hit by %s!", target_name, source_name);}
 }
 
 /* This method places the given creature on the given map

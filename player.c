@@ -52,9 +52,7 @@ void playerTakeTurnCallback(struct creature_t* creature,
 
     //And attacking if so
     if(creature_in_way){
-      damage_creature(creature_in_way, 
-		      player->name, 
-		      creature_get_damage(player));
+      damage_creature(creature_in_way, player);
     }
     else{
       //If no creature in way, just move there.
@@ -98,6 +96,7 @@ void player_init(char* name){
 
   player->corpse_type = CORPSE_HUMAN;
   player->class = CLASS_NEWB;
+  player->legendary = true;
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);

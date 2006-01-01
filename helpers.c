@@ -375,21 +375,6 @@ void debug(){
     exit(0);
   }else if(!strcmp(debug_cmd_lower,"reveal")){
     cur_map->known_map = cur_map;
-  }else if(!strcmp(debug_cmd_lower,"kill")){
-    int k_x = player->x;
-    int k_y = player->y;
-    get_coord_via_cursor(&k_y,&k_x);
-
-    if(cur_map->creatures != NULL){
-      for(struct creature_list_node_t *cur = cur_map->creatures->first;
-	  cur != NULL;
-	  cur = cur->next){
-	if(cur->creature->x == k_x && cur->creature->y == k_y){
-	  damage_creature(cur->creature, "GOD", 10000);
-	  break;
-	}
-      }
-    }
   }else if(!strcmp(debug_cmd_lower,"toomuchhealth")){
     set_health(player, 10000);
   }else if(!strcmp(debug_cmd_lower,"maketelepathic")){
