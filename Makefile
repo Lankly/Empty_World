@@ -1,10 +1,13 @@
-SOURCES = main.o map.o tiles.o helpers.o
+SOURCES = main.o map.o tiles.o helpers.o colors.o
+DEPS = $(SOURCES:.o=.d)
 TARGET = empty_world
 
 all: $(TARGET)
+
+-include $(DEPS)
 
 $(TARGET): $(SOURCES)
 	gcc $(SOURCES) -lncurses -o $(TARGET)
 
 $(SOURCES): %.o: %.c
-	gcc $< -c -o $@ -std=c99 -Wall -Werror
+	gcc -std=c99 -Wall -Werror -MMD -o $@ -c $<

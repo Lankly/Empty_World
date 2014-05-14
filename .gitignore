@@ -1,3 +1,5 @@
 *.o
 empty_world
 *~
+*.d
+*#*

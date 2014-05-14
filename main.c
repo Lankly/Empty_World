@@ -5,12 +5,17 @@
 #include "helpers.h"
 #include "map.h"
 #include "tiles.h"
+#include "colors.h"
+
+#define TERMINAL_WIDTH  80
+#define TERMINAL_HEIGHT 24
 
 //Main
 int main(int argc, char** argv){
   //Setup
   srand(time(NULL));
   initscr();
+  color_init();
   cbreak();
   noecho();
   keypad(stdscr, true);
@@ -23,9 +28,15 @@ int main(int argc, char** argv){
   //Variables
   map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
-  map_init(cur_map,rand() % 10 + 3, rand() % 10 + 3);
+  map_init(cur_map,80, 24);
   map_draw_rect(cur_map,1,1,cur_map->width-2, cur_map->height-2,TILE_FLOOR);
   map_draw_borders(cur_map);
+
+  //Place character randomly
+  while(cur_map->tiles[player_y*cur_map->width+player_x]!=TILE_FLOOR){
+    player_x=rand() % cur_map->width;
+    player_y=rand() % cur_map->height;
+  }
 
   //Main Game Loop
   while(true){
@@ -42,7 +53,7 @@ int main(int argc, char** argv){
 	}
       }
     }
-    mvaddch(player_y,player_x,'@');
+    mvaddch(player_y,player_x,'@' | COLOR_PAIR(CP_GREY_BLACK));
     refresh();
     
     int plr_mv_to_x=player_x, plr_mv_to_y=player_y;
@@ -77,9 +88,10 @@ int main(int argc, char** argv){
       plr_mv_to_y++;
     }
     if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
-      
-      player_x=plr_mv_to_x;
-      player_y=plr_mv_to_y;
+      if(tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]].passable){
+	player_x=plr_mv_to_x;
+	player_y=plr_mv_to_y;
+      }
     } 
   }
 
