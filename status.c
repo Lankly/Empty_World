@@ -10,6 +10,7 @@ static bool newmsg;
 static char* name;
 static int dlevel, encumberment, health, level, num_msgs;
 static msg_t *cur_msg, *first_msg, *last_msg;
+static int strength, perception, endurance, charisma, intelligence, agility, luck;
 
 void draw_status(){
   char* output = (char*) Calloc(81,sizeof(char));
@@ -32,7 +33,7 @@ void draw_status(){
   }
 
   //Line one of info
-  sprintf(output,"  %-*s%*s",MAX_NAME_LEN,name,80-MAX_NAME_LEN-2,"");
+  sprintf(output,"  %-*s      STR:%-2d  PER:%-2d  END:%-2d  CHA:%-2d  INT:%-2d  AGL:%-2d  LCK:%-2d      ",MAX_NAME_LEN,name,strength, perception, endurance, charisma, intelligence, agility, luck);
   move(22,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
@@ -83,10 +84,25 @@ void set_level(int l){level=l;}
 void set_dlevel(int d){dlevel=d;}
 void set_name(char* n){name=n;}
 
+void set_strength(int s){strength=s;}
+void set_perception(int p){perception=p;}
+void set_endurance(int e){endurance=e;}
+void set_charisma(int c){charisma=c;}
+void set_intelligence(int i){intelligence=i;}
+void set_agility(int a){agility=a;}
+void set_luck(int l){luck=l;}
+
 char* get_name(){return name;}
 char* get_cur_msg(){return cur_msg->msg;}
 int get_health(){return health;}
 int get_encumberment(){return encumberment;}
 int get_level(){return level;}
 int get_dlevel(){return dlevel;}
-  
+
+int get_strength(){return strength;}
+int get_perception(){return perception;}
+int get_endurance(){return endurance;}
+int get_charisma(){return charisma;}
+int get_intelligence(){return intelligence;}
+int get_agility(){return agility;}
+int get_luck(){return luck;}

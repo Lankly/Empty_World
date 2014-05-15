@@ -13,12 +13,20 @@ typedef struct msg_t {
 
 void draw_status();
 
-void msg_add(char* m);
+void msg_add(char* new_msg);
 void set_health(int h);
 void set_encumberment(int e);
 void set_level(int l);
 void set_dlevel(int d);
 void set_name(char* n);
+
+void set_strength(int s);
+void set_perception(int p);
+void set_endurance(int e);
+void set_charisma(int c);
+void set_intelligence(int i);
+void set_agility(int a);
+void set_luck(int l);
 
 char* get_name();
 char* get_cur_msg();
@@ -26,5 +34,13 @@ int get_health();
 int get_encumberment();
 int get_level();
 int get_dlevel();
+
+int get_strength();
+int get_perception();
+int get_endurance();
+int get_charisma();
+int get_intelligence();
+int get_agility();
+int get_luck();
 
 #endif

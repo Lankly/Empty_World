@@ -29,8 +29,8 @@ int main(int argc, char** argv){
   map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3);
-  map_draw_rect(cur_map,1,1,cur_map->width-2, cur_map->height-2,TILE_FLOOR);
-  map_draw_borders(cur_map);
+  //map_draw_rect(cur_map,1,1,cur_map->width-2, cur_map->height-2,TILE_FLOOR);
+  //map_draw_borders(cur_map);
   
   //Setup player stats
   set_health(100);
@@ -43,6 +43,8 @@ int main(int argc, char** argv){
   msg_add(welcome_msg);
 
   //Place character randomly
+  map_draw_random_rooms(cur_map);
+  map_draw_borders(cur_map);
   while(cur_map->tiles[player_y*cur_map->width+player_x]!=TILE_FLOOR){
     player_x=rand() % cur_map->width;
     player_y=rand() % cur_map->height;

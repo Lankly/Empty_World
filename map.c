@@ -51,7 +51,7 @@ void map_draw_rect(map_t* map, int x, int y, int w, int h, int tile){
     printf("Error: Map is null\n");
     exit(1);
   }
-  else if(x<0 || y<0 || x>=map->height || y>=map->width){
+  else if(x<0 || y<0 || x>=map->width || y>=map->height){
     endwin();
     printf("Error: Index out of bounds (draw)\n");
     exit(1);
@@ -127,5 +127,18 @@ void map_draw_borders(map_t* map){
 	}
       }
     }
+  }
+}
+
+
+void map_draw_random_rooms(map_t* map){
+  //Assumes empty map
+  int stop = rand()%7+3;
+  for(int i=0; i<stop; i++){
+    int randw=(10-i)*(rand()%3+2)+3;
+    int randh=rand()%(10-i)+3;
+    int randx=rand()%(map->width-randw-3)+1;
+    int randy=rand()%(map->height-randh-3)+1;
+    map_draw_rect(map, randx, randy, randw, randh, TILE_FLOOR);
   }
 }

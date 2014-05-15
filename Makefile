@@ -10,4 +10,4 @@ $(TARGET): $(SOURCES)
 	gcc $(SOURCES) -lncurses -o $(TARGET)
 
 $(SOURCES): %.o: %.c
-	gcc -std=c99 -Wall -Werror -MMD -o $@ -c $<
+	gcc -std=c99 -Wall -Werror -MMD -g -o $@ -c $<
