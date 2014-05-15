@@ -10,7 +10,8 @@
 #define TILE_DOOR_OPEN 3
 #define TILE_DOOR_CLOSE 4
 #define TILE_DOOR_BROKEN 5
-#define TILE_MAX 5
+#define TILE_CORRIDOR 6
+#define TILE_MAX 6
 
 typedef struct {
   bool  deep;

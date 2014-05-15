@@ -133,12 +133,47 @@ void map_draw_borders(map_t* map){
 
 void map_draw_random_rooms(map_t* map){
   //Assumes empty map
-  int stop = rand()%7+3;
+  int stop = rand()%7+2;
+  int prevw=-1, prevh=-1, prevx=-1, prevy=-1;
   for(int i=0; i<stop; i++){
-    int randw=(10-i)*(rand()%3+2)+3;
+    int randw=(10-i)*(rand()%3+1)+3;
     int randh=rand()%(10-i)+3;
     int randx=rand()%(map->width-randw-3)+1;
     int randy=rand()%(map->height-randh-3)+1;
     map_draw_rect(map, randx, randy, randw, randh, TILE_FLOOR);
+    //draw corridors
+    if(prevw!=-1){
+      int prevmidx= prevx+(prevw/2);
+      int prevmidy= prevy+(prevh/2);
+      int curmidx = randx+(randw/2);
+      int curmidy = randy+(randh/2);
+
+      int startx=prevmidx, starty=prevmidy;
+      bool done=false;
+      while(!done){
+	if(startx==curmidx && starty==curmidy){
+	  done=true;
+	}
+	else if(startx==curmidx){
+	  starty < curmidy ? starty++ : starty--; 
+	}
+	else if(starty==curmidy){
+	  prevmidx < curmidx ? startx++ : startx--;
+	}
+	else{
+	  if(rand()%2 == 0){//Work on the x-axis for a step
+	    startx < curmidx ? startx++ : startx--;
+	  }
+	  else{//Work on the y-axis for a step
+	  prevmidy < curmidy ? starty++ : starty--; 
+	  }
+	}
+
+	if(!done && map->tiles[starty*map->width+startx]==TILE_UNKNOWN){
+	  map->tiles[starty*map->width+startx]=TILE_CORRIDOR;
+	}
+      }
+    }
+    prevw=randw; prevh=randh; prevx=randx; prevy=randy;
   }
 }
