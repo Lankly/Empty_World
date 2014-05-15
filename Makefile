@@ -1,4 +1,4 @@
-SOURCES = main.o map.o tiles.o helpers.o colors.o
+SOURCES = main.o map.o tiles.o helpers.o colors.o status.o
 DEPS = $(SOURCES:.o=.d)
 TARGET = empty_world
 

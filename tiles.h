@@ -15,7 +15,7 @@
 typedef struct {
   bool  deep;
   bool  passable;
-  char  display;
+  int  display;
   char* exam_text;
   int   hardness;//0=mush, 1=dirt, 2=wood, 3=stone, 4=unbreakable  
 } tile_t;
