@@ -11,6 +11,67 @@
 #define TERMINAL_WIDTH  80
 #define TERMINAL_HEIGHT 24
 
+
+bool qckmv_continue(map_t* map,int x, int y, int qckmv_cmd){
+  int cur_tile = map->tiles[y*map->width+x];
+  int ul=map->tiles[(y-1)*map->width+x-1];
+  int ur=map->tiles[(y-1)*map->width+x+1];
+  int dl=map->tiles[(y+1)*map->width+x-1];
+  int dr=map->tiles[(y+1)*map->width+x+1];
+  int u=map->tiles[(y-1)*map->width+x];
+  int d=map->tiles[(y+1)*map->width+x];
+  int l=map->tiles[y*map->width+x-1];
+  int r=map->tiles[y*map->width+x+1];
+  //Check for at corner in corridor
+  if(cur_tile == TILE_CORRIDOR){
+    if(qckmv_cmd==KEY_UP && (ul==TILE_CORRIDOR || ur==TILE_CORRIDOR) ){return false;}
+    if(qckmv_cmd==KEY_DOWN && (dl==TILE_CORRIDOR || dr==TILE_CORRIDOR) ){return false;}
+    if(qckmv_cmd==KEY_LEFT && (ul==TILE_CORRIDOR || dl==TILE_CORRIDOR) ){return false;}
+    if(qckmv_cmd==KEY_RIGHT && (ur==TILE_CORRIDOR || dr==TILE_CORRIDOR) ){return false;}
+  }
+  //Check for change in tile type
+  if(qckmv_cmd==KEY_UP    && (u!=cur_tile || tile_data[ul].stopme || tile_data[ur].stopme)){return false;}
+  if(qckmv_cmd==KEY_DOWN  && (d!=cur_tile || tile_data[dl].stopme || tile_data[dr].stopme)){return false;}
+  if(qckmv_cmd==KEY_LEFT  && (l!=cur_tile || tile_data[dl].stopme || tile_data[ul].stopme)){return false;}
+  if(qckmv_cmd==KEY_RIGHT && (r!=cur_tile || tile_data[dr].stopme || tile_data[ur].stopme)){return false;}
+  if(qckmv_cmd==KEY_HOME && ul!=cur_tile){return false;}
+  if(qckmv_cmd==KEY_PPAGE && ur!=cur_tile){return false;}
+  if(qckmv_cmd==KEY_END && dl!=cur_tile){return false;}
+  if(qckmv_cmd==KEY_NPAGE && dr!=cur_tile){return false;}
+  return true;
+}
+
+void analyze_cmd(int cmd, int* plr_mv_to_x, int* plr_mv_to_y){
+  if(cmd == KEY_UP){
+    *plr_mv_to_y-=1;
+  }
+  else if(cmd == KEY_DOWN){
+    *plr_mv_to_y+=1;
+  }
+  else if(cmd == KEY_LEFT){
+    *plr_mv_to_x-=1;
+  }
+  else if(cmd == KEY_RIGHT){
+    *plr_mv_to_x+=1;
+  }
+  else if(cmd == KEY_HOME){ //Upper Left of keypad
+    *plr_mv_to_x-=1;
+    *plr_mv_to_y-=1;
+  }
+  else if(cmd == KEY_PPAGE){ //Upper Right of keypad
+    *plr_mv_to_x+=1;
+    *plr_mv_to_y-=1;
+  }
+  else if(cmd == KEY_END){ //Lower Left of keypad
+    *plr_mv_to_x-=1;
+    *plr_mv_to_y+=1;
+  }
+  else if(cmd == KEY_NPAGE){ //Lower Right of keypad
+    *plr_mv_to_x+=1;
+    *plr_mv_to_y+=1;
+  }
+}
+
 //Main
 int main(int argc, char** argv){
   //Setup
@@ -24,13 +85,11 @@ int main(int argc, char** argv){
   tile_data_init();
 
   //Variables
-  int player_x=0, player_y=0;
-  int cmd;
+  int player_x=0, player_y=0, cmd, qckmv_cmd=0;
+  bool qckmv=false; //Quick-Move
   map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3);
-  //map_draw_rect(cur_map,1,1,cur_map->width-2, cur_map->height-2,TILE_FLOOR);
-  //map_draw_borders(cur_map);
   
   //Setup player stats
   set_health(100);
@@ -64,42 +123,32 @@ int main(int argc, char** argv){
     refresh();
     
     int plr_mv_to_x=player_x, plr_mv_to_y=player_y;
+    
+    if(qckmv){
+      cmd = qckmv_cmd;
+    }
+    else{
+      cmd = getch();
+    }
 
-    cmd = getch();
-    if(cmd == KEY_UP){
-      plr_mv_to_y--;
-    }
-    else if(cmd == KEY_DOWN){
-      plr_mv_to_y++;
-    }
-    else if(cmd == KEY_LEFT){
-      plr_mv_to_x--;
-    }
-    else if(cmd == KEY_RIGHT){
-      plr_mv_to_x++;
-    }
-    else if(cmd == KEY_HOME){ //Upper Left of keypad
-      plr_mv_to_x--;
-      plr_mv_to_y--;
-    }
-    else if(cmd == KEY_PPAGE){ //Upper Right of keypad
-      plr_mv_to_x++;
-      plr_mv_to_y--;
-    }
-    else if(cmd == KEY_END){ //Lower Left of keypad
-      plr_mv_to_x--;
-      plr_mv_to_y++;
-    }
-    else if(cmd == KEY_NPAGE){ //Lower Right of keypad
-      plr_mv_to_x++;
-      plr_mv_to_y++;
+    analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
+    if(cmd == KEY_B2){//5 on keypad
+      qckmv_cmd=getch();
+      if(qckmv_cmd==KEY_HOME || qckmv_cmd==KEY_UP || qckmv_cmd==KEY_PPAGE || qckmv_cmd==KEY_LEFT || qckmv_cmd==KEY_RIGHT || qckmv_cmd==KEY_END || qckmv_cmd==KEY_DOWN || qckmv_cmd==KEY_NPAGE){
+	qckmv=true;
+	analyze_cmd(qckmv_cmd, &plr_mv_to_x, &plr_mv_to_y);
+      }
     }
     if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
       if(tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]].passable){
 	player_x=plr_mv_to_x;
 	player_y=plr_mv_to_y;
       }
-    } 
+      else{
+	qckmv=false;
+      }
+    }
+    if(qckmv){qckmv=qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
   }
 
   endwin();

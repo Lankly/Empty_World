@@ -16,9 +16,10 @@
 typedef struct {
   bool  deep;
   bool  passable;
-  int  display;
+  int   display;
   char* exam_text;
   int   hardness;//0=mush, 1=dirt, 2=wood, 3=stone, 4=unbreakable  
+  bool  stopme;
 } tile_t;
 
 tile_t tile_data[TILE_MAX];
