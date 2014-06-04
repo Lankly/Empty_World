@@ -41,41 +41,34 @@ bool qckmv_continue(map_t* map,int x, int y, int qckmv_cmd){
   return true;
 }
 
-void analyze_cmd(int cmd, int* plr_mv_to_x, int* plr_mv_to_y){
+void analyze_cmd(int cmd, int* x, int* y){
   if(cmd == KEY_UP){
-    *plr_mv_to_y-=1;
-  }
-  else if(cmd == KEY_DOWN){
-    *plr_mv_to_y+=1;
-  }
-  else if(cmd == KEY_LEFT){
-    *plr_mv_to_x-=1;
-  }
-  else if(cmd == KEY_RIGHT){
-    *plr_mv_to_x+=1;
-  }
-  else if(cmd == KEY_HOME){ //Upper Left of keypad
-    *plr_mv_to_x-=1;
-    *plr_mv_to_y-=1;
-  }
-  else if(cmd == KEY_PPAGE){ //Upper Right of keypad
-    *plr_mv_to_x+=1;
-    *plr_mv_to_y-=1;
-  }
-  else if(cmd == KEY_END){ //Lower Left of keypad
-    *plr_mv_to_x-=1;
-    *plr_mv_to_y+=1;
-  }
-  else if(cmd == KEY_NPAGE){ //Lower Right of keypad
-    *plr_mv_to_x+=1;
-    *plr_mv_to_y+=1;
+    *y-=1;
+  }else if(cmd == KEY_DOWN){
+    *y+=1;
+  }else if(cmd == KEY_LEFT){
+    *x-=1;
+  }else if(cmd == KEY_RIGHT){
+    *x+=1;
+  }else if(cmd == KEY_HOME){ //Upper Left of keypad
+    *x-=1;*y-=1;
+  }else if(cmd == KEY_PPAGE){ //Upper Right of keypad
+    *x+=1;*y-=1;
+  }else if(cmd == KEY_END){ //Lower Left of keypad
+    *x-=1;*y+=1;
+  }else if(cmd == KEY_NPAGE){ //Lower Right of keypad
+    *x+=1;*y+=1;
   }
 }
 
 //Main
 int main(int argc, char** argv){
   //Setup
-  srand(time(NULL));
+  int seed = time(NULL);
+  printf("Seed: %d\n", seed);
+  srand(seed);
+  //srand(1400352790);
+  srand(1400358288);
   initscr();
   color_init();
   cbreak();
@@ -101,9 +94,12 @@ int main(int argc, char** argv){
   sprintf(welcome_msg, "Welcome to the game, %s!", get_name());
   msg_add(welcome_msg);
 
-  //Place character randomly
+  //Setup floor
   map_draw_random_rooms(cur_map);
+  map_cleanup(cur_map);
   map_draw_borders(cur_map);
+
+  //Place character randomly
   while(cur_map->tiles[player_y*cur_map->width+player_x]!=TILE_FLOOR){
     player_x=rand() % cur_map->width;
     player_y=rand() % cur_map->height;
@@ -132,12 +128,49 @@ int main(int argc, char** argv){
     }
 
     analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
-    if(cmd == KEY_B2){//5 on keypad
+    if(cmd == KEY_B2){//5 on keypad (qkmv command)
       qckmv_cmd=getch();
       if(qckmv_cmd==KEY_HOME || qckmv_cmd==KEY_UP || qckmv_cmd==KEY_PPAGE || qckmv_cmd==KEY_LEFT || qckmv_cmd==KEY_RIGHT || qckmv_cmd==KEY_END || qckmv_cmd==KEY_DOWN || qckmv_cmd==KEY_NPAGE){
 	qckmv=true;
 	analyze_cmd(qckmv_cmd, &plr_mv_to_x, &plr_mv_to_y);
       }
+    }//Open command
+    else if(cmd=='o'){
+      int open_cmd=getch();
+      int open_x=player_x,open_y=player_y;
+      analyze_cmd(open_cmd,&open_x,&open_y);
+
+      int otile=map_get_tile(cur_map,open_x,open_y);
+      if(tile_data[otile].openable){
+	if(otile==TILE_DOOR_CLOSE){
+	  map_set_tile(cur_map,open_x,open_y,TILE_DOOR_OPEN);
+	}else if(otile==TILE_DOOR_OPEN){
+	  msg_add("That door is already open.");
+	}else if(otile==TILE_DOOR_BROKEN){
+	  msg_add("That door is broken.");
+	}
+      }
+      else if(open_x==player_x && open_y==player_y){
+	msg_add("Invalid direction.");
+      }
+      else{msg_add("That cannot be opened.");}
+    }//Close command for doors
+    else if(cmd=='C'){
+      int close_cmd=getch();
+      int close_x=player_x,close_y=player_y;
+      analyze_cmd(close_cmd,&close_x,&close_y);
+
+      int ctile=map_get_tile(cur_map,close_x,close_y);
+      if(tile_data[ctile].openable){
+	if(ctile==TILE_DOOR_OPEN){
+	  map_set_tile(cur_map,close_x,close_y,TILE_DOOR_CLOSE);
+	}else if(ctile==TILE_DOOR_CLOSE){
+	  msg_add("That door is already closed.");
+	}else if(ctile==TILE_DOOR_BROKEN){
+	  msg_add("That door is broken");
+	}
+      }
+      else{msg_add("That cannot be closed.");}
     }
     if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
       if(tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]].passable){

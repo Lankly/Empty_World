@@ -39,7 +39,7 @@ int map_get_tile(map_t* map, int x, int y){
   }
   else if(x<0 || y<0 || x>=map->width || y>=map->height){
     endwin();
-    printf("Error: Index out of bounds (get)\n");
+    printf("Error: Index out of bounds (get %d,%d)\n",x,y);
     exit(1);
   }
   return map->tiles[y*map->width+x];
@@ -130,7 +130,6 @@ void map_draw_borders(map_t* map){
   }
 }
 
-
 void map_draw_random_rooms(map_t* map){
   //Assumes empty map
   int stop = rand()%7+2;
@@ -151,29 +150,267 @@ void map_draw_random_rooms(map_t* map){
       int startx=prevmidx, starty=prevmidy;
       bool done=false;
       while(!done){
+	
 	if(startx==curmidx && starty==curmidy){
 	  done=true;
-	}
-	else if(startx==curmidx){
-	  starty < curmidy ? starty++ : starty--; 
-	}
-	else if(starty==curmidy){
-	  prevmidx < curmidx ? startx++ : startx--;
-	}
-	else{
-	  if(rand()%2 == 0){//Work on the x-axis for a step
-	    startx < curmidx ? startx++ : startx--;
+	}//If the path is aligned with the middle of the target
+	else if(startx==curmidx){starty   < curmidy ? starty++ : starty--;}
+	else if(starty==curmidy){prevmidx < curmidx ? startx++ : startx--;}
+	else{//Otherwise
+	  if(rand()%2 == 0 || map_get_tile(map,startx+1,starty)==TILE_CORRIDOR){//Work on the x-axis for a step
+	    startx   < curmidx ? startx++ : startx--;
 	  }
-	  else{//Work on the y-axis for a step
-	  prevmidy < curmidy ? starty++ : starty--; 
+	  else{//Or work on the y-axis for a step
+	    starty < curmidy ? starty++ : starty--; 
 	  }
 	}
 
-	if(!done && map->tiles[starty*map->width+startx]==TILE_UNKNOWN){
-	  map->tiles[starty*map->width+startx]=TILE_CORRIDOR;
+	if(!done && map_get_tile(map,startx,starty)==TILE_UNKNOWN){
+	  map_set_tile(map,startx,starty,TILE_CORRIDOR);
+
+	  //Try to move along pre-existing corridors
+	  if(startx==curmidx && starty>curmidy){//If corridor is going strictly up
+	    if(map_get_tile(map,startx,starty-1)==TILE_CORRIDOR){
+	      starty--;
+	    }
+	    else if(map_get_tile(map,startx-1,starty-1)==TILE_CORRIDOR){
+	      startx--;starty--;
+	    }
+	    else if(map_get_tile(map,startx+1,starty-1)==TILE_CORRIDOR){
+	      startx++;starty--;
+	    }
+	  }
+	  else if(startx==curmidx && starty<curmidy){//If corridor is going strictly down
+	    if(map_get_tile(map,startx,curmidy+1)==TILE_CORRIDOR){
+	      starty++;
+	    }
+	    else if(map_get_tile(map,startx-1,starty+1)==TILE_CORRIDOR){
+	      startx--;starty++;
+	    }
+	    else if(map_get_tile(map,startx+1,starty+1)==TILE_CORRIDOR){
+	      startx++;starty++;
+	    }
+	  }
+	  else if(starty==curmidy && startx>curmidx){//If corridor is going strictly left
+	    if(map_get_tile(map,startx-1,starty)==TILE_CORRIDOR){
+	      startx--;
+	    }
+	    else if(map_get_tile(map,startx-1,starty-1)==TILE_CORRIDOR){
+	      startx--;starty--;
+	    }
+	    else if(map_get_tile(map,startx-1,starty+1)==TILE_CORRIDOR){
+	      startx--;starty++;
+	    }
+	  }
+	  else if(starty==curmidy && startx<curmidx){//If corridor is going strictly right
+	    if(map_get_tile(map,startx+1,starty)==TILE_CORRIDOR){
+	      startx++;
+	    }
+	    else if(map_get_tile(map,startx+1,starty-1)==TILE_CORRIDOR){
+	      startx++;starty--;
+	    }
+	    else if(map_get_tile(map,startx+1,starty+1)==TILE_CORRIDOR){
+	      startx++;starty++;
+	    }
+	  }
+	  else if(startx<curmidx && starty<curmidy){//If corridor is going right and down
+	    if(map_get_tile(map,startx+1,starty)==TILE_CORRIDOR){
+	      startx++;
+	    }
+	    else if(map_get_tile(map,startx,starty+1)==TILE_CORRIDOR){
+	      starty++;
+	    }
+	  }
+	  
 	}
+	
       }
     }
     prevw=randw; prevh=randh; prevx=randx; prevy=randy;
+  }
+}
+
+bool map_coord_is_door(map_t* map, int x, int y){
+  int tile = map_get_tile(map,x,y);
+  return (tile==TILE_DOOR_OPEN || tile==TILE_DOOR_CLOSE || tile==TILE_DOOR_BROKEN);
+}
+
+bool map_tile_is_door(int tile){
+  return (tile==TILE_DOOR_OPEN || tile==TILE_DOOR_CLOSE || tile==TILE_DOOR_BROKEN);
+}
+
+void map_cleanup(map_t* map){
+  for(int y=1; y<map->height; y++){
+    for(int x=1; x<map->width; x++){
+      //Delete all unnecessary corridors
+      int cur_tile=map_get_tile(map,x,y);
+      if(cur_tile==TILE_CORRIDOR){
+	int u=map_get_tile(map,x,y-1);
+	int d=map_get_tile(map,x,y+1);
+	int l=map_get_tile(map,x-1,y);
+	int r=map_get_tile(map,x+1,y);
+	int ul=map_get_tile(map,x-1,y-1);
+	int ur=map_get_tile(map,x+1,y-1);
+	int dl=map_get_tile(map,x-1,y+1);
+	int dr=map_get_tile(map,x+1,y+1);
+	//Catches corridors that replace sides of rooms
+	if(d==TILE_CORRIDOR && ((r==TILE_FLOOR && dr==TILE_FLOOR && ur==TILE_FLOOR && l!=TILE_CORRIDOR) || (l==TILE_FLOOR && dl==TILE_FLOOR && ul==TILE_FLOOR && r!=TILE_CORRIDOR))){
+	  if(r==TILE_FLOOR && l==TILE_FLOOR){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else if(map_tile_is_door(l)){
+	    map_set_tile(map,x-1,y,TILE_FLOOR);
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else {
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	}//Catches corridors that replace sides of rooms
+	else if(r==TILE_CORRIDOR && ((u==TILE_FLOOR && ur==TILE_FLOOR && ul==TILE_FLOOR && d!=TILE_CORRIDOR) || (d==TILE_FLOOR && dr==TILE_FLOOR && dl==TILE_FLOOR && u!=TILE_CORRIDOR))){
+	  if(u==TILE_FLOOR && d==TILE_FLOOR){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else if(map_tile_is_door(u)){
+	    map_set_tile(map,x,y-1,TILE_FLOOR);
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else{
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	}
+	//Place a door here if possible
+	else if((u==TILE_FLOOR || d==TILE_FLOOR || l==TILE_FLOOR || r==TILE_FLOOR) && (u==TILE_CORRIDOR || d==TILE_CORRIDOR || r==TILE_CORRIDOR || l==TILE_CORRIDOR)){
+	  if(map_tile_is_door(l)){
+	    if(u!=TILE_CORRIDOR){
+	      map_set_tile(map,x-1,y,TILE_FLOOR);
+	      map_set_tile(map,x,y,TILE_FLOOR);
+	    }
+	    else{
+	      map_set_tile(map,x-1,y,TILE_WALL);
+	      map_set_tile(map,x,y,TILE_DOOR_CLOSE);
+	    }
+	  }  
+	  else if(map_tile_is_door(u)){map_set_tile(map,x,y-1,TILE_FLOOR);map_set_tile(map,x,y,TILE_FLOOR);}
+	  else if((l==TILE_FLOOR && u==TILE_FLOOR) || (u==TILE_FLOOR && r==TILE_FLOOR) || (r==TILE_FLOOR && d==TILE_FLOOR) || (d==TILE_FLOOR && l==TILE_FLOOR)){map_set_tile(map,x,y,TILE_FLOOR);}
+	  else if(rand()%3==0){map_set_tile(map,x,y,TILE_DOOR_OPEN);}
+	  else if(rand()%50==0){map_set_tile(map,x,y,TILE_DOOR_BROKEN);}
+	  else{map_set_tile(map,x,y,TILE_DOOR_CLOSE);}
+	}
+	//Replace double doors 
+	else if(map_tile_is_door(u) && d==TILE_FLOOR){
+	  if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
+	    map_set_tile(map,x,y-1,TILE_WALL);
+	  }
+	  if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	}
+	else if(map_tile_is_door(l) && r==TILE_FLOOR){
+	  if(ul!=TILE_CORRIDOR && dl!=TILE_CORRIDOR){
+	    map_set_tile(map,x-1,y,TILE_FLOOR);
+	  }
+	  //if((ul==TILE_FLOOR && dl==TILE_CORRIDOR) || (ul==TILE_CORRIDOR && dl==TILE_FLOOR) || (ul==TILE_WALL && dl==TILE_WALL)){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	    //}
+	}
+	//Fix corridor blobs
+	else if(r==TILE_CORRIDOR && d==TILE_CORRIDOR && dr==TILE_CORRIDOR){
+	  if(u==TILE_FLOOR || ur==TILE_FLOOR){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	    map_set_tile(map,x+1,y,TILE_FLOOR);
+	  }
+	  else if(u==TILE_UNKNOWN && ur==TILE_UNKNOWN){
+	    if(l!=TILE_CORRIDOR){map_set_tile(map,x,y,TILE_UNKNOWN);}
+	    if(map_get_tile(map,x+2,y)!=TILE_CORRIDOR){map_set_tile(map,x+1,y,TILE_UNKNOWN);}
+	  }
+	}
+	else if(d==TILE_CORRIDOR && l==TILE_CORRIDOR && dl==TILE_CORRIDOR){
+	   if(r==TILE_FLOOR){map_set_tile(map,x,y,TILE_WALL);}
+	}
+	//Fix abandoned corridors
+	else if(u!=TILE_CORRIDOR && d!=TILE_CORRIDOR && r!=TILE_CORRIDOR && l!=TILE_CORRIDOR){
+	  if((l==TILE_FLOOR && r==TILE_FLOOR) || (u==TILE_FLOOR && d==TILE_FLOOR)){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else if(map_tile_is_door(u)){
+	    if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
+	      map_set_tile(map,x,y-1,TILE_WALL);
+	    }
+	    if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
+	      map_set_tile(map,x,y,TILE_WALL);
+	    }
+	  }
+	  else if(map_tile_is_door(r)){
+	    if(ur!=TILE_CORRIDOR && dr!=TILE_CORRIDOR){
+	      map_set_tile(map,x+1,y,TILE_WALL);
+	    }
+	    if((ur==TILE_FLOOR && dr==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && dr==TILE_FLOOR)){
+	      map_set_tile(map,x,y,TILE_WALL);	    
+	    }
+	  }
+	  else if(map_tile_is_door(d)){
+	    if(dl!=TILE_CORRIDOR && dr!=TILE_CORRIDOR && map_get_tile(map,x,y+2)!=TILE_CORRIDOR){
+	      map_set_tile(map,x,y+1,TILE_WALL);
+	    }
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	  else if(map_tile_is_door(l)){
+	    if(ul!=TILE_CORRIDOR && dl!=TILE_CORRIDOR && map_get_tile(map,x-2,y)!=TILE_CORRIDOR){
+	      map_set_tile(map,x-1,y,TILE_WALL);
+	    }
+	    map_set_tile(map,x,y,TILE_WALL);    
+	  }
+	  else{
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	}
+      }
+      //Fix improper doors
+      cur_tile=map_get_tile(map,x,y);
+      if(map_tile_is_door(cur_tile)){
+	int u=map_get_tile(map,x,y-1);
+	int d=map_get_tile(map,x,y+1);
+	int l=map_get_tile(map,x-1,y);
+	int r=map_get_tile(map,x+1,y);
+	int ul=map_get_tile(map,x-1,y-1);
+	int ur=map_get_tile(map,x+1,y-1);
+	int dl=map_get_tile(map,x-1,y+1);
+	int dr=map_get_tile(map,x+1,y+1);
+	if(u!=TILE_CORRIDOR && d!=TILE_CORRIDOR && r!=TILE_CORRIDOR && l!=TILE_CORRIDOR){
+	  if((u==TILE_FLOOR && d==TILE_FLOOR) || (l==TILE_FLOOR && r==TILE_FLOOR)){
+	    map_set_tile(map,x,y,TILE_FLOOR);
+	  }
+	  else{
+	    map_set_tile(map,x,y,TILE_WALL);
+	  }
+	}
+	else if(u==TILE_CORRIDOR && r==TILE_CORRIDOR && ur==TILE_CORRIDOR){
+	  map_set_tile(map,x,y-1,TILE_WALL);
+	}
+	else if(r==TILE_CORRIDOR && d==TILE_CORRIDOR && dr==TILE_CORRIDOR){
+	  map_set_tile(map,x+1,y,TILE_WALL);
+	}
+	else if(d==TILE_CORRIDOR && l==TILE_CORRIDOR && dl==TILE_CORRIDOR){
+	  map_set_tile(map,x,y+1,TILE_WALL);
+	}
+	else if(l==TILE_CORRIDOR && u==TILE_CORRIDOR && ul==TILE_CORRIDOR){
+	  map_set_tile(map,x-1,y,TILE_WALL);
+	}
+	else if(map_tile_is_door(ul) && (l==TILE_CORRIDOR || u==TILE_CORRIDOR)){
+	  map_set_tile(map,x,y,TILE_WALL);
+	}
+	else if(map_tile_is_door(ur) && (r==TILE_CORRIDOR || u==TILE_CORRIDOR)){
+	  map_set_tile(map,x,y,TILE_WALL);
+	}
+	else if(map_tile_is_door(dl) && (l==TILE_CORRIDOR || d==TILE_CORRIDOR)){
+	  map_set_tile(map,x,y,TILE_WALL);
+	}
+	else if(map_tile_is_door(dr) && (r==TILE_CORRIDOR || d==TILE_CORRIDOR)){
+	  map_set_tile(map,x,y,TILE_WALL);
+	}
+	
+      }
+
+    }
   }
 }
