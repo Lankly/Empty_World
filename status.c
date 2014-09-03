@@ -8,7 +8,7 @@
 
 static bool newmsg;
 static char* name;
-static int dlevel, encumberment, health, level, num_msgs;
+static int dlevel, encumberment, health, level, num_msgs, weight;
 static msg_t *cur_msg, *first_msg, *last_msg;
 static int strength, perception, endurance, charisma, intelligence, agility, luck;
 
@@ -83,6 +83,7 @@ void set_encumberment(int e){encumberment=e;}
 void set_level(int l){level=l;}
 void set_dlevel(int d){dlevel=d;}
 void set_name(char* n){name=n;}
+void set_weight(int w){weight=w;}
 
 void set_strength(int s){strength=s;}
 void set_perception(int p){perception=p;}
@@ -98,6 +99,7 @@ int get_health(){return health;}
 int get_encumberment(){return encumberment;}
 int get_level(){return level;}
 int get_dlevel(){return dlevel;}
+int get_weight(){return weight;}
 
 int get_strength(){return strength;}
 int get_perception(){return perception;}
@@ -106,3 +108,6 @@ int get_charisma(){return charisma;}
 int get_intelligence(){return intelligence;}
 int get_agility(){return agility;}
 int get_luck(){return luck;}
+
+void add_health(int h){health+=h;}
+void add_weight(int w){weight+=w;}

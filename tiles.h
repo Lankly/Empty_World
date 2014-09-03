@@ -14,6 +14,7 @@
 #define TILE_MAX 6
 
 typedef struct {
+  int id;
   bool  deep;
   bool  passable;
   int   display;
@@ -24,6 +25,8 @@ typedef struct {
 } tile_t;
 
 tile_t tile_data[TILE_MAX];
+
+int tile_id(tile_t t);
 
 void tile_data_init();
 

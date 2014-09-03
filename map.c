@@ -253,7 +253,7 @@ void map_cleanup(map_t* map){
 	int ur=map_get_tile(map,x+1,y-1);
 	int dl=map_get_tile(map,x-1,y+1);
 	int dr=map_get_tile(map,x+1,y+1);
-	//Catches corridors that replace sides of rooms
+	//Catches corridors that replace sides of rooms - vertical sides
 	if(d==TILE_CORRIDOR && ((r==TILE_FLOOR && dr==TILE_FLOOR && ur==TILE_FLOOR && l!=TILE_CORRIDOR) || (l==TILE_FLOOR && dl==TILE_FLOOR && ul==TILE_FLOOR && r!=TILE_CORRIDOR))){
 	  if(r==TILE_FLOOR && l==TILE_FLOOR){
 	    map_set_tile(map,x,y,TILE_FLOOR);
@@ -265,7 +265,7 @@ void map_cleanup(map_t* map){
 	  else {
 	    map_set_tile(map,x,y,TILE_WALL);
 	  }
-	}//Catches corridors that replace sides of rooms
+	}//Catches corridors that replace sides of rooms - horizontal side
 	else if(r==TILE_CORRIDOR && ((u==TILE_FLOOR && ur==TILE_FLOOR && ul==TILE_FLOOR && d!=TILE_CORRIDOR) || (d==TILE_FLOOR && dr==TILE_FLOOR && dl==TILE_FLOOR && u!=TILE_CORRIDOR))){
 	  if(u==TILE_FLOOR && d==TILE_FLOOR){
 	    map_set_tile(map,x,y,TILE_FLOOR);
@@ -274,12 +274,16 @@ void map_cleanup(map_t* map){
 	    map_set_tile(map,x,y-1,TILE_FLOOR);
 	    map_set_tile(map,x,y,TILE_FLOOR);
 	  }
-	  else{
+	  else if(d!=TILE_CORRIDOR){
 	    map_set_tile(map,x,y,TILE_WALL);
 	  }
+	}//Catches too many corridors in empty space
+	else if(u==TILE_CORRIDOR && ur==TILE_CORRIDOR && r==TILE_CORRIDOR && d==TILE_UNKNOWN){
+	  map_set_tile(map,x,y,TILE_UNKNOWN);
 	}
-	//Place a door here if possible
+	//Place a door here if possible (Possible=Adjacent Floor+Adjacent Corridor)
 	else if((u==TILE_FLOOR || d==TILE_FLOOR || l==TILE_FLOOR || r==TILE_FLOOR) && (u==TILE_CORRIDOR || d==TILE_CORRIDOR || r==TILE_CORRIDOR || l==TILE_CORRIDOR)){
+	  //If two adjacent doors, replace with Floor
 	  if(map_tile_is_door(l)){
 	    if(u!=TILE_CORRIDOR){
 	      map_set_tile(map,x-1,y,TILE_FLOOR);
@@ -289,21 +293,30 @@ void map_cleanup(map_t* map){
 	      map_set_tile(map,x-1,y,TILE_WALL);
 	      map_set_tile(map,x,y,TILE_DOOR_CLOSE);
 	    }
-	  }  
-	  else if(map_tile_is_door(u)){map_set_tile(map,x,y-1,TILE_FLOOR);map_set_tile(map,x,y,TILE_FLOOR);}
+	  }
+	  else if(map_tile_is_door(u)){
+	    if(l!=TILE_CORRIDOR){
+	      map_set_tile(map,x,y-1,TILE_FLOOR);
+	      map_set_tile(map,x,y,TILE_FLOOR);
+	    }
+	    else{
+	      map_set_tile(map,x,y-1,TILE_WALL);
+	      map_set_tile(map,x,y,TILE_DOOR_CLOSE);
+	    }
+	  }
 	  else if((l==TILE_FLOOR && u==TILE_FLOOR) || (u==TILE_FLOOR && r==TILE_FLOOR) || (r==TILE_FLOOR && d==TILE_FLOOR) || (d==TILE_FLOOR && l==TILE_FLOOR)){map_set_tile(map,x,y,TILE_FLOOR);}
 	  else if(rand()%3==0){map_set_tile(map,x,y,TILE_DOOR_OPEN);}
 	  else if(rand()%50==0){map_set_tile(map,x,y,TILE_DOOR_BROKEN);}
 	  else{map_set_tile(map,x,y,TILE_DOOR_CLOSE);}
 	}
-	//Replace double doors 
+	//Replace double doors (Distinct from Two Adjacent Doors)
 	else if(map_tile_is_door(u) && d==TILE_FLOOR){
 	  if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
 	    map_set_tile(map,x,y-1,TILE_WALL);
 	  }
-	  if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
+	  //if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
 	    map_set_tile(map,x,y,TILE_WALL);
-	  }
+	    //}
 	}
 	else if(map_tile_is_door(l) && r==TILE_FLOOR){
 	  if(ul!=TILE_CORRIDOR && dl!=TILE_CORRIDOR){
@@ -406,6 +419,10 @@ void map_cleanup(map_t* map){
 	  map_set_tile(map,x,y,TILE_WALL);
 	}
 	else if(map_tile_is_door(dr) && (r==TILE_CORRIDOR || d==TILE_CORRIDOR)){
+	  map_set_tile(map,x,y,TILE_WALL);
+	}
+	else if(u==TILE_CORRIDOR && ur==TILE_FLOOR){
+	  map_set_tile(map,x,y-1,cur_tile);
 	  map_set_tile(map,x,y,TILE_WALL);
 	}
 	
