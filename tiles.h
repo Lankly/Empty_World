@@ -24,7 +24,7 @@ typedef struct {
   bool  openable;
 } tile_t;
 
-tile_t tile_data[TILE_MAX];
+tile_t tile_data[TILE_MAX+1];
 
 int tile_id(tile_t t);
 

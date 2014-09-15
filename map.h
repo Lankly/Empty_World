@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "items.h"
 
 #ifndef MAP_H
 #define MAP_H
@@ -7,10 +8,12 @@
 typedef struct {
   int width;
   int height;
+  int max_item_height;
   int* tiles;
+  item_map_t* items;
 } map_t;
 
-void map_init(map_t* map, int w, int h);
+void map_init(map_t* map, int w, int h,int max_item_height);
 
 void map_set_tile(map_t* map, int x, int y, int tile);
 

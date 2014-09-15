@@ -4,6 +4,7 @@
 #define MAX_MSGS 10
 #define MAX_MSG_LEN 66
 #define MAX_NAME_LEN 12
+#define MSG_ROW 21
 
 typedef struct msg_t {
   struct msg_t* prev;
@@ -14,6 +15,7 @@ typedef struct msg_t {
 void draw_status();
 
 void msg_add(char* new_msg);
+char* msg_prompt();
 
 void set_health(int h);
 void set_encumberment(int e);
@@ -48,5 +50,7 @@ int get_luck();
 
 void add_health(int h);
 void add_weight(int w);
+
+void status_init();
 
 #endif

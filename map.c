@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include "tiles.h"
 
-void map_init(map_t* map, int w, int h){
+void map_init(map_t* map, int w, int h, int max_item_height){
   map->width = w;
   map->height= h;
+  map->max_item_height=max_item_height;
   map->tiles = (int*)Calloc(w * h,sizeof(int));
 }
 
@@ -28,7 +29,6 @@ void map_set_tile(map_t* map, int x, int y, int tile){
   }
 
   map->tiles[y*map->width+x] = tile;
-
 }
 
 int map_get_tile(map_t* map, int x, int y){
@@ -312,10 +312,10 @@ void map_cleanup(map_t* map){
 	//Replace double doors (Distinct from Two Adjacent Doors)
 	else if(map_tile_is_door(u) && d==TILE_FLOOR){
 	  if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
-	    map_set_tile(map,x,y-1,TILE_WALL);
+	    map_set_tile(map,x,y-1,TILE_FLOOR);//Changed from WALL to FLOOR
 	  }
 	  //if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
-	    map_set_tile(map,x,y,TILE_WALL);
+	  map_set_tile(map,x,y,TILE_FLOOR);//Changed from WALL to FLOOR
 	    //}
 	}
 	else if(map_tile_is_door(l) && r==TILE_FLOOR){

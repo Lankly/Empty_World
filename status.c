@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "colors.h"
 #include "helpers.h"
 
@@ -27,7 +28,7 @@ void draw_status(){
   else{
     sprintf(output,"%80s", "");
   }  //now color the output white printf-ing
-  move(21,0);
+  move(MSG_ROW,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
   }
@@ -78,6 +79,49 @@ void msg_add(char* new_msg){
   newmsg=true;
 }
 
+char* msg_prompt(char* prompt){
+  if(prompt==NULL || strlen(prompt)>MAX_MSG_LEN-3){
+    quit("Error: NULL prompt or prompt too large");
+  }
+  curs_set(1);
+  move(MSG_ROW,0);
+
+  int ch = (int)' ';
+  int ret_pos=0;
+  char* ret = (char*)Calloc(81-strlen(prompt),sizeof(char));
+  while(ch!='\n'){
+    //clear message bar
+    move(MSG_ROW,0);
+    for(int i=0;i<MAX_MSG_LEN;i++){addch(' ');}
+    move(MSG_ROW,0);
+    //print out the prompt first
+    for(int i=0; i<strlen(prompt); i++){
+      addch(prompt[i] | COLOR_PAIR(CP_GREEN_BLACK));
+    }
+    //then print out everything the user has input
+    for(int i=0; i<strlen(ret); i++){
+      addch(ret[i] | COLOR_PAIR(CP_GREEN_BLACK));
+    }
+    //read in the next key
+    ch=getch();
+    //special case for backspace
+    if(ch==KEY_BACKSPACE && ret_pos>=0){
+	ret_pos--;
+	ret[ret_pos]=0;
+      }
+    else if((strlen(prompt)+strlen(ret))<=MAX_MSG_LEN){
+      //do not add \n
+      if(ch!='\n' && (isalnum(ch) || isspace(ch))){
+	ret[ret_pos]=ch;
+	ret_pos++;
+      }
+    }
+    else{msg_add("Error");}
+  }
+  curs_set(0);
+  return ret;
+}
+
 void set_health(int h){health=h;}
 void set_encumberment(int e){encumberment=e;}
 void set_level(int l){level=l;}
@@ -111,3 +155,14 @@ int get_luck(){return luck;}
 
 void add_health(int h){health+=h;}
 void add_weight(int w){weight+=w;}
+
+void status_init(){
+  set_health(100);
+  set_encumberment(0);
+  set_level(1);
+  set_dlevel(0);
+  set_name("Lan");
+  char welcome_msg[81];
+  sprintf(welcome_msg, "Welcome to the game, %s!", get_name());
+  msg_add(welcome_msg);
+}

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <curses.h>
 #include <time.h>
 #include "helpers.h"
@@ -7,9 +8,11 @@
 #include "tiles.h"
 #include "colors.h"
 #include "status.h"
+#include "items.h"
 
 #define TERMINAL_WIDTH  80
 #define TERMINAL_HEIGHT 24
+#define DEFAULT_ITEMS_STACK_SIZE 10
 
 #define PASS_WEIGHT 50
 
@@ -64,33 +67,29 @@ int main(int argc, char** argv){
   int seed = time(NULL);
   printf("Seed: %d\n", seed);
   srand(seed);
-  //srand();
+  //srand(1401917882);
   //KNOWN TESTING SEEDS
   //1401917882
+  //1410214243
+  //1410291444
   initscr();
   color_init();
   cbreak();
   noecho();
   keypad(stdscr, true);
-  curs_set(0);
+  curs_set(0);  
   tile_data_init();
+  item_data_init();
 
   //Variables
   int player_x=0, player_y=0, cmd, qckmv_cmd=0;
   bool qckmv=false; //Quick-Move
   map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
-  map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3);
+  map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
   
   //Setup player stats
-  set_health(100);
-  set_encumberment(0);
-  set_level(1);
-  set_dlevel(0);
-  set_name("Lan");
-  char welcome_msg[81];
-  sprintf(welcome_msg, "Welcome to the game, %s!", get_name());
-  msg_add(welcome_msg);
+  status_init();
 
   //Setup floor
   map_draw_random_rooms(cur_map);
@@ -105,10 +104,15 @@ int main(int argc, char** argv){
 
   //Main Game Loop
   while(true){
+    item_map_t* cur_items=cur_map->items;
     for(int j=0; j<cur_map->height; j++){
       move(j,0);
       for(int i=0; i<cur_map->width; i++){
-	addch(tile_data[map_get_tile(cur_map,i,j)].display);
+	if(cur_items!=NULL && cur_items->x==i && cur_items->y==j){
+	  addch(get_top_item_sym_from_stack(cur_items));
+	  cur_items=cur_items->next;
+	}
+	else{addch(tile_data[map_get_tile(cur_map,i,j)].display);}
       }
     }
     mvaddch(player_y,player_x,'@' | COLOR_PAIR(CP_YELLOW_BLACK));
@@ -163,7 +167,50 @@ int main(int argc, char** argv){
 	}
       }else{msg_add("That cannot be closed.");}
     }else if(cmd=='~'){//Debug
-      int debug_cmd=getch();
+      char* debug_cmd=msg_prompt("~ ");
+      char* debug_cmd_lower=str_lowercase(debug_cmd);
+      if(!strcmp(debug_cmd_lower,"place")){
+	free(debug_cmd_lower);
+	free(debug_cmd);
+	char* debug_cmd=msg_prompt("Place where?");
+	char* debug_cmd_lower=str_lowercase(debug_cmd);
+	int place_x=player_x;int place_y=player_y;
+	if(!strcmp(debug_cmd_lower,"nw")){place_x=player_x-1;place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"n")){place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"ne")){place_x=player_x+1;place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"w")){place_x=player_x-1;}
+	else if(!strcmp(debug_cmd_lower,"e")){place_x=player_x+1;}
+	else if(!strcmp(debug_cmd_lower,"sw")){place_x=player_x-1;place_y=player_y+1;}
+	else if(!strcmp(debug_cmd_lower,"s")){place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"se")){place_x=player_x+1;place_y=player_y+1;}
+
+	free(debug_cmd_lower);
+	free(debug_cmd);
+	debug_cmd=msg_prompt("Place what? ");
+	debug_cmd_lower=str_lowercase(debug_cmd);
+	if(!strcmp(debug_cmd_lower,"tile")){
+	  free(debug_cmd_lower);
+	  free(debug_cmd);
+	  debug_cmd=msg_prompt("TILE ID: ");
+	  debug_cmd_lower=str_lowercase(debug_cmd);
+	  if(str_is_num(debug_cmd_lower)){
+	    map_set_tile(cur_map,place_x,place_y,atoi(debug_cmd)); 
+	    msg_add("Done");
+	  }
+	}else if(!strcmp(debug_cmd_lower,"item")){
+	  free(debug_cmd_lower);
+	  free(debug_cmd);
+	  debug_cmd=msg_prompt("ITEM ID: ");
+	  debug_cmd_lower=str_lowercase(debug_cmd);
+	  if(str_is_num(debug_cmd_lower)){
+	    add_item(cur_map,place_x,place_y,item_create_from_data(atoi(debug_cmd))); 
+	    msg_add("Done");
+	  }
+	}
+	free(debug_cmd_lower);
+	free(debug_cmd);
+      }
+      /*int debug_cmd=getch();
       bool edit=false;
       int edit_tile=TILE_UNKNOWN;
       if(debug_cmd=='w'){edit=true; edit_tile=TILE_WALL;}
@@ -194,7 +241,7 @@ int main(int argc, char** argv){
 	else if(dir_cmd==KEY_END){map_set_tile(cur_map,player_x-1,player_y+1,edit_tile);}
 	else if(dir_cmd==KEY_DOWN){map_set_tile(cur_map,player_x,player_y+1,edit_tile);}
 	else if(dir_cmd==KEY_NPAGE){map_set_tile(cur_map,player_x+1,player_y+1,edit_tile);}
-      }
+	}*/
     }
     
     //Ensure that the player is light enough to pass through corners, that they are not behind a closed door
