@@ -60,10 +60,12 @@ bool add_item(map_t* map,int x,int y,item_t* item){
     item_map_t* last;
     for(item_map_t* i=map->items; i!=NULL; i=i->next){
       last = i;
-      if(i->y > y || (i->y==y && i->x>x)){
+      //If we've gone too far, create a new spot for our data
+      if(i->y > y || (i->y==y && i->x > x)){
 	item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
 	items_map_init(items,x,y);
-	if(i->prev!=NULL){i->prev->next=items;}//Case where inserted first
+	if(i->prev!=NULL){i->prev->next=items;}//Need to make sure this isn't first element
+	else{map->items=items;}
 	items->prev=i->prev;
 	items->next=i;
 	i->prev=items;
