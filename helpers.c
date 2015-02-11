@@ -42,3 +42,21 @@ void* Calloc(int items, int size)
   }
   return ret;
 }
+
+int display(display_list_t* list,int width,int height){
+  //One padded row
+  move(0,0);
+  display_list_node_t* next =list->first; 
+  for(int i=0;i<width;i++){addch(' ');}
+  //Now for each element in the list
+  for(int i=0;i<height && i<list->size;i++){
+    move(i,0);addch(' ');addch('a'+i);addch(' ');
+    char* str = next->data;
+    for(int j=0;j<width;j++){
+      if(j<strlen(str)){addch(str[j]);}
+      else{addch(' ');}
+    }
+    next=next->next;
+  }
+  return getch()-'a';
+}

@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "status.h"
+#include <curses.h>
 
 #ifndef ITEMS_H
 #define ITEMS_H
@@ -107,7 +108,8 @@ typedef struct{
 #define WEAR_FINGER  8
 #define WEAR_EYES    9
 #define WEAR_NECK    10
-#define WEAR_MAX     10
+#define WEAR_SHOULDER 11
+#define WEAR_MAX     11
 
 item_t item_data[ITEM_MAX+1];
 
@@ -122,7 +124,7 @@ typedef struct item_map_t{
   struct item_map_t* prev;
   item_map_node_t* first;
   int x; int y;
-  int size;
+  int size;//This is the current size of the item stack
 }item_map_t;
 
 #include "map.h"
@@ -137,4 +139,5 @@ char get_item_sym(map_t* map,int x,int y, int index);
 char get_top_item_sym(map_t* map,int x,int y);
 char get_top_item_sym_from_stack(item_map_t* items);
 item_t* item_create_from_data(int index);
+int items_display(map_t* map,int x,int y);
 #endif

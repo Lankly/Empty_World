@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 void item_data_init(){
   item_data[ITEM_UNKNOWN]=(item_t){.id=ITEM_UNKNOWN,.exam_text="This item does not exist."};
@@ -49,14 +50,17 @@ bool add_item(map_t* map,int x,int y,item_t* item){
     item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
     items_map_init(items,x,y);
     map->items=items;
-    cur=items;
+    items->first=Calloc(1,sizeof(item_map_node_t));
+    items->first->item=item;
+    items->size+=item->size;
+    return true;
   }
   //Now we loop through to find where to insert our data
   else{
     item_map_t* last;
-    for(item_map_t* i=map->items;i!=NULL;i=i->next){
+    for(item_map_t* i=map->items; i!=NULL; i=i->next){
       last = i;
-      if(i->y>y || (i->y=y && i->x>x)){
+      if(i->y > y || (i->y==y && i->x>x)){
 	item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
 	items_map_init(items,x,y);
 	if(i->prev!=NULL){i->prev->next=items;}//Case where inserted first
@@ -72,6 +76,9 @@ bool add_item(map_t* map,int x,int y,item_t* item){
     }
     //Case where it is inserted last
     if(cur==NULL){
+          
+      msg_addf("(%d,%d) - %d",x,y,(int)time(NULL));
+
       item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
       items_map_init(items,x,y);
       last->next=items;
@@ -171,4 +178,35 @@ item_t* item_create_from_data(int index){
   memcpy(ret,&item_data[index],sizeof(item_t));
 
   return ret;
+}
+
+int items_display(map_t* map,int x,int y){
+  if(map==NULL){quit("Error: Null map");}
+  if(map->items==NULL){quit("Error: Invalid items map");}
+  if(get_coord(x,y,map->width)>map->width*map->height){
+    quit("Error: Items Index Out of Bounds");
+  }
+
+  //Navigate to the correct item stack on the map
+  item_map_t* cur=NULL;
+  for(item_map_t* i=map->items;i!=NULL;i=i->next){
+    if(i->y>y || (i->y==y && i->x>x)){break;}
+    cur=i;
+    if(i->y==y && i->x==x){break;}
+  }
+  if(cur==NULL){return -1;}
+
+  item_map_node_t* cur_node = cur->first;
+  display_list_t* items = Calloc(1,sizeof(display_list_t));
+  display_list_node_t* to_add=Calloc(1,sizeof(display_list_node_t));
+  to_add->data=cur_node->item->exam_text;
+  items->first=to_add;
+  cur_node=cur_node->next;
+  while(cur_node!=NULL){
+    to_add->next=Calloc(1,sizeof(display_list_node_t));
+    to_add->data=cur_node->item->exam_text;
+    to_add=to_add->next;
+    cur_node=cur_node->next;
+  }
+  return display(items,map->width,map->height);
 }

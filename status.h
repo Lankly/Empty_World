@@ -15,6 +15,7 @@ typedef struct msg_t {
 void draw_status();
 
 void msg_add(char* new_msg);
+void msg_addf(char* msg, ...);
 char* msg_prompt();
 
 void set_health(int h);

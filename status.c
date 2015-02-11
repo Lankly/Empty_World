@@ -1,5 +1,6 @@
 #include "status.h"
 #include <curses.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,17 @@ void msg_add(char* new_msg){
     msg_add(m);
   }
   newmsg=true;
+}
+
+/*Same as msg_add, but with more arguments*/
+void msg_addf(char* msg, ...){
+  va_list args;
+  va_start(args,msg);
+  char* new_msg = (char*)Calloc(MAX_MSG_LEN+1,sizeof(char*));
+  vsprintf(new_msg,msg,args);
+  va_end(args);
+  msg_add(new_msg);
+  free(new_msg);
 }
 
 char* msg_prompt(char* prompt){

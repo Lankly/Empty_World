@@ -9,6 +9,7 @@
 #include "colors.h"
 #include "status.h"
 #include "items.h"
+#include "inventory.h"
 
 #define TERMINAL_WIDTH  80
 #define TERMINAL_HEIGHT 24
@@ -80,6 +81,7 @@ int main(int argc, char** argv){
   curs_set(0);  
   tile_data_init();
   item_data_init();
+  inventory_init();
 
   //Variables
   int player_x=0, player_y=0, cmd, qckmv_cmd=0;
@@ -105,10 +107,12 @@ int main(int argc, char** argv){
   //Main Game Loop
   while(true){
     item_map_t* cur_items=cur_map->items;
+    //Draw the map
     for(int j=0; j<cur_map->height; j++){
       move(j,0);
       for(int i=0; i<cur_map->width; i++){
-	if(cur_items!=NULL && cur_items->x==i && cur_items->y==j){
+	//Draw top item on each item stack if there is one
+	if(cur_items!=NULL && cur_items->size!=0 && cur_items->x==i && cur_items->y==j){
 	  addch(get_top_item_sym_from_stack(cur_items));
 	  cur_items=cur_items->next;
 	}
@@ -166,22 +170,33 @@ int main(int argc, char** argv){
 	  msg_add("That door is broken");
 	}
       }else{msg_add("That cannot be closed.");}
+    }else if(cmd==','){
+      int count = count_items(cur_map,player_x,player_y);
+      item_t* to_add;
+      if(count==0){msg_add("No items to pick up!");break;}
+      else if(count==1){to_add=remove_item(cur_map,player_x,player_y,0);}
+      else if(count>1){
+	to_add=remove_item(cur_map,player_x,player_y,items_display(cur_map,player_x,player_y));
+      }
+      inventory_add(to_add);
+    }else if(cmd=='i'){
+      display_inventory();
     }else if(cmd=='~'){//Debug
       char* debug_cmd=msg_prompt("~ ");
       char* debug_cmd_lower=str_lowercase(debug_cmd);
       if(!strcmp(debug_cmd_lower,"place")){
 	free(debug_cmd_lower);
 	free(debug_cmd);
-	char* debug_cmd=msg_prompt("Place where?");
+	char* debug_cmd=msg_prompt("Place where? ");
 	char* debug_cmd_lower=str_lowercase(debug_cmd);
 	int place_x=player_x;int place_y=player_y;
 	if(!strcmp(debug_cmd_lower,"nw")){place_x=player_x-1;place_y=player_y-1;}
-	else if(!strcmp(debug_cmd_lower,"n")){place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"n")) {place_y=player_y-1;}
 	else if(!strcmp(debug_cmd_lower,"ne")){place_x=player_x+1;place_y=player_y-1;}
-	else if(!strcmp(debug_cmd_lower,"w")){place_x=player_x-1;}
-	else if(!strcmp(debug_cmd_lower,"e")){place_x=player_x+1;}
+	else if(!strcmp(debug_cmd_lower,"w")) {place_x=player_x-1;}
+	else if(!strcmp(debug_cmd_lower,"e")) {place_x=player_x+1;}
 	else if(!strcmp(debug_cmd_lower,"sw")){place_x=player_x-1;place_y=player_y+1;}
-	else if(!strcmp(debug_cmd_lower,"s")){place_y=player_y-1;}
+	else if(!strcmp(debug_cmd_lower,"s")) {place_y=player_y+1;}
 	else if(!strcmp(debug_cmd_lower,"se")){place_x=player_x+1;place_y=player_y+1;}
 
 	free(debug_cmd_lower);
@@ -204,44 +219,26 @@ int main(int argc, char** argv){
 	  debug_cmd_lower=str_lowercase(debug_cmd);
 	  if(str_is_num(debug_cmd_lower)){
 	    add_item(cur_map,place_x,place_y,item_create_from_data(atoi(debug_cmd))); 
-	    msg_add("Done");
+	    //msg_add("Done");
 	  }
 	}
 	free(debug_cmd_lower);
 	free(debug_cmd);
       }
-      /*int debug_cmd=getch();
-      bool edit=false;
-      int edit_tile=TILE_UNKNOWN;
-      if(debug_cmd=='w'){edit=true; edit_tile=TILE_WALL;}
-      else if(debug_cmd=='f'){edit=true;edit_tile=TILE_FLOOR;}
-      else if(debug_cmd=='W'){
-	int inc_cmd=getch(); 
-	if(inc_cmd=='+'){
-	  add_weight(10);
-	  msg_add("10 weight added.");
-	}else if(inc_cmd=='-'){
-	  add_weight(-10);
-	  msg_add("10 weight removed.");
+      else if(!strcmp(debug_cmd_lower,"print items")){
+	endwin();
+	cur_items=cur_map->items;
+	for(int j=0; j<cur_map->height; j++){
+	  for(int i=0; i<cur_map->width; i++){
+	    if(cur_items!=NULL && cur_items->size!=0 && cur_items->x==i && cur_items->y==j){
+	      printf("%c (%d,%d) [%d,%d]\n",get_top_item_sym_from_stack(cur_items),cur_items->x,cur_items->y,i,j);
+	      cur_items=cur_items->next;
+	    }
+	  }
 	}
+	exit(0);
       }
-      else if(debug_cmd=='x'){//Display coordinates
-	char* coord = (char*)Calloc(15,sizeof(char));
-	sprintf(coord,"X:%d,Y:%d",player_x,player_y);
-	msg_add(coord);
-	free(coord);
-      }
-      if(edit){
-	int dir_cmd=getch();
-	if(dir_cmd==KEY_HOME){map_set_tile(cur_map,player_x-1,player_y-1,edit_tile);}
-	else if(dir_cmd==KEY_UP){map_set_tile(cur_map,player_x,player_y-1,edit_tile);}
-	else if(dir_cmd==KEY_PPAGE){map_set_tile(cur_map,player_x+1,player_y-1,edit_tile);}
-	else if(dir_cmd==KEY_LEFT){map_set_tile(cur_map,player_x-1,player_y,edit_tile);}
-	else if(dir_cmd==KEY_RIGHT){map_set_tile(cur_map,player_x+1,player_y,edit_tile);}
-	else if(dir_cmd==KEY_END){map_set_tile(cur_map,player_x-1,player_y+1,edit_tile);}
-	else if(dir_cmd==KEY_DOWN){map_set_tile(cur_map,player_x,player_y+1,edit_tile);}
-	else if(dir_cmd==KEY_NPAGE){map_set_tile(cur_map,player_x+1,player_y+1,edit_tile);}
-	}*/
+
     }
     
     //Ensure that the player is light enough to pass through corners, that they are not behind a closed door
