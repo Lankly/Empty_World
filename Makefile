@@ -1,4 +1,4 @@
-SOURCES = main.o map.o tiles.o helpers.o colors.o status.o items.o inventory.o
+SOURCES = main.o map.o tiles.o helpers.o colors.o status.o items.o item_callbacks.o inventory.o player.o creature.o creature_callbacks.o
 DEPS = $(SOURCES:.o=.d)
 TARGET = empty_world
 

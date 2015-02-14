@@ -80,7 +80,7 @@ int main(int argc, char** argv){
   inventory_init();
 
   //Variables
-  int player_x=0, player_y=0, cmd, qckmv_cmd=0;
+  int cmd, qckmv_cmd=0;
   bool qckmv=false; //Quick-Move
   map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
@@ -95,9 +95,9 @@ int main(int argc, char** argv){
   map_draw_borders(cur_map);
 
   //Place character randomly
-  while(cur_map->tiles[player_y*cur_map->width+player_x]!=TILE_FLOOR){
-    player_x=rand() % cur_map->width;
-    player_y=rand() % cur_map->height;
+  while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
+    player->x=rand() % cur_map->width;
+    player->y=rand() % cur_map->height;
   }
 
   //Main Game Loop
@@ -115,11 +115,11 @@ int main(int argc, char** argv){
 	else{addch(tile_data[map_get_tile(cur_map,i,j)].display);}
       }
     }
-    mvaddch(player_y,player_x,'@' | COLOR_PAIR(CP_YELLOW_BLACK));
+    mvaddch(player->y,player->x,'@' | COLOR_PAIR(CP_YELLOW_BLACK));
     draw_status();
     refresh();
     
-    int plr_mv_to_x=player_x, plr_mv_to_y=player_y;
+    int plr_mv_to_x=player->x, plr_mv_to_y=player->y;
     
     //If the player is quickmoving, keep doing that. Else, look for keyboard input.
     if(qckmv){cmd = qckmv_cmd;}
@@ -135,7 +135,7 @@ int main(int argc, char** argv){
     }//Open command
     else if(cmd=='o'){
       int open_cmd=getch();
-      int open_x=player_x,open_y=player_y;
+      int open_x=player->x,open_y=player->y;
       analyze_cmd(open_cmd,&open_x,&open_y);
 
       int otile=map_get_tile(cur_map,open_x,open_y);
@@ -147,13 +147,13 @@ int main(int argc, char** argv){
 	}else if(otile==TILE_DOOR_BROKEN){
 	  msg_add("That door is broken.");
 	}
-      }else if(open_x==player_x && open_y==player_y){
+      }else if(open_x==player->x && open_y==player->y){
 	msg_add("Invalid direction.");
       }else{msg_add("That cannot be opened.");}
     }//Close command for doors
     else if(cmd=='C'){
       int close_cmd=getch();
-      int close_x=player_x,close_y=player_y;
+      int close_x=player->x,close_y=player->y;
       analyze_cmd(close_cmd,&close_x,&close_y);
 
       int ctile=map_get_tile(cur_map,close_x,close_y);
@@ -167,12 +167,12 @@ int main(int argc, char** argv){
 	}
       }else{msg_add("That cannot be closed.");}
     }else if(cmd==','){
-      int count = count_items(cur_map,player_x,player_y);
+      int count = count_items(cur_map,player->x,player->y);
       item_t* to_add;
       if(count==0){msg_add("No items to pick up!");break;}
-      else if(count==1){to_add=remove_item(cur_map,player_x,player_y,0);}
+      else if(count==1){to_add=remove_item(cur_map,player->x,player->y,0);}
       else if(count>1){
-	to_add=remove_item(cur_map,player_x,player_y,items_display(cur_map,player_x,player_y));
+	to_add=remove_item(cur_map,player->x,player->y,items_display(cur_map,player->x,player->y));
       }
       inventory_add(to_add);
     }else if(cmd=='i'){
@@ -185,15 +185,15 @@ int main(int argc, char** argv){
 	free(debug_cmd);
 	char* debug_cmd=msg_prompt("Place where? ");
 	char* debug_cmd_lower=str_lowercase(debug_cmd);
-	int place_x=player_x;int place_y=player_y;
-	if(!strcmp(debug_cmd_lower,"nw")){place_x=player_x-1;place_y=player_y-1;}
-	else if(!strcmp(debug_cmd_lower,"n")) {place_y=player_y-1;}
-	else if(!strcmp(debug_cmd_lower,"ne")){place_x=player_x+1;place_y=player_y-1;}
-	else if(!strcmp(debug_cmd_lower,"w")) {place_x=player_x-1;}
-	else if(!strcmp(debug_cmd_lower,"e")) {place_x=player_x+1;}
-	else if(!strcmp(debug_cmd_lower,"sw")){place_x=player_x-1;place_y=player_y+1;}
-	else if(!strcmp(debug_cmd_lower,"s")) {place_y=player_y+1;}
-	else if(!strcmp(debug_cmd_lower,"se")){place_x=player_x+1;place_y=player_y+1;}
+	int place_x=player->x;int place_y=player->y;
+	if(!strcmp(debug_cmd_lower,"nw")){place_x=player->x-1;place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"n")) {place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"ne")){place_x=player->x+1;place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"w")) {place_x=player->x-1;}
+	else if(!strcmp(debug_cmd_lower,"e")) {place_x=player->x+1;}
+	else if(!strcmp(debug_cmd_lower,"sw")){place_x=player->x-1;place_y=player->y+1;}
+	else if(!strcmp(debug_cmd_lower,"s")) {place_y=player->y+1;}
+	else if(!strcmp(debug_cmd_lower,"se")){place_x=player->x+1;place_y=player->y+1;}
 
 	free(debug_cmd_lower);
 	free(debug_cmd);
@@ -241,14 +241,14 @@ int main(int argc, char** argv){
     if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
       tile_t move_tile = tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]];
       if(move_tile.passable){
-	tile_t u = tile_data[cur_map->tiles[(player_y-1)*cur_map->width+player_x]];
-	tile_t d = tile_data[cur_map->tiles[(player_y+1)*cur_map->width+player_x]];
-	tile_t r = tile_data[cur_map->tiles[player_y*cur_map->width+player_x+1]];
-	tile_t l = tile_data[cur_map->tiles[player_y*cur_map->width+player_x-1]];
+	tile_t u = tile_data[cur_map->tiles[(player->y-1)*cur_map->width+player->x]];
+	tile_t d = tile_data[cur_map->tiles[(player->y+1)*cur_map->width+player->x]];
+	tile_t r = tile_data[cur_map->tiles[player->y*cur_map->width+player->x+1]];
+	tile_t l = tile_data[cur_map->tiles[player->y*cur_map->width+player->x-1]];
 	if(get_weight()>PASS_WEIGHT && ((cmd==KEY_HOME && !u.passable && !l.passable) || (cmd==KEY_PPAGE && !u.passable && !r.passable) || (cmd==KEY_END && !d.passable && !l.passable) || (cmd==KEY_NPAGE && !d.passable && !r.passable))){ msg_add("You are too heavy to pass through.");}
 	else if(!(cmd==KEY_HOME && (tile_id(u)==TILE_DOOR_CLOSE || tile_id(l)==TILE_DOOR_CLOSE)) && !(cmd==KEY_PPAGE && (tile_id(u)==TILE_DOOR_CLOSE || tile_id(r)==TILE_DOOR_CLOSE)) && !(cmd==KEY_END && (tile_id(d)==TILE_DOOR_CLOSE || tile_id(l)==TILE_DOOR_CLOSE)) && !(cmd==KEY_NPAGE && (tile_id(d)==TILE_DOOR_CLOSE || tile_id(r)==TILE_DOOR_CLOSE))){
-	  player_x=plr_mv_to_x;
-	  player_y=plr_mv_to_y;
+	  player->x=plr_mv_to_x;
+	  player->y=plr_mv_to_y;
 	} 
         else{msg_add("You cannot pass through a closed door.");}
       }else{qckmv=false;}

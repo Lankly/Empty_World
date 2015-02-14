@@ -21,16 +21,13 @@ typedef struct{
   int size;//how much space it takes up on an item stack, in a bag
   int material;
   int weight;
-  bool legendary;//if true, only one may exist
-  
+  int damage;
+  bool legendary;//if true, only one may exist  
   int wearable;
-  bool is_weapon;
   bool is_two_handed;
   int extrinsic;
-
   int curse_lvl;//0=uncursed,1=blessed,2=cursed
   int water_breathing_lvl;//0=normal,1=shallow,2=deep
-  int turn_to_mob;//0=default, refer to mob catalogue for more
 
   itemUseCallback use;
   itemConsumeCallback consume;

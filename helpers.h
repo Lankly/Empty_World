@@ -24,4 +24,5 @@ typedef struct{
 
 int display(display_list_t* list,int width,int height);
 
+void analyze_cmd(int cmd, int* x, int* y);
 #endif

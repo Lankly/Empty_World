@@ -1,5 +1,6 @@
 #include "player.h"
 #include "status.h"
+#include "items.h"
 
 #ifndef ITEM_CALLBACKS_H
 #define ITEM_CALLBACKS_H

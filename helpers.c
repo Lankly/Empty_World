@@ -60,3 +60,19 @@ int display(display_list_t* list,int width,int height){
   }
   return getch()-'a';
 }
+
+void analyze_cmd(int cmd, int* x, int* y){
+  if(cmd == KEY_UP){*y-=1;
+  }else if(cmd == KEY_DOWN){*y+=1;
+  }else if(cmd == KEY_LEFT){*x-=1;
+  }else if(cmd == KEY_RIGHT){*x+=1;
+  }else if(cmd == KEY_HOME){ //Upper Left of keypad
+    *x-=1;*y-=1;
+  }else if(cmd == KEY_PPAGE){ //Upper Right of keypad
+    *x+=1;*y-=1;
+  }else if(cmd == KEY_END){ //Lower Left of keypad
+    *x-=1;*y+=1;
+  }else if(cmd == KEY_NPAGE){ //Lower Right of keypad
+    *x+=1;*y+=1;
+  }
+}

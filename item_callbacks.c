@@ -13,7 +13,7 @@ void ironSwordUseCallback(item_use_t* data){
     damage_player(player);
   }
   else if(data->type==CALLBACK_TYPE_CREATURE){
-    damage_creature(data->creature;
+    damage_creature(data->creature,data->caller->damage);
   }
   else if(data->type==CALLBACK_TYPE_ITEM){
     if(data->item == NULL){quit("Error: Cannot damage NULL item");}
