@@ -9,12 +9,10 @@
 #include "helpers.h"
 
 static bool newmsg;
-static char* name;
 static int dlevel, encumberment, health, level, num_msgs, weight;
 static msg_t *cur_msg, *first_msg, *last_msg;
-static int strength, perception, endurance, charisma, intelligence, agility, luck;
 
-void draw_status(){
+void draw_status(player_t* player,map_t* map){
   char* output = (char*) Calloc(81,sizeof(char));
 
   //Status bar
@@ -35,14 +33,28 @@ void draw_status(){
   }
 
   //Line one of info
-  sprintf(output,"  %-*s      STR:%-2d  PER:%-2d  END:%-2d  CHA:%-2d  INT:%-2d  AGL:%-2d  LCK:%-2d      ",MAX_NAME_LEN,name,strength, perception, endurance, charisma, intelligence, agility, luck);
+  sprintf(output,"  %-*s      STR:%-2d  PER:%-2d  END:%-2d  CHA:%-2d  INT:%-2d  AGL:%-2d  LCK:%-2d      ",
+	  MAX_NAME_LEN,
+	  player->name,
+	  player->strength,
+	  player->perception, 
+	  player->endurance, 
+	  player->charisma, 
+	  player->intelligence, 
+	  player->agility, 
+	  player->luck);
   move(22,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
   }
 
   //Line two of info
-  sprintf(output,"  HP:%-3d  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d%*s",health,encumberment,level,dlevel,80-2-3-3-2-4-3-2-4-3-2-5-2,"");
+  sprintf(output,"  HP:%-3d  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d%*s",
+	  player->health,
+	  player->inventory!=NULL?player->inventory->encumberment:0,
+	  player->level,
+	  map->dlevel,
+	  80-2-3-3-2-4-3-2-4-3-2-5-2,"");
   move(23,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));

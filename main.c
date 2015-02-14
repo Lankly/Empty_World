@@ -27,7 +27,7 @@ bool qckmv_continue(map_t* map,int x, int y, int qckmv_cmd){
   int d=map->tiles[(y+1)*map->width+x];
   int l=map->tiles[y*map->width+x-1];
   int r=map->tiles[y*map->width+x+1];
-  //Check for at corner in corridor
+  //Check for at-corner in corridor
   if(cur_tile == TILE_CORRIDOR){
     if(qckmv_cmd==KEY_UP && (ul==TILE_CORRIDOR || ur==TILE_CORRIDOR) ){return false;}
     if(qckmv_cmd==KEY_DOWN && (dl==TILE_CORRIDOR || dr==TILE_CORRIDOR) ){return false;}
@@ -73,12 +73,8 @@ int main(int argc, char** argv){
   //1401917882
   //1410214243
   //1410291444
-  initscr();
-  color_init();
-  cbreak();
-  noecho();
-  keypad(stdscr, true);
-  curs_set(0);  
+  initscr(); color_init(); cbreak(); noecho();
+  keypad(stdscr, true); curs_set(0);  
   tile_data_init();
   item_data_init();
   inventory_init();

@@ -1,4 +1,5 @@
 #include "items.h"
+#include "item_callbacks.h"
 #include "status.h"
 #include "map.h"
 #include "helpers.h"
@@ -8,14 +9,27 @@
 #include <time.h>
 
 void item_data_init(){
-  item_data[ITEM_UNKNOWN]=(item_t){.id=ITEM_UNKNOWN,.exam_text="This item does not exist."};
-  item_data[ITEM_IRON_SWORD]=(item_t){.id=ITEM_IRON_SWORD,.dmg_type0=DMG_BLUNT,.display=')',.exam_text="It is a plain sword made of iron.",.gold_value=5,.size=1,.material=MAT_IRON,.weight=10,.is_weapon=true};
+  item_data[ITEM_UNKNOWN]=(item_t){.id=ITEM_UNKNOWN,
+				   .exam_text="This item does not exist.",
+				   .use=&defaultUseCallback;
+				   .consume=&defaultConsumeCallback;
+				   .zap=&defaultZapCallback;};
+  item_data[ITEM_IRON_SWORD]=(item_t){.id=ITEM_IRON_SWORD
+				      .display=')',
+				      .exam_text="It is a plain sword made of iron.",
+				      .gold_value=5,
+				      .size=1,
+				      .material=MAT_IRON,
+				      .weight=10,
+				      .use=&ironSwordUseCallback;
+				      .consume=&defaultConsumeCallback;
+				      .zap=&defaultZapCallback;
+  };
 
   //    1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./
   //    !@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?
   //    ±²³´µ¶·¸¹°­½ñ÷åòôùõéïðÛÝÜáóäæçèêëì»§úøãöâîí¬®¯
   //    ¡À£¤¥Þ¦ª¨©ß«Ñ×ÅÒÔÙÕÉÏÐûýüÁÓÄÆÇÈÊËÌº¢ÚØÃÖÂÎÍ¼¾¿
-
 }
 
 void items_map_init(item_map_t* items,int x,int y){
