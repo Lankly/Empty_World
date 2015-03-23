@@ -1,16 +1,36 @@
 #include <stdbool.h>
-#include "status.h"
-#include "item_callbacks.h"
 #include <curses.h>
 
 #ifndef ITEMS_H
 #define ITEMS_H
 
-#define ITEM_UNKNOWN 0
-#define ITEM_IRON_SWORD 1
-#define ITEM_MAX 1
+#define ITEM_UNKNOWN  0
+#define CORPSE_HUMAN  1
+#define CORPSE_WERE   2
+#define CORPSE_ORC    3
+#define CORPSE_GOBLIN 4
+#define CORPSE_SKELETON 5
+#define CORPSE_CANINE 6
+#define CORPSE_FELINE 7
+#define CORPSE_INSECT 8
+#define CORPSE_RODENT 9
+#define CORPSE_AVIAN  10
+#define CORPSE_DEMON  11
+#define CORPSE_MINDFLAYER 12
+#define CORPSE_GRIFFON 13
+#define CORPSE_SENTINEL 14
+#define CORPSE_PLANT  15
+#define CORPSE_EYE    16
+#define ITEM_IRON_SWORD 17
+#define ITEM_MAX 17
 
-typedef struct{
+//These are callbacks that will be inside of each item
+struct item_use_t; struct item_consume_t; struct item_zap_t;
+typedef void (*itemUseCallback)(struct item_use_t* data);
+typedef void (*itemConsumeCallback)(struct item_consume_t* data);
+typedef void (*itemZapCallback)(struct item_zap_t* data);
+
+typedef struct item_t{
   int id;
   int str_bonus;int per_bonus;int end_bonus;int cha_bonus;
   int int_bonus;int agl_bonus;int luc_bonus;int hth_bonus;
@@ -24,6 +44,7 @@ typedef struct{
   int damage;
   bool legendary;//if true, only one may exist  
   int wearable;
+  bool ranged;
   bool is_two_handed;
   int extrinsic;
   int curse_lvl;//0=uncursed,1=blessed,2=cursed
@@ -33,6 +54,30 @@ typedef struct{
   itemConsumeCallback consume;
   itemZapCallback zap;
 }item_t;
+
+#include "creature.h"
+
+//This gives the callbacks information about how to use an item
+typedef struct item_use_t{
+  int type;
+  item_t* caller;
+  item_t* item;
+  struct creature_t* creature;
+}item_use_t;
+
+//This gives the callbacks information about how to consume an item
+typedef struct item_consume_t{
+  int type;
+  struct creature_t* creature;
+}item_consume_t;
+
+//This givest he callbacks information about how to zap an item
+typedef struct item_zap_t{
+  int type;
+  struct creature_list_t* creatures;
+}item_zap_t;
+
+#include "item_callbacks.h"
 
 //Material Types
 #define MAT_UNKNOWN 0
@@ -77,14 +122,17 @@ typedef struct item_map_t{
 #include "map.h"
 
 void item_data_init();
-void items_map_init(item_map_t* items, int w, int h);
+void items_map_init(struct item_map_t* items, int w, int h);
 
-bool add_item(map_t* map, int x, int y, item_t* i);
-item_t* remove_item(map_t* map, int x, int y, int index);
-int count_items(map_t* map,int x,int y);
-char get_item_sym(map_t* map,int x,int y, int index);
-char get_top_item_sym(map_t* map,int x,int y);
-char get_top_item_sym_from_stack(item_map_t* items);
+bool add_item(struct map_t* map, int x, int y, struct item_t* i);
+item_t* remove_item(struct map_t* map, int x, int y, int index);
+int count_items(struct map_t* map,int x,int y);
+void destroy_item(item_t* item);
+
+char get_item_sym(struct map_t* map,int x,int y, int index);
+char get_top_item_sym(struct map_t* map,int x,int y);
+char get_top_item_sym_from_stack(struct item_map_t* items);
+
 item_t* item_create_from_data(int index);
-int items_display(map_t* map,int x,int y);
+int items_display(struct map_t* map,int x,int y);
 #endif

@@ -15,13 +15,14 @@
 
 typedef struct {
   int id;
-  bool  deep;
-  bool  passable;
-  int   display;
+  int display;
+  int hardness;  //0=mush, 1=dirt, 2=wood, 3=stone, 4=unbreakable  
+  bool deep;
+  bool passable;
+  bool stopme;
+  bool openable;
+  bool transparent;
   char* exam_text;
-  int   hardness;//0=mush, 1=dirt, 2=wood, 3=stone, 4=unbreakable  
-  bool  stopme;
-  bool  openable;
 } tile_t;
 
 tile_t tile_data[TILE_MAX+1];

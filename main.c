@@ -5,6 +5,7 @@
 #include <time.h>
 #include "helpers.h"
 #include "map.h"
+#include "player.h"
 #include "tiles.h"
 #include "colors.h"
 #include "status.h"
@@ -29,37 +30,57 @@ bool qckmv_continue(map_t* map,int x, int y, int qckmv_cmd){
   int r=map->tiles[y*map->width+x+1];
   //Check for at-corner in corridor
   if(cur_tile == TILE_CORRIDOR){
-    if(qckmv_cmd==KEY_UP && (ul==TILE_CORRIDOR || ur==TILE_CORRIDOR) ){return false;}
-    if(qckmv_cmd==KEY_DOWN && (dl==TILE_CORRIDOR || dr==TILE_CORRIDOR) ){return false;}
-    if(qckmv_cmd==KEY_LEFT && (ul==TILE_CORRIDOR || dl==TILE_CORRIDOR) ){return false;}
-    if(qckmv_cmd==KEY_RIGHT && (ur==TILE_CORRIDOR || dr==TILE_CORRIDOR) ){return false;}
+    if(qckmv_cmd==KEY_UP && (ul==TILE_CORRIDOR || ur==TILE_CORRIDOR)){
+      return false;
+    }
+    if(qckmv_cmd==KEY_DOWN && (dl==TILE_CORRIDOR || dr==TILE_CORRIDOR)){
+      return false;
+    }
+    if(qckmv_cmd==KEY_LEFT && (ul==TILE_CORRIDOR || dl==TILE_CORRIDOR)){
+      return false;
+    }
+    if(qckmv_cmd==KEY_RIGHT && (ur==TILE_CORRIDOR || dr==TILE_CORRIDOR)){
+      return false;
+    }
   }
   //Check for change in tile type during quickmove
-  if(qckmv_cmd==KEY_UP    && (u!=cur_tile || tile_data[ul].stopme || tile_data[ur].stopme)){return false;}
-  if(qckmv_cmd==KEY_DOWN  && (d!=cur_tile || tile_data[dl].stopme || tile_data[dr].stopme)){return false;}
-  if(qckmv_cmd==KEY_LEFT  && (l!=cur_tile || tile_data[dl].stopme || tile_data[ul].stopme)){return false;}
-  if(qckmv_cmd==KEY_RIGHT && (r!=cur_tile || tile_data[dr].stopme || tile_data[ur].stopme)){return false;}
-  if(qckmv_cmd==KEY_HOME && ul!=cur_tile){return false;}
-  if(qckmv_cmd==KEY_PPAGE && ur!=cur_tile){return false;}
-  if(qckmv_cmd==KEY_END && dl!=cur_tile){return false;}
-  if(qckmv_cmd==KEY_NPAGE && dr!=cur_tile){return false;}
-  return true;
-}
-
-void analyze_cmd(int cmd, int* x, int* y){
-  if(cmd == KEY_UP){*y-=1;
-  }else if(cmd == KEY_DOWN){*y+=1;
-  }else if(cmd == KEY_LEFT){*x-=1;
-  }else if(cmd == KEY_RIGHT){*x+=1;
-  }else if(cmd == KEY_HOME){ //Upper Left of keypad
-    *x-=1;*y-=1;
-  }else if(cmd == KEY_PPAGE){ //Upper Right of keypad
-    *x+=1;*y-=1;
-  }else if(cmd == KEY_END){ //Lower Left of keypad
-    *x-=1;*y+=1;
-  }else if(cmd == KEY_NPAGE){ //Lower Right of keypad
-    *x+=1;*y+=1;
+  if(qckmv_cmd==KEY_UP 
+     && (u!=cur_tile 
+	 || tile_data[ul].stopme 
+	 || tile_data[ur].stopme)){
+    return false;
   }
+  if(qckmv_cmd==KEY_DOWN
+     && (d!=cur_tile 
+	 || tile_data[dl].stopme 
+	 || tile_data[dr].stopme)){
+    return false;
+  }
+  if(qckmv_cmd==KEY_LEFT
+     && (l!=cur_tile 
+	 || tile_data[dl].stopme 
+	 || tile_data[ul].stopme)){
+    return false;
+  }
+  if(qckmv_cmd==KEY_RIGHT
+     && (r!=cur_tile 
+	 || tile_data[dr].stopme 
+	 || tile_data[ur].stopme)){
+    return false;
+  }
+  if(qckmv_cmd==KEY_HOME && ul!=cur_tile){
+    return false;
+  }
+  if(qckmv_cmd==KEY_PPAGE && ur!=cur_tile){
+    return false;
+  }
+  if(qckmv_cmd==KEY_END && dl!=cur_tile){
+    return false;
+  }
+  if(qckmv_cmd==KEY_NPAGE && dr!=cur_tile){
+    return false;
+  }
+  return true;
 }
 
 //Main
@@ -77,12 +98,12 @@ int main(int argc, char** argv){
   keypad(stdscr, true); curs_set(0);  
   tile_data_init();
   item_data_init();
-  inventory_init();
+  player_init();
+  inventory_init(player);
 
   //Variables
   int cmd, qckmv_cmd=0;
   bool qckmv=false; //Quick-Move
-  map_t* cur_map;
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
   
@@ -108,7 +129,10 @@ int main(int argc, char** argv){
       move(j,0);
       for(int i=0; i<cur_map->width; i++){
 	//Draw top item on each item stack if there is one
-	if(cur_items!=NULL && cur_items->size!=0 && cur_items->x==i && cur_items->y==j){
+	if(cur_items!=NULL 
+	   && cur_items->size!=0 
+	   && cur_items->x==i 
+	   && cur_items->y==j){
 	  addch(get_top_item_sym_from_stack(cur_items));
 	  cur_items=cur_items->next;
 	}
@@ -121,14 +145,23 @@ int main(int argc, char** argv){
     
     int plr_mv_to_x=player->x, plr_mv_to_y=player->y;
     
-    //If the player is quickmoving, keep doing that. Else, look for keyboard input.
+    /* If the player is quickmoving, keep doing that. 
+     * Else, look for keyboard input.
+    */
     if(qckmv){cmd = qckmv_cmd;}
     else{cmd = getch();}
 
     analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
     if(cmd == KEY_B2){//5 on keypad (qkmv command)
       qckmv_cmd=getch();
-      if(qckmv_cmd==KEY_HOME || qckmv_cmd==KEY_UP || qckmv_cmd==KEY_PPAGE || qckmv_cmd==KEY_LEFT || qckmv_cmd==KEY_RIGHT || qckmv_cmd==KEY_END || qckmv_cmd==KEY_DOWN || qckmv_cmd==KEY_NPAGE){
+      if(qckmv_cmd==KEY_HOME 
+	 || qckmv_cmd==KEY_UP 
+	 || qckmv_cmd==KEY_PPAGE 
+	 || qckmv_cmd==KEY_LEFT 
+	 || qckmv_cmd==KEY_RIGHT 
+	 || qckmv_cmd==KEY_END 
+	 || qckmv_cmd==KEY_DOWN 
+	 || qckmv_cmd==KEY_NPAGE){
 	qckmv=true;
 	analyze_cmd(qckmv_cmd, &plr_mv_to_x, &plr_mv_to_y);
       }
@@ -166,15 +199,27 @@ int main(int argc, char** argv){
 	  msg_add("That door is broken");
 	}
       }else{msg_add("That cannot be closed.");}
+    //, is used to pick up an item that the player is standing on
     }else if(cmd==','){
       int count = count_items(cur_map,player->x,player->y);
       item_t* to_add;
+      /* This is the case where the player has tried to pick up an item,
+       * but there is nothing on the ground  beneath them.
+       */
       if(count==0){msg_add("No items to pick up!");break;}
+      /* This is the case where the there is only one item on the ground
+       * beneath the player.
+       */
       else if(count==1){to_add=remove_item(cur_map,player->x,player->y,0);}
+      /* This is the case where there are multiple items on the ground 
+       * beneath the player. It will take the user to a screen where they
+       * can select which item it is that they're trying to pick up.
+       */
       else if(count>1){
-	to_add=remove_item(cur_map,player->x,player->y,items_display(cur_map,player->x,player->y));
+	to_add=remove_item(cur_map,player->x,player->y,
+			   items_display(cur_map,player->x,player->y));
       }
-      inventory_add(to_add);
+      inventory_add(player,to_add);
     }else if(cmd=='i'){
       display_inventory();
     }else if(cmd=='~'){//Debug
@@ -186,14 +231,26 @@ int main(int argc, char** argv){
 	char* debug_cmd=msg_prompt("Place where? ");
 	char* debug_cmd_lower=str_lowercase(debug_cmd);
 	int place_x=player->x;int place_y=player->y;
-	if(!strcmp(debug_cmd_lower,"nw")){place_x=player->x-1;place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"n")) {place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"ne")){place_x=player->x+1;place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"w")) {place_x=player->x-1;}
-	else if(!strcmp(debug_cmd_lower,"e")) {place_x=player->x+1;}
-	else if(!strcmp(debug_cmd_lower,"sw")){place_x=player->x-1;place_y=player->y+1;}
-	else if(!strcmp(debug_cmd_lower,"s")) {place_y=player->y+1;}
-	else if(!strcmp(debug_cmd_lower,"se")){place_x=player->x+1;place_y=player->y+1;}
+	if(!strcmp(debug_cmd_lower,"nw")){
+	  place_x=player->x-1;
+	  place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"n")){
+	  place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"ne")){
+	  place_x=player->x+1;
+	  place_y=player->y-1;}
+	else if(!strcmp(debug_cmd_lower,"w")){
+	  place_x=player->x-1;}
+	else if(!strcmp(debug_cmd_lower,"e")){
+	  place_x=player->x+1;}
+	else if(!strcmp(debug_cmd_lower,"sw")){
+	  place_x=player->x-1;
+	  place_y=player->y+1;}
+	else if(!strcmp(debug_cmd_lower,"s")){
+	  place_y=player->y+1;}
+	else if(!strcmp(debug_cmd_lower,"se")){
+	  place_x=player->x+1;
+	  place_y=player->y+1;}
 
 	free(debug_cmd_lower);
 	free(debug_cmd);
@@ -214,7 +271,10 @@ int main(int argc, char** argv){
 	  debug_cmd=msg_prompt("ITEM ID: ");
 	  debug_cmd_lower=str_lowercase(debug_cmd);
 	  if(str_is_num(debug_cmd_lower)){
-	    add_item(cur_map,place_x,place_y,item_create_from_data(atoi(debug_cmd))); 
+	    add_item(cur_map,
+		     place_x,
+		     place_y,
+		     (struct item_t*)item_create_from_data(atoi(debug_cmd)));
 	    //msg_add("Done");
 	  }
 	}
@@ -226,8 +286,13 @@ int main(int argc, char** argv){
 	cur_items=cur_map->items;
 	for(int j=0; j<cur_map->height; j++){
 	  for(int i=0; i<cur_map->width; i++){
-	    if(cur_items!=NULL && cur_items->size!=0 && cur_items->x==i && cur_items->y==j){
-	      printf("%c (%d,%d) [%d,%d]\n",get_top_item_sym_from_stack(cur_items),cur_items->x,cur_items->y,i,j);
+	    if(cur_items!=NULL 
+	       && cur_items->size!=0 
+	       && cur_items->x==i 
+	       && cur_items->y==j){
+	      printf("%c (%d,%d) [%d,%d]\n",
+		     get_top_item_sym_from_stack(cur_items),
+		     cur_items->x, cur_items->y, i, j);
 	      cur_items=cur_items->next;
 	    }
 	  }
@@ -237,16 +302,37 @@ int main(int argc, char** argv){
 
     }
     
-    //Ensure that the player is light enough to pass through corners, that they are not behind a closed door
-    if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
-      tile_t move_tile = tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]];
+    /* Ensure that the player is light enough to pass through corners,
+       that they are not behind a closed door.
+     */
+    if(plr_mv_to_x >=0 && plr_mv_to_x<cur_map->width 
+       && plr_mv_to_y>=0 && plr_mv_to_y<cur_map->height){
+      tile_t move_tile = 
+	tile_data[cur_map->tiles[plr_mv_to_y*cur_map->width+plr_mv_to_x]];
       if(move_tile.passable){
 	tile_t u = tile_data[cur_map->tiles[(player->y-1)*cur_map->width+player->x]];
 	tile_t d = tile_data[cur_map->tiles[(player->y+1)*cur_map->width+player->x]];
 	tile_t r = tile_data[cur_map->tiles[player->y*cur_map->width+player->x+1]];
 	tile_t l = tile_data[cur_map->tiles[player->y*cur_map->width+player->x-1]];
-	if(get_weight()>PASS_WEIGHT && ((cmd==KEY_HOME && !u.passable && !l.passable) || (cmd==KEY_PPAGE && !u.passable && !r.passable) || (cmd==KEY_END && !d.passable && !l.passable) || (cmd==KEY_NPAGE && !d.passable && !r.passable))){ msg_add("You are too heavy to pass through.");}
-	else if(!(cmd==KEY_HOME && (tile_id(u)==TILE_DOOR_CLOSE || tile_id(l)==TILE_DOOR_CLOSE)) && !(cmd==KEY_PPAGE && (tile_id(u)==TILE_DOOR_CLOSE || tile_id(r)==TILE_DOOR_CLOSE)) && !(cmd==KEY_END && (tile_id(d)==TILE_DOOR_CLOSE || tile_id(l)==TILE_DOOR_CLOSE)) && !(cmd==KEY_NPAGE && (tile_id(d)==TILE_DOOR_CLOSE || tile_id(r)==TILE_DOOR_CLOSE))){
+	if(player->inventory->cur_weight>PASS_WEIGHT 
+	   && ((cmd==KEY_HOME && !u.passable && !l.passable) 
+	       || (cmd==KEY_PPAGE && !u.passable && !r.passable) 
+	       || (cmd==KEY_END && !d.passable && !l.passable) 
+	       || (cmd==KEY_NPAGE && !d.passable && !r.passable))){
+	  msg_add("You are too heavy to pass through.");
+	}
+	else if(!(cmd==KEY_HOME && 
+		  (tile_id(u)==TILE_DOOR_CLOSE 
+		   || tile_id(l)==TILE_DOOR_CLOSE))
+		&& !(cmd==KEY_PPAGE 
+		     && (tile_id(u)==TILE_DOOR_CLOSE 
+			 || tile_id(r)==TILE_DOOR_CLOSE)) 
+		&& !(cmd==KEY_END 
+		     && (tile_id(d)==TILE_DOOR_CLOSE 
+			 || tile_id(l)==TILE_DOOR_CLOSE))
+		&& !(cmd==KEY_NPAGE 
+		     && (tile_id(d)==TILE_DOOR_CLOSE 
+			 || tile_id(r)==TILE_DOOR_CLOSE))){
 	  player->x=plr_mv_to_x;
 	  player->y=plr_mv_to_y;
 	} 

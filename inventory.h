@@ -1,21 +1,9 @@
 #include <stdlib.h>
 #include "items.h"
+#include "creature.h"
 
 #ifndef INVENTORY_H
 #define INVENTORY_H
-
-typedef struct inventory_node_t{
-  item_t* item;
-  int id;//the order in which items were added
-  struct inventory_node_t* next;
-}inventory_node_t;
-
-typedef struct{
-  int max_weight;
-  int cur_weight;
-  inventory_node_t* first;
-  inventory_node_t* last;
-}inventory_t;
 
 typedef struct{
   item_t* item;
@@ -48,22 +36,40 @@ typedef struct{
   item_t* shirt;
 }equipment_chest_t;
 
-inventory_t* inventory;
-equipment_head_t* head;
-equipment_chest_t* chest;
-equipment_arm_t* left_arm;
-equipment_arm_t* right_arm;
-equipment_leg_t* left_leg;
-equipment_leg_t* right_leg;
-item_t* pants;
-item_t* neck;
-int last_inventory_id;
+//This defines an inventory for creatures.
+typedef struct inventory_node_t{
+  item_t* item;
+  int id;//the order in which items were added
+  
+  struct inventory_node_t* next;
+}inventory_node_t;
+typedef struct{
+  equipment_head_t* head;
+  equipment_chest_t* chest;
+  equipment_arm_t* left_arm;
+  equipment_arm_t* right_arm;
+  equipment_leg_t* left_leg;
+  equipment_leg_t* right_leg;
+  item_t* pants;
+  item_t* neck;
+  item_t* weild;
 
-void inventory_init();
-bool inventory_add(item_t* item);
-item_t* inventory_remove(int inventory_id);
-bool equip(int inventory_id);
-bool unequip(int inventory_id);
+  int max_weight;
+  int cur_weight;
+
+  struct inventory_node_t* first;
+  struct inventory_node_t* last;
+  int last_inventory_id;
+}inventory_t;
+
+void inventory_init(struct creature_t* creature);
+bool inventory_add(struct creature_t* creature, item_t* item);
+void inventory_remove_by_item(struct creature_t* creature, item_t* item);
+item_t* inventory_remove_by_id(struct creature_t* creature, int inventory_id);
+bool equip_by_item(struct creature_t* creature, item_t* item);
+bool equip_by_id(struct creature_t* creature, int inventory_id);
+bool unequip_by_item(struct creature_t* creature, item_t* item);
+bool unequip_by_id(struct creature_t* creature, int inventory_id);
 void display_inventory();
 
 #endif

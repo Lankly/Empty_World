@@ -4,13 +4,11 @@
 #define HELPERS_H
 
 void* Calloc(int items, int size);
-
 char* str_lowercase(char* str);
 bool str_is_num(char* str);
-
 int get_coord(int x,int y,int width);
-
 void quit(const char* error_msg);
+void analyze_cmd(int cmd, int* x, int* y);
 
 typedef struct display_list_node_t{
   char* data;
@@ -24,5 +22,4 @@ typedef struct{
 
 int display(display_list_t* list,int width,int height);
 
-void analyze_cmd(int cmd, int* x, int* y);
 #endif

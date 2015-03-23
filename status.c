@@ -7,12 +7,14 @@
 #include <ctype.h>
 #include "colors.h"
 #include "helpers.h"
+#include "map.h"
+#include "player.h"
 
 static bool newmsg;
-static int dlevel, encumberment, health, level, num_msgs, weight;
+static int num_msgs;
 static msg_t *cur_msg, *first_msg, *last_msg;
 
-void draw_status(player_t* player,map_t* map){
+void draw_status(map_t* map){
   char* output = (char*) Calloc(81,sizeof(char));
 
   //Status bar
@@ -51,7 +53,7 @@ void draw_status(player_t* player,map_t* map){
   //Line two of info
   sprintf(output,"  HP:%-3d  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d%*s",
 	  player->health,
-	  player->inventory!=NULL?player->inventory->encumberment:0,
+	  player->inventory!=NULL?player->inventory->cur_weight:0,
 	  player->level,
 	  map->dlevel,
 	  80-2-3-3-2-4-3-2-4-3-2-5-2,"");
@@ -146,47 +148,10 @@ char* msg_prompt(char* prompt){
   return ret;
 }
 
-void set_health(int h){health=h;}
-void set_encumberment(int e){encumberment=e;}
-void set_level(int l){level=l;}
-void set_dlevel(int d){dlevel=d;}
-void set_name(char* n){name=n;}
-void set_weight(int w){weight=w;}
-
-void set_strength(int s){strength=s;}
-void set_perception(int p){perception=p;}
-void set_endurance(int e){endurance=e;}
-void set_charisma(int c){charisma=c;}
-void set_intelligence(int i){intelligence=i;}
-void set_agility(int a){agility=a;}
-void set_luck(int l){luck=l;}
-
-char* get_name(){return name;}
-char* get_cur_msg(){return cur_msg->msg;}
-int get_health(){return health;}
-int get_encumberment(){return encumberment;}
-int get_level(){return level;}
-int get_dlevel(){return dlevel;}
-int get_weight(){return weight;}
-
-int get_strength(){return strength;}
-int get_perception(){return perception;}
-int get_endurance(){return endurance;}
-int get_charisma(){return charisma;}
-int get_intelligence(){return intelligence;}
-int get_agility(){return agility;}
-int get_luck(){return luck;}
-
-void add_health(int h){health+=h;}
-void add_weight(int w){weight+=w;}
-
 void status_init(){
-  set_health(100);
-  set_encumberment(0);
-  set_level(1);
-  set_dlevel(0);
-  set_name("Lan");
   char welcome_msg[81];
-  sprintf(welcome_msg, "Welcome to the game, %s!", get_name());
+  sprintf(welcome_msg, "Welcome to the game, %s!", get_name(player));
   msg_add(welcome_msg);
 }
+
+char* get_cur_msg(){return cur_msg->msg;}

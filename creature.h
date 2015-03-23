@@ -1,38 +1,10 @@
-#include "creature_callbacks.h"
 #include <stdbool.h>
 
 #ifndef CREATURE_H
 #define CREATURE_H
 
-typedef struct creature_inventory_node_t{
-  item_t* item;
-  struct creature_inventory_node_t* next;
-}creature_inventory_node_t;
-typedef struct{
-  creature_inventory_node_t* first;
-}creature_inventory_t*;
-
-typedef struct{
-int creature_id;
-int type;
-char* name;
-creature_inventory_t* inventory;
-int health;
-int x; int y;
-
-creatureTakeTurnCallback* takeTurn;
-creaturePathfindCallback* move;
-
-bool is_awake;
-}creature_t;
-
-creature_t creature_data[CREATURE_TYPE_MAX+1];
-int creature_types_data[CREATURE_TYPE_MAX+1];
-
-void creature_data_init();
-void damage_creature(creature_t* creature, int damage);
-void creature_place_on_map(creature_t* creature, map_t* map);
-bool creature_is_visible(creature_t* creature);
+#include "items.h"
+#include "map.h"
 
 //DEFINE CREATURE TYPES
 #define CREATURE_TYPE_UNKNOWN  0
@@ -97,4 +69,186 @@ bool creature_is_visible(creature_t* creature);
 #define CREATURE_FLOATING_EYE 37
 #define CREATURE_MAX          37
 
+//DAMAGE TYPES LIST
+#define DMG_UNKNOWN 0
+#define DMG_BLUNT   1
+#define DMG_FIRE    2
+#define DMG_ICE     3
+#define DMG_WATER   4
+#define DMG_LIGHTNING 5
+#define DMG_PSYCHIC 6
+#define DMG_MAX     6
+
+//EXTRINSICS,INTRINSICS LIST
+#define TRINSIC_UNKNOWN 0
+#define TRINSIC_FLYING 1
+#define TRINSIC_HOVER  2
+#define TRINSIC_RES_FIRE 3
+#define TRINSIC_RES_ICE  4
+#define TRINSIC_RES_LIGHTNING 5
+#define TRINSIC_TELEPATHY 6
+#define TRINSIC_BLIND_TELEPATHY 7
+#define TRINSIC_TELEKINESIS 8
+#define TRINSIC_DARKVISION  9
+#define TRINSIC_LASER_VISION  10
+#define TRINSIC_TELEPORTATION 11
+#define TRINSIC_CONT_TELEPORTATION 12
+#define TRINSIC_POLYMORPH 13
+#define TRINSIC_CONT_POLYMORPH 14
+#define TRINSIC_MAX 14
+
+//CONSUMABLES TYPES LIST
+#define CONSUME_UNKNOWN 0
+#define CONSUME_ANIMAL  1
+#define CONSUME_SAPIENT 2
+#define CONSUME_INSECT  3
+#define CONSUME_FOOD    4
+#define CONSUME_DRUG    5
+#define CONSUME_WATER   6
+#define CONSUME_ALCOHOL 7
+#define CONSUME_POTION  8
+#define CONSUME_BLOOD   9
+#define CONSUME_NONFOOD 10
+#define CONSUME_MAX 10
+
+//BREATHABLE TYPES LIST
+#define BREATHE_UNKNOWN 0
+#define BREATHE_AIR 1
+#define BREATHE_WATER 2
+#define BREATHE_POISON 3
+#define BREATHE_LAVA 4
+#define BREATHE_MAX 4
+
+//This is a list of all the types of things that a creature can breathe
+typedef struct breathe_node_t{
+  int breathe_type;
+  struct breathe_node_t* next;
+}breathe_node_t;
+typedef struct{
+  struct breathe_node_t* first;
+}breathe_list_t;
+
+/* This is a list of all the types of things that a creature or the player can
+ * eat or drink
+ */
+typedef struct consume_node_t{
+  int consume_type;
+  struct consume_node_t* next;
+}consume_node_t;
+typedef struct{
+  consume_node_t* first;
+}consume_list_t;
+
+//This is a list of all the intrinsics that a creature has
+typedef struct intrinsics_node_t{
+  int intrinsic_type;
+  struct intrinsics_node_t* next;
+}intrinsics_node_t;
+typedef struct{
+  intrinsics_node_t* first;
+}intrinsics_list_t;
+
+//This is a list of all the resistances that a creature has
+typedef struct resistances_node_t{
+  int damage_type;
+  struct resistances_node_t* next;
+}resistances_node_t;
+typedef struct{
+  resistances_node_t* first;
+}resistances_list_t;
+
+
+struct creature_t; struct map_t; struct item_map_t;
+typedef void (*creatureTakeTurnCallback)(struct creature_t* creature,
+					 struct map_t* map,
+					 struct item_map_t* items);
+
+#include "inventory.h"
+typedef struct creature_t{
+  int strength;  int perception;    int endurance;
+  int charisma;  int intelligence;  int agility;
+  int luck;      int health;        int hunger;
+  int gold;      int level;         int max_hunger;
+
+  int corpse_type;
+  int creature_id;
+  int dlevel;
+  int type;
+  int x; int y;
+
+  char* name;
+  
+  bool is_awake;
+  bool can_move;
+  bool can_fly;
+  bool can_see;
+
+  breathe_list_t* breathables;
+  consume_list_t* consumables;
+  intrinsics_list_t* intrinsics;
+  resistances_list_t* resistances;
+
+  inventory_t* inventory;
+  creatureTakeTurnCallback takeTurn;
+}creature_t;
+
+#include "creature_callbacks.h"
+
+//This is a list of creatures
+typedef struct creature_list_node_t{
+  struct creature_t* creature;
+  struct creature_list_node_t* next;
+}creature_list_node_t;
+typedef struct{
+  struct creature_list_node_t* first;
+}creature_list_t;
+
+//This is all the default kinds of creatures that can be created
+creature_t creature_data[CREATURE_TYPE_MAX+1];
+int creature_types_data[CREATURE_TYPE_MAX+1];
+
+void creature_data_init();
+void creature_kill(struct creature_t* creature);
+void damage_creature(struct creature_t* creature, int dmg);
+void creature_place_on_map(struct creature_t* creature, map_t* map);
+int creature_see_distance(struct creature_t* creature);
+bool creature_is_visible(struct creature_t* creature);
+int creature_get_damage(struct creature_t* creature);
+
+void set_level(struct creature_t* c, int l);
+void set_dlevel(struct creature_t* c, int d);
+void set_name(struct creature_t* c, char* n);
+void set_gold(struct creature_t* c, int g);
+
+void set_strength(struct creature_t* c, int s);
+void set_perception(struct creature_t* c, int p);
+void set_endurance(struct creature_t* c, int e);
+void set_charisma(struct creature_t* c, int ch);
+void set_intelligence(struct creature_t* c, int i);
+void set_agility(struct creature_t* c, int a);
+void set_luck(struct creature_t* c, int l);
+
+void set_health(struct creature_t* c, int h);
+void set_max_hunger(struct creature_t* c, int m);
+void set_hunger(struct creature_t* c, int h);
+
+char* get_name(struct creature_t* c);
+int get_level(struct creature_t* c);
+int get_dlevel(struct creature_t* c);
+int get_weight(struct creature_t* c);
+int get_gold(struct creature_t* c);
+
+int get_health(struct creature_t* c);
+int get_max_hunger(struct creature_t* c);
+int get_hunger(struct creature_t* c);
+
+int get_strength(struct creature_t* c);
+int get_perception(struct creature_t* c);
+int get_endurance(struct creature_t* c);
+int get_charisma(struct creature_t* c);
+int get_intelligence(struct creature_t* c);
+int get_agility(struct creature_t* c);
+int get_luck(struct creature_t* c);
+
+void add_health(struct creature_t* c, int h);
 #endif

@@ -1,29 +1,34 @@
-#include "items.h"
-#include "item_callbacks.h"
-#include "status.h"
-#include "map.h"
-#include "helpers.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include "items.h"
+#include "item_callbacks.h"
+#include "status.h"
+#include "inventory.h"
+#include "map.h"
+#include "helpers.h"
+#include "player.h"
 
 void item_data_init(){
-  item_data[ITEM_UNKNOWN]=(item_t){.id=ITEM_UNKNOWN,
-				   .exam_text="This item does not exist.",
-				   .use=&defaultUseCallback;
-				   .consume=&defaultConsumeCallback;
-				   .zap=&defaultZapCallback;};
-  item_data[ITEM_IRON_SWORD]=(item_t){.id=ITEM_IRON_SWORD
-				      .display=')',
-				      .exam_text="It is a plain sword made of iron.",
-				      .gold_value=5,
-				      .size=1,
-				      .material=MAT_IRON,
-				      .weight=10,
-				      .use=&ironSwordUseCallback;
-				      .consume=&defaultConsumeCallback;
-				      .zap=&defaultZapCallback;
+  item_data[ITEM_UNKNOWN]=(item_t){
+    .id=ITEM_UNKNOWN,
+    .exam_text="This item does not exist.",
+    .use=&defaultUseCallback,
+    .consume=&defaultConsumeCallback,
+    .zap=&defaultZapCallback
+  };
+  item_data[ITEM_IRON_SWORD]=(item_t){
+    .id=ITEM_IRON_SWORD,
+    .display=')',
+    .exam_text="It is a plain sword made of iron.",
+    .gold_value=5,
+    .size=1,
+    .material=MAT_IRON,
+    .weight=10,
+    .use=&ironSwordUseCallback,
+    .consume=&defaultConsumeCallback,
+    .zap=&defaultZapCallback
   };
 
   //    1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./
@@ -32,12 +37,12 @@ void item_data_init(){
   //    ¡À£¤¥Þ¦ª¨©ß«Ñ×ÅÒÔÙÕÉÏÐûýüÁÓÄÆÇÈÊËÌº¢ÚØÃÖÂÎÍ¼¾¿
 }
 
-void items_map_init(item_map_t* items,int x,int y){
+void items_map_init(struct item_map_t* items,int x,int y){
   items->x=x;
   items->y=y;
 }
 
-int count_items(map_t* map,int x,int y){
+int count_items(struct map_t* map,int x,int y){
   if(x<0 || y<0 || get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
@@ -52,7 +57,7 @@ int count_items(map_t* map,int x,int y){
   return 0;
 }
 
-bool add_item(map_t* map,int x,int y,item_t* item){
+bool add_item(struct map_t* map,int x,int y,struct item_t* item){
   if(map==NULL){quit("Error: NULL map");}
   if(item->size>map->max_item_height){return false;}
   item_map_t* cur = NULL;
@@ -78,8 +83,11 @@ bool add_item(map_t* map,int x,int y,item_t* item){
       if(i->y > y || (i->y==y && i->x > x)){
 	item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
 	items_map_init(items,x,y);
-	if(i->prev!=NULL){i->prev->next=items;}//Need to make sure this isn't first element
+
+	//Need to make sure this isn't first element
+	if(i->prev!=NULL){i->prev->next=items;}
 	else{map->items=items;}
+
 	items->prev=i->prev;
 	items->next=i;
 	i->prev=items;
@@ -115,7 +123,8 @@ bool add_item(map_t* map,int x,int y,item_t* item){
   return true;
 }
 
-item_t* remove_item(map_t* map,int x,int y,int index){
+//Removes an item from the map
+item_t* remove_item(struct map_t* map,int x,int y,int index){
   if(get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
@@ -150,12 +159,24 @@ item_t* remove_item(map_t* map,int x,int y,int index){
   return to_return;
 }
 
-char get_item_sym(map_t* map,int x,int y,int index){
+/* This function unequips the given item if it can,
+ * and then frees that item. It does not care whether the
+ * item was in the player's inventory or not when it frees the item
+ */
+void destroy_item(struct item_t* item){
+  unequip_by_item(player,item);
+  free(item);
+}
+
+/* This function returns a char representing the item at the given index on
+ * the item stack at the given coordinates in the given map.
+ */
+char get_item_sym(struct map_t* map,int x,int y,int index){
   if(get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
 
-  //Navigate to the correct item stack on the map
+  //Navigate to the correct item-stack on the map
   item_map_t* cur=NULL;
   for(item_map_t* i=map->items;i!=NULL;i=i->next){
     if(i->y>y || (i->y==y && i->x>x)){break;}
@@ -175,16 +196,25 @@ char get_item_sym(map_t* map,int x,int y,int index){
   return to_return;  
 }
 
-char get_top_item_sym(map_t* map,int x,int y){
+/* This function returns the top item in an item stack by calling
+ * get_item_sym() with the index=0.
+ */
+char get_top_item_sym(struct map_t* map,int x,int y){
   return get_item_sym(map,x,y,0);
 }
 
-char get_top_item_sym_from_stack(item_map_t* items){
+/* This function returns the top item in a given item stack. It 
+ * checks to make sure it can first, though.
+ */
+char get_top_item_sym_from_stack(struct item_map_t* items){
   if(items==NULL){quit("Error: NULL items stack");}
   if(items->first==NULL){quit("Error: No first item");}
   return items->first->item->display;
 }
 
+/* This item creates a deep copy of an item from the item_data array
+ * using the given index to determine which item it will copy.
+ */
 item_t* item_create_from_data(int index){
   if(index<0 || index>ITEM_MAX){
     quit("Error: invalid item index");
@@ -196,7 +226,11 @@ item_t* item_create_from_data(int index){
   return ret;
 }
 
-int items_display(map_t* map,int x,int y){
+/* This will display all the items on a given tile of the map to the player.
+ * The player will then select one of them with a keypress and the index of 
+ * that item on the item-stack will be returned.
+ */
+int items_display(struct map_t* map,int x,int y){
   if(map==NULL){quit("Error: Null map");}
   if(map->items==NULL){quit("Error: Invalid items map");}
   if(get_coord(x,y,map->width)>map->width*map->height){
