@@ -18,71 +18,6 @@
 
 #define PASS_WEIGHT 50
 
-bool qckmv_continue(map_t* map,int x, int y, int qckmv_cmd){
-  int cur_tile = map->tiles[y*map->width+x];
-  int ul=map->tiles[(y-1)*map->width+x-1];
-  int ur=map->tiles[(y-1)*map->width+x+1];
-  int dl=map->tiles[(y+1)*map->width+x-1];
-  int dr=map->tiles[(y+1)*map->width+x+1];
-  int u=map->tiles[(y-1)*map->width+x];
-  int d=map->tiles[(y+1)*map->width+x];
-  int l=map->tiles[y*map->width+x-1];
-  int r=map->tiles[y*map->width+x+1];
-  //Check for at-corner in corridor
-  if(cur_tile == TILE_CORRIDOR){
-    if(qckmv_cmd==KEY_UP && (ul==TILE_CORRIDOR || ur==TILE_CORRIDOR)){
-      return false;
-    }
-    if(qckmv_cmd==KEY_DOWN && (dl==TILE_CORRIDOR || dr==TILE_CORRIDOR)){
-      return false;
-    }
-    if(qckmv_cmd==KEY_LEFT && (ul==TILE_CORRIDOR || dl==TILE_CORRIDOR)){
-      return false;
-    }
-    if(qckmv_cmd==KEY_RIGHT && (ur==TILE_CORRIDOR || dr==TILE_CORRIDOR)){
-      return false;
-    }
-  }
-  //Check for change in tile type during quickmove
-  if(qckmv_cmd==KEY_UP 
-     && (u!=cur_tile 
-	 || tile_data[ul].stopme 
-	 || tile_data[ur].stopme)){
-    return false;
-  }
-  if(qckmv_cmd==KEY_DOWN
-     && (d!=cur_tile 
-	 || tile_data[dl].stopme 
-	 || tile_data[dr].stopme)){
-    return false;
-  }
-  if(qckmv_cmd==KEY_LEFT
-     && (l!=cur_tile 
-	 || tile_data[dl].stopme 
-	 || tile_data[ul].stopme)){
-    return false;
-  }
-  if(qckmv_cmd==KEY_RIGHT
-     && (r!=cur_tile 
-	 || tile_data[dr].stopme 
-	 || tile_data[ur].stopme)){
-    return false;
-  }
-  if(qckmv_cmd==KEY_HOME && ul!=cur_tile){
-    return false;
-  }
-  if(qckmv_cmd==KEY_PPAGE && ur!=cur_tile){
-    return false;
-  }
-  if(qckmv_cmd==KEY_END && dl!=cur_tile){
-    return false;
-  }
-  if(qckmv_cmd==KEY_NPAGE && dr!=cur_tile){
-    return false;
-  }
-  return true;
-}
-
 //Main
 int main(int argc, char** argv){
   //Setup
@@ -94,12 +29,7 @@ int main(int argc, char** argv){
   //1401917882
   //1410214243
   //1410291444
-  initscr(); color_init(); cbreak(); noecho();
-  keypad(stdscr, true); curs_set(0);  
-  tile_data_init();
-  item_data_init();
-  player_init();
-  inventory_init(player);
+  game_init(seed);
 
   //Variables
   int cmd, qckmv_cmd=0;
@@ -107,9 +37,6 @@ int main(int argc, char** argv){
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
   
-  //Setup player stats
-  status_init();
-
   //Setup floor
   map_draw_random_rooms(cur_map);
   map_cleanup(cur_map);

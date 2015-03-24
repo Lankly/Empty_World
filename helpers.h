@@ -1,7 +1,14 @@
 #include <stdbool.h>
+#include "map.h"
 
 #ifndef HELPERS_H
 #define HELPERS_H
+
+#define TERMINAL_WIDTH  80
+#define TERMINAL_HEIGHT 24
+#define DEFAULT_ITEMS_STACK_SIZE 10
+
+#define PASS_WEIGHT 50
 
 void* Calloc(int items, int size);
 char* str_lowercase(char* str);
@@ -21,5 +28,9 @@ typedef struct{
 }display_list_t; 
 
 int display(display_list_t* list,int width,int height);
+
+bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
+
+void game_init();
 
 #endif
