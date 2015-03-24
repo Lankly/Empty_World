@@ -251,4 +251,15 @@ int get_agility(struct creature_t* c);
 int get_luck(struct creature_t* c);
 
 void add_health(struct creature_t* c, int h);
+
+int add_breathable(struct creature_t* creature, int type);
+int add_consumable(struct creature_t* creature, int type);
+int add_intrinsic(struct creature_t* creature, int type);
+int add_resistance(struct creature_t* creature, int type);
+
+int remove_breathable(struct creature_t* creature, int type);
+int remove_consumable(struct creature_t* creature, int type);
+int remove_intrinsic(struct creature_t* creature, int type);
+int remove_resistance(struct creature_t* creature, int type);
+
 #endif

@@ -224,3 +224,235 @@ int get_luck(struct creature_t* c){return c->luck;}
 int get_gold(struct creature_t* c){return c->gold;}
 
 void add_health(struct creature_t* c, int h){c->health+=h;}
+
+int add_breathable(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){quit("ERROR: NULL Creature");}
+  if(creature->breathables==NULL){quit("ERROR: NULL Creature_Breathables");}
+  if(type<0 || type>BREATHE_MAX){
+    return 1;
+}
+  
+  struct breathe_node_t* next = creature->breathables->first;
+  //Case where adding first breathable
+  if(next==NULL){
+    next=(struct breathe_node_t*)Calloc(1,sizeof(struct breathe_node_t));
+    next->breathe_type=type;
+    return 0;
+  }
+  /* Otherwise navigate to the end and add it, making sure 
+   * the type isn't already in the list
+   */
+  while(next->next!=NULL){
+    if(next->breathe_type==type){return 1;}
+    next=next->next;
+  }
+  next->next =
+    (struct breathe_node_t*)Calloc(1,sizeof(struct breathe_node_t));
+  next->next->breathe_type=type;
+  return 0;
+}
+
+int add_consumable(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){
+    quit("ERROR: NULL Creature");}
+  if(creature->consumables==NULL){
+    quit("ERROR: NULL Creature_Consumables");}
+  if(type<0 || type>CONSUME_MAX){return 1;}
+
+  struct consume_node_t* next = creature->consumables->first;
+  //Case where adding first consumable
+  if(next==NULL){
+    next = (consume_node_t*)Calloc(1,sizeof(consume_node_t));
+    next->consume_type = type;
+    return 0;
+  }
+  /* Otherwise navigate to the end and add it, making sure 
+   * the type isn't already in the list
+   */
+  while(next->next!=NULL){
+    if(next->consume_type==type){return 1;}
+    next=next->next;
+  }
+  next->next = (consume_node_t*)Calloc(1,sizeof(consume_node_t));
+  next->next->consume_type = type;
+  return 0;
+}
+
+int add_intrinsic(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){quit("ERROR: NULL Creature");}
+  if(creature->intrinsics==NULL){quit("ERROR: NULL Creature_Intrinsics");}
+  if(type<0 || type>TRINSIC_MAX){return 1;}
+
+  struct intrinsics_node_t* next = creature->intrinsics->first;
+  //Case where adding first intrinsic
+  if(next==NULL){
+    next=(struct intrinsics_node_t*)
+      Calloc(1,sizeof(struct intrinsics_node_t));
+    next->intrinsic_type=type;
+    return 0;
+  }
+  /* Otherwise navigate to the end and add it, making sure 
+   * the type isn't already in the list
+   */
+  while(next->next!=NULL){
+    if(next->intrinsic_type==type){return 1;}
+    next=next->next;
+  }
+  next->next = 
+    (struct intrinsics_node_t*)Calloc(1,sizeof(struct intrinsics_node_t));
+  next->next->intrinsic_type=type;
+  return 0;
+}
+
+int add_resistance(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){quit("ERROR: NULL Creature");}
+  if(creature->resistances==NULL){quit("ERROR: NULL Creature_Resistance");}
+  if(type<0 || type>DMG_MAX){return 1;}
+
+  struct resistances_node_t* next = creature->resistances->first;
+  //Case where adding first resistance
+  if(next==NULL){
+    next = (struct resistances_node_t*)
+      Calloc(1,sizeof(resistances_node_t));
+    next->damage_type=type;
+    return 0;
+  }
+  /*Otherwise navigate to the end and add it, making sure 
+   * the type isn't already in the list
+   */
+  while(next->next!=NULL){
+    if(next->damage_type==type){return 1;}
+    next=next->next;
+  }
+  next->next = (resistances_node_t*)Calloc(1,sizeof(resistances_node_t));
+  next->next->damage_type=type;
+  return 0;
+}
+
+int remove_breathable(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){
+    quit("ERROR: NULL Creature");}
+  /* In this function, if there are no items to remove, we react as if we have
+   * successfully removed the item
+   */
+  if(creature->breathables==NULL || creature->breathables->first==NULL){
+    return 0;}
+  if(type<0 || type>BREATHE_MAX){return 1;}
+
+  breathe_node_t* next = creature->breathables->first;
+  //If it's the first node
+  if(next->breathe_type==type){
+    creature->breathables->first = next->next;
+    free(next);
+    return 0;
+  }
+  //Loop through to find it
+  while(next->next!=NULL){
+    if(next->next->breathe_type==type){
+      breathe_node_t* temp = next->next;
+      next->next=next->next->next;
+      free(temp);
+      return 0;
+    }
+  }
+  //Not found
+  return 1;
+}
+
+int remove_consumable(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){
+    quit("ERROR: NULL Creature");}
+  /* In this function, if there are no items to remove, we react as if we have
+   * successfully removed the item
+   */
+  if(creature->consumables==NULL || creature->consumables->first==NULL){
+    return 0;}
+  if(type<0 || type>CONSUME_MAX){return 1;}
+
+  consume_node_t* next = creature->consumables->first;
+  //If it's the first node
+  if(next->consume_type==type){
+    creature->consumables->first=next->next;
+    free(next);
+    return 0;
+  }
+  //Loop through to find it
+  while(next->next!=NULL){
+    if(next->next->consume_type==type){
+      consume_node_t* temp = next->next;
+      next->next=next->next->next;
+      free(temp);
+      return 0;
+    }
+  }
+  //Not found
+  return 1;
+}
+
+int remove_instrinsic(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){
+    quit("ERROR: NULL Creature");}
+  /* In this function, if there are no items to remove, we react as if we have
+   * successfully removed the item
+   */
+  if(creature->intrinsics==NULL || creature->intrinsics->first==NULL){
+    return 0;}
+  if(type<0 || type>TRINSIC_MAX){return 1;}
+
+  intrinsics_node_t* next = creature->intrinsics->first;
+  //If it's the first node
+  if(next->intrinsic_type==type){
+    creature->intrinsics->first=next->next;
+    free(next);
+    return 0;
+  }
+  //Loop through to find it
+  while(next->next!=NULL){
+    if(next->next->intrinsic_type==type){
+      intrinsics_node_t* temp = next->next;
+      next->next=next->next->next;
+      free(temp);
+      return 0;
+    }
+  }
+  //Not found
+  return 1;
+}
+
+int remove_resistance(struct creature_t* creature, int type){
+  //Make sure everything is right
+  if(creature==NULL){
+    quit("ERROR: NULL Creature");}
+  /* In this function, if there are no items to remove, we react as if we have
+   * successfully removed the item
+   */
+  if(creature->resistances==NULL || creature->resistances->first==NULL){
+    return 0;}
+  if(type<0 || type>DMG_MAX){return 1;}
+
+  resistances_node_t* next = creature->resistances->first;
+  //If it's the first node
+  if(next->damage_type==type){
+    creature->resistances->first=next->next;
+    free(next);
+    return 0;
+  }
+  //Loop through to find it
+  while(next->next!=NULL){
+    if(next->next->damage_type==type){
+      resistances_node_t* temp = next->next;
+      next->next = next->next->next;
+      free(temp);
+      return 0;
+    }
+  }
+  //Not found
+  return 1;
+}
