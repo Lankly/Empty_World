@@ -10,6 +10,9 @@
 
 #define PASS_WEIGHT 50
 
+bool qckmv;
+int qckmv_cmd;
+
 void* Calloc(int items, int size);
 char* str_lowercase(char* str);
 bool str_is_num(char* str);
@@ -32,5 +35,12 @@ int display(display_list_t* list,int width,int height);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
 
 void game_init();
+void draw_map(struct map_t* map);
+
+void open_tile();
+void close_tile();
+void pickup_tile();
+void debug();
+void analyze_cmd(int cmd, int* x, int* y);
 
 #endif

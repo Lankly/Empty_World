@@ -12,12 +12,6 @@
 #include "items.h"
 #include "inventory.h"
 
-#define TERMINAL_WIDTH  80
-#define TERMINAL_HEIGHT 24
-#define DEFAULT_ITEMS_STACK_SIZE 10
-
-#define PASS_WEIGHT 50
-
 //Main
 int main(int argc, char** argv){
   //Setup
@@ -32,16 +26,8 @@ int main(int argc, char** argv){
   game_init(seed);
 
   //Variables
-  int cmd, qckmv_cmd=0;
-  bool qckmv=false; //Quick-Move
-  cur_map = (map_t*)Calloc(1,sizeof(map_t));
-  map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
+  int cmd = 0;
   
-  //Setup floor
-  map_draw_random_rooms(cur_map);
-  map_cleanup(cur_map);
-  map_draw_borders(cur_map);
-
   //Place character randomly
   while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
     player->x=rand() % cur_map->width;
@@ -50,27 +36,11 @@ int main(int argc, char** argv){
 
   //Main Game Loop
   while(true){
-    item_map_t* cur_items=cur_map->items;
-    //Draw the map
-    for(int j=0; j<cur_map->height; j++){
-      move(j,0);
-      for(int i=0; i<cur_map->width; i++){
-	//Draw top item on each item stack if there is one
-	if(cur_items!=NULL 
-	   && cur_items->size!=0 
-	   && cur_items->x==i 
-	   && cur_items->y==j){
-	  addch(get_top_item_sym_from_stack(cur_items));
-	  cur_items=cur_items->next;
-	}
-	else{addch(tile_data[map_get_tile(cur_map,i,j)].display);}
-      }
-    }
-    mvaddch(player->y,player->x,'@' | COLOR_PAIR(CP_YELLOW_BLACK));
-    draw_status();
-    refresh();
+
+    draw_map(cur_map);
     
-    int plr_mv_to_x=player->x, plr_mv_to_y=player->y;
+    int plr_mv_to_x = player->x,
+      plr_mv_to_y = player->y;
     
     /* If the player is quickmoving, keep doing that. 
      * Else, look for keyboard input.
@@ -79,155 +49,7 @@ int main(int argc, char** argv){
     else{cmd = getch();}
 
     analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
-    if(cmd == KEY_B2){//5 on keypad (qkmv command)
-      qckmv_cmd=getch();
-      if(qckmv_cmd==KEY_HOME 
-	 || qckmv_cmd==KEY_UP 
-	 || qckmv_cmd==KEY_PPAGE 
-	 || qckmv_cmd==KEY_LEFT 
-	 || qckmv_cmd==KEY_RIGHT 
-	 || qckmv_cmd==KEY_END 
-	 || qckmv_cmd==KEY_DOWN 
-	 || qckmv_cmd==KEY_NPAGE){
-	qckmv=true;
-	analyze_cmd(qckmv_cmd, &plr_mv_to_x, &plr_mv_to_y);
-      }
-    }//Open command
-    else if(cmd=='o'){
-      int open_cmd=getch();
-      int open_x=player->x,open_y=player->y;
-      analyze_cmd(open_cmd,&open_x,&open_y);
-
-      int otile=map_get_tile(cur_map,open_x,open_y);
-      if(tile_data[otile].openable){
-	if(otile==TILE_DOOR_CLOSE){
-	  map_set_tile(cur_map,open_x,open_y,TILE_DOOR_OPEN);
-	}else if(otile==TILE_DOOR_OPEN){
-	  msg_add("That door is already open.");
-	}else if(otile==TILE_DOOR_BROKEN){
-	  msg_add("That door is broken.");
-	}
-      }else if(open_x==player->x && open_y==player->y){
-	msg_add("Invalid direction.");
-      }else{msg_add("That cannot be opened.");}
-    }//Close command for doors
-    else if(cmd=='C'){
-      int close_cmd=getch();
-      int close_x=player->x,close_y=player->y;
-      analyze_cmd(close_cmd,&close_x,&close_y);
-
-      int ctile=map_get_tile(cur_map,close_x,close_y);
-      if(tile_data[ctile].openable){
-	if(ctile==TILE_DOOR_OPEN){
-	  map_set_tile(cur_map,close_x,close_y,TILE_DOOR_CLOSE);
-	}else if(ctile==TILE_DOOR_CLOSE){
-	  msg_add("That door is already closed.");
-	}else if(ctile==TILE_DOOR_BROKEN){
-	  msg_add("That door is broken");
-	}
-      }else{msg_add("That cannot be closed.");}
-    //, is used to pick up an item that the player is standing on
-    }else if(cmd==','){
-      int count = count_items(cur_map,player->x,player->y);
-      item_t* to_add;
-      /* This is the case where the player has tried to pick up an item,
-       * but there is nothing on the ground  beneath them.
-       */
-      if(count==0){msg_add("No items to pick up!");break;}
-      /* This is the case where the there is only one item on the ground
-       * beneath the player.
-       */
-      else if(count==1){to_add=remove_item(cur_map,player->x,player->y,0);}
-      /* This is the case where there are multiple items on the ground 
-       * beneath the player. It will take the user to a screen where they
-       * can select which item it is that they're trying to pick up.
-       */
-      else if(count>1){
-	to_add=remove_item(cur_map,player->x,player->y,
-			   items_display(cur_map,player->x,player->y));
-      }
-      inventory_add(player,to_add);
-    }else if(cmd=='i'){
-      display_inventory();
-    }else if(cmd=='~'){//Debug
-      char* debug_cmd=msg_prompt("~ ");
-      char* debug_cmd_lower=str_lowercase(debug_cmd);
-      if(!strcmp(debug_cmd_lower,"place")){
-	free(debug_cmd_lower);
-	free(debug_cmd);
-	char* debug_cmd=msg_prompt("Place where? ");
-	char* debug_cmd_lower=str_lowercase(debug_cmd);
-	int place_x=player->x;int place_y=player->y;
-	if(!strcmp(debug_cmd_lower,"nw")){
-	  place_x=player->x-1;
-	  place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"n")){
-	  place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"ne")){
-	  place_x=player->x+1;
-	  place_y=player->y-1;}
-	else if(!strcmp(debug_cmd_lower,"w")){
-	  place_x=player->x-1;}
-	else if(!strcmp(debug_cmd_lower,"e")){
-	  place_x=player->x+1;}
-	else if(!strcmp(debug_cmd_lower,"sw")){
-	  place_x=player->x-1;
-	  place_y=player->y+1;}
-	else if(!strcmp(debug_cmd_lower,"s")){
-	  place_y=player->y+1;}
-	else if(!strcmp(debug_cmd_lower,"se")){
-	  place_x=player->x+1;
-	  place_y=player->y+1;}
-
-	free(debug_cmd_lower);
-	free(debug_cmd);
-	debug_cmd=msg_prompt("Place what? ");
-	debug_cmd_lower=str_lowercase(debug_cmd);
-	if(!strcmp(debug_cmd_lower,"tile")){
-	  free(debug_cmd_lower);
-	  free(debug_cmd);
-	  debug_cmd=msg_prompt("TILE ID: ");
-	  debug_cmd_lower=str_lowercase(debug_cmd);
-	  if(str_is_num(debug_cmd_lower)){
-	    map_set_tile(cur_map,place_x,place_y,atoi(debug_cmd)); 
-	    msg_add("Done");
-	  }
-	}else if(!strcmp(debug_cmd_lower,"item")){
-	  free(debug_cmd_lower);
-	  free(debug_cmd);
-	  debug_cmd=msg_prompt("ITEM ID: ");
-	  debug_cmd_lower=str_lowercase(debug_cmd);
-	  if(str_is_num(debug_cmd_lower)){
-	    add_item(cur_map,
-		     place_x,
-		     place_y,
-		     (struct item_t*)item_create_from_data(atoi(debug_cmd)));
-	    //msg_add("Done");
-	  }
-	}
-	free(debug_cmd_lower);
-	free(debug_cmd);
-      }
-      else if(!strcmp(debug_cmd_lower,"print items")){
-	endwin();
-	cur_items=cur_map->items;
-	for(int j=0; j<cur_map->height; j++){
-	  for(int i=0; i<cur_map->width; i++){
-	    if(cur_items!=NULL 
-	       && cur_items->size!=0 
-	       && cur_items->x==i 
-	       && cur_items->y==j){
-	      printf("%c (%d,%d) [%d,%d]\n",
-		     get_top_item_sym_from_stack(cur_items),
-		     cur_items->x, cur_items->y, i, j);
-	      cur_items=cur_items->next;
-	    }
-	  }
-	}
-	exit(0);
-      }
-
-    }
+    
     
     /* Ensure that the player is light enough to pass through corners,
        that they are not behind a closed door.

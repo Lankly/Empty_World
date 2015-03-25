@@ -14,7 +14,7 @@ typedef struct map_t{
   struct item_map_t* items;
 } map_t;
 
-map_t* cur_map;
+struct map_t* cur_map;
 
 void map_init(struct map_t* map, int w, int h,int max_item_height);
 void map_set_tile(struct map_t* map, int x, int y, int tile);
