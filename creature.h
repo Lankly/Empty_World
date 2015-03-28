@@ -213,6 +213,7 @@ void damage_creature(struct creature_t* creature, int dmg);
 void creature_place_on_map(struct creature_t* creature, map_t* map);
 int creature_see_distance(struct creature_t* creature);
 bool creature_is_visible(struct creature_t* creature);
+bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd);
 int creature_get_damage(struct creature_t* creature);
 
 void set_level(struct creature_t* c, int l);

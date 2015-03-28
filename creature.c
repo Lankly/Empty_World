@@ -4,6 +4,7 @@
 #include "inventory.h"
 #include "map.h"
 #include "player.h"
+#include "status.h"
 #include "tiles.h"
 #include <stdbool.h>
 
@@ -161,6 +162,46 @@ bool creature_is_visible(struct creature_t* creature){
     else{ check_y++;}
   }
   return true;
+}
+
+/* This method returns true if a given creature can move to a given tile, not
+ * taking into account the creature's position.
+ */
+bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
+  if(creature == NULL){quit("ERROR: Cannot analyze NULL Creature");}
+  //Coordinates must be in-bounds, but should not be game-breaking if not
+  if(x < 0 || x >= TERMINAL_WIDTH
+     || y <0 || y >= TERMINAL_HEIGHT){
+    return false;
+  }
+
+  //Get the tile we're looking at moving to
+  tile_t move_tile = tile_data[cur_map->tiles[y * cur_map->width + x]];
+  //Quick check to see if the tile allows passing
+  if(!move_tile.passable){return false;}
+
+  //Get all the tiles surrounding the one we're looking at
+  tile_t u = tile_data[cur_map->tiles[(y-1) * cur_map->width + x]];
+  tile_t d = tile_data[cur_map->tiles[(y+1) * cur_map->width + x]];
+  tile_t r = tile_data[cur_map->tiles[y * cur_map->width + x+1]];
+  tile_t l = tile_data[cur_map->tiles[y * cur_map->width + x-1]];
+
+  /* For the creature to be able to pass, if they're trying to pass through a
+   * corner, they cannot be caryying too much.
+   */
+  if(creature->inventory->cur_weight > PASS_WEIGHT 
+     && ((cmd==KEY_HOME && !u.passable && !l.passable) 
+	 || (cmd==KEY_PPAGE && !u.passable && !r.passable) 
+	 || (cmd==KEY_END && !d.passable && !l.passable) 
+	 || (cmd==KEY_NPAGE && !d.passable && !r.passable))){
+    //If we were trying to move the player, print out a quick alert
+    if(creature == player){
+      msg_add("You are too heavy to pass through.");}
+    return false;
+  }
+
+  return true;
+
 }
 
 /* This method calculates how much damage a creature will do. It takes into
