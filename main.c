@@ -56,27 +56,6 @@ int main(int argc, char** argv){
     /* Ensure that the player is light enough to pass through corners,
        that they are not behind a closed door.
      */
-
-
-    /*
-      if((cmd==KEY_HOME && (tile_id(u) == TILE_DOOR_CLOSE 
-      || tile_id(l) == TILE_DOOR_CLOSE))
-      && !(cmd==KEY_PPAGE && (tile_id(u) == TILE_DOOR_CLOSE 
-      || tile_id(r) == TILE_DOOR_CLOSE)) 
-      && !(cmd==KEY_END && (tile_id(d) == TILE_DOOR_CLOSE 
-      || tile_id(l) == TILE_DOOR_CLOSE))
-      && !(cmd==KEY_NPAGE && (tile_id(d) == TILE_DOOR_CLOSE 
-			     || tile_id(r) == TILE_DOOR_CLOSE))){
-			     return false;
-			     } 
-			     else{msg_add("You cannot pass through a closed door.");}
-    
-    if(plr_mv_to_x >=0 && plr_mv_to_x < cur_map->width 
-       && plr_mv_to_y >=0 && plr_mv_to_y < cur_map->height){
-      
-       }
-    */
-
     if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
       player->x=plr_mv_to_x;
       player->y=plr_mv_to_y;

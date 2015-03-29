@@ -10,6 +10,31 @@
 
 #define PASS_WEIGHT 50
 
+//Define the keys in the game
+#define CMD_DEBUG 0
+#define CMD_UP 1
+#define CMD_DOWN 2
+#define CMD_LEFT 3
+#define CMD_RIGHT 4
+#define CMD_UP_RIGHT 5
+#define CMD_UP_LEFT 6
+#define CMD_DOWN_RIGHT 7
+#define CMD_DOWN_LEFT 8
+#define CMD_OPEN 9
+#define CMD_CLOSE 10
+#define CMD_QCKMV 11
+#define CMD_PICKUP 12
+#define CMD_INVENTORY 13
+#define CMD_REMAP 14
+#define CMD_EXTENDED 15
+#define CMD_MAX 15
+
+#define EXT_TOGGLE_NUMPAD 0
+#define EXT_MAX 0
+
+int cmd_data[CMD_MAX+1];
+char* cmd_data_extended[EXT_MAX+1];
+
 bool qckmv;
 int qckmv_cmd;
 
@@ -18,6 +43,8 @@ char* str_lowercase(char* str);
 bool str_is_num(char* str);
 int get_coord(int x,int y,int width);
 void quit(const char* error_msg);
+void cmd_init();
+void cmd_remap();
 void analyze_cmd(int cmd, int* x, int* y);
 
 typedef struct display_list_node_t{

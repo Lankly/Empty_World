@@ -16,7 +16,8 @@ void draw_status();
 
 void msg_add(char* new_msg);
 void msg_addf(char* msg, ...);
-char* msg_prompt();
+char* msg_prompt(char* prompt);
+int msg_promptchar(char* prompt);
 char* get_cur_msg();
 
 void status_init();

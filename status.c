@@ -107,12 +107,14 @@ void msg_addf(char* msg, ...){
   free(new_msg);
 }
 
+/* Uses the message bar to ask the user a question and return their response.
+ * Will not leave the message there once the function completes.
+ */
 char* msg_prompt(char* prompt){
   if(prompt==NULL || strlen(prompt)>MAX_MSG_LEN-3){
     quit("Error: NULL prompt or prompt too large");
   }
   curs_set(1);
-  move(MSG_ROW,0);
 
   int ch = (int)' ';
   int ret_pos=0;
@@ -122,16 +124,20 @@ char* msg_prompt(char* prompt){
     move(MSG_ROW,0);
     for(int i=0;i<MAX_MSG_LEN;i++){addch(' ');}
     move(MSG_ROW,0);
+    
     //print out the prompt first
     for(int i=0; i<strlen(prompt); i++){
       addch(prompt[i] | COLOR_PAIR(CP_GREEN_BLACK));
     }
+    
     //then print out everything the user has input
     for(int i=0; i<strlen(ret); i++){
       addch(ret[i] | COLOR_PAIR(CP_GREEN_BLACK));
     }
+    
     //read in the next key
     ch=getch();
+    
     //special case for backspace
     if(ch==KEY_BACKSPACE && ret_pos>=0){
 	ret_pos--;
@@ -148,6 +154,29 @@ char* msg_prompt(char* prompt){
   }
   curs_set(0);
   return ret;
+}
+
+/* Like msg_prompt, but only allows the user to input one character before 
+ * returning.
+ */
+int msg_promptchar(char* prompt){
+  if(prompt==NULL || strlen(prompt)>MAX_MSG_LEN-3){
+    quit("Error: NULL prompt or prompt too large");
+  }
+  curs_set(1);
+  move(MSG_ROW,0);
+
+  //Print out the prompt
+  for(int i=0 ; i < MAX_MSG_LEN; i++){
+    if(i < strlen(prompt)){
+      addch(prompt[i] | COLOR_PAIR(CP_GREEN_BLACK));
+    }
+    else{
+      addch(' ' | COLOR_PAIR(CP_GREEN_BLACK));
+    }
+  }
+  curs_set(0);
+  return getch();
 }
 
 void status_init(){

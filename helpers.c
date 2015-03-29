@@ -69,6 +69,64 @@ int display(display_list_t* list,int width,int height){
   return getch()-'a';
 }
 
+/* This command will give all the initial definitions to the keys for the game.
+ */
+void cmd_init(){
+  cmd_data[CMD_DEBUG] = '~';
+  cmd_data[CMD_UP] = KEY_UP;
+  cmd_data[CMD_DOWN] = KEY_DOWN;
+  cmd_data[CMD_LEFT] = KEY_LEFT;
+  cmd_data[CMD_RIGHT] = KEY_RIGHT;
+  cmd_data[CMD_UP_RIGHT] = KEY_PPAGE; //Upper Right of keypad
+  cmd_data[CMD_UP_LEFT] = KEY_HOME; //Upper Left of keypad
+  cmd_data[CMD_DOWN_RIGHT] = KEY_NPAGE; //Lower Right of keypad
+  cmd_data[CMD_DOWN_LEFT] = KEY_END; //Lower Left of keypad
+  cmd_data[CMD_OPEN] = 'o';
+  cmd_data[CMD_CLOSE] = 'C';
+  cmd_data[CMD_QCKMV] = KEY_B2; //5 on keypad
+  cmd_data[CMD_PICKUP] = ',';
+  cmd_data[CMD_INVENTORY] = 'i';
+  cmd_data[CMD_REMAP] = '=';
+  cmd_data[CMD_EXTENDED] = '#';
+
+  cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
+}
+
+/* This function will remap a given CMD to a new key, assuming that the input
+ * is actually valid.
+ */
+void cmd_remap(){
+  int cmd = msg_promptchar("What key do you want to remap?");
+  int new = msg_promptchar("What key should it be now?");
+  int CMD = -1;
+
+  //CMD should now be made to be the index of the command given.
+  for(int i=0; i <= CMD_MAX; i++){
+    if(cmd_data[i] == cmd){
+      CMD = i;
+    }
+    else if(cmd_data[i] == new){
+      msg_promptchar("That key is already in use!");
+      return;
+    }
+  }
+  //If it was never found, quit
+  if(CMD == -1){
+    msg_promptchar("The key you want to remap does not exist.");
+    return;
+  }
+
+  //Make sure the new command does not collide with any old ones
+  for(int i=CMD; i <= CMD_MAX; i++){
+    if(cmd_data[i] == new){
+      msg_promptchar("That key is already in use!");
+      return;
+    }
+  }
+
+  cmd_data[CMD] = new;
+}
+
 void analyze_cmd(int cmd, int*x, int* y);
 /* This function handles what to do when the open action is executed. It will
  * attempt to turn a closed door into an open door at this time. 
@@ -223,51 +281,164 @@ void debug(){
   }
 }
 
+/* This command toggles whether or not the player wants to use the numpad on and
+ * off. This affects only movement at this time, including quickmove.
+ */
+void toggle_numpad(){
+  int u, d, r, l, ur, ul, dr, dl, q;
+  if(cmd_data[CMD_UP_RIGHT] == KEY_PPAGE){
+    u = 'k';  d = 'j';  l = 'h';  
+    r = 'l';  ur = 'u'; ul = 'y';
+    dr = 'n'; dl = 'b'; q = 'q';
+  }
+  else{
+    u = KEY_UP;     d = KEY_DOWN;    l = KEY_LEFT;  
+    r = KEY_RIGHT;  ur = KEY_PPAGE;  ul = KEY_HOME;
+    dr = KEY_NPAGE;   dl = KEY_END; q = KEY_B2;
+  }
+  
+  for(int i = 0; i<CMD_MAX+1; i++){
+    if(cmd_data[i] == u
+       || cmd_data[i] == d
+       || cmd_data[i] == l
+       || cmd_data[i] == r
+       || cmd_data[i] == ur
+       || cmd_data[i] == ul
+       || cmd_data[i] == dr
+       || cmd_data[i] == dl
+       || cmd_data[i] == q){
+      msg_promptchar("Cannot rebind keys - custom keybinds in place.");
+      return;
+    }
+  }
+  cmd_data[CMD_UP] = u;
+  cmd_data[CMD_DOWN] = d;
+  cmd_data[CMD_LEFT] = l;
+  cmd_data[CMD_RIGHT] = r;
+  cmd_data[CMD_UP_RIGHT] = ur;
+  cmd_data[CMD_UP_LEFT] = ul;
+  cmd_data[CMD_DOWN_RIGHT] = dr;
+  cmd_data[CMD_DOWN_LEFT] = dl;
+  cmd_data[CMD_QCKMV] = q;
+}
+
+/* This command will let the user type a command
+ */
+void analyze_cmd_extended(){
+  curs_set(1);
+  
+  int ch = (int)' ';
+  int ret_pos = 0;
+  char* ret = (char*)Calloc(MAX_MSG_LEN-1, sizeof(char));
+  
+  while(ch != '\n'){
+    move(MSG_ROW, 0);
+    addch('#' | COLOR_PAIR(CP_GREEN_BLACK));
+    for(int i=0; i < MAX_MSG_LEN; i++){
+      if(i < strlen(ret)){
+	addch(ret[i] | COLOR_PAIR(CP_GREEN_BLACK));
+      }
+      else{
+	addch(' ' | COLOR_PAIR(CP_GREEN_BLACK));
+      }
+    }
+
+    int i = 0; bool done = false;
+    //Predict what they want
+    if(strlen(ret) > 2){
+      //Loop through all the extended commands
+      for(i=0; i <= EXT_MAX && !done; i++){
+	//For each, examine for similarity to what's been typed
+	for(int j=0; j < strlen(ret) && j < strlen(cmd_data_extended[i]); j++){
+	  if(cmd_data_extended[i][j] != ret[j]){break;}
+	  //If everything typed so far is equal to a command, autocomplete
+	  if(j == strlen(ret)-1){
+	    move(MSG_ROW, strlen(ret)+1);
+	    for(int k=j+1; k < strlen(cmd_data_extended[i]); k++){
+	      addch(cmd_data_extended[i][k] | COLOR_PAIR(CP_GREY_BLACK));
+	    }
+	    done = true; i--; break;
+	  }
+	}
+      }
+    }
+
+    move(MSG_ROW, strlen(ret)+1);
+    
+    ch = getch();
+    //special case for backspace
+    if(ch==KEY_BACKSPACE && ret_pos>=0){
+      ret_pos--;
+      ret[ret_pos]=0;
+    }
+    else if(strlen(ret)<=MAX_MSG_LEN){
+      //do not add \n
+      if(ch!='\n' && (isalnum(ch) || ch=='-')){
+	ret[ret_pos]=ch;
+	ret_pos++;
+      }
+      else if(ch == '\n' && i != EXT_MAX+1){
+	ret = cmd_data_extended[i];
+      }
+    }
+    
+  }
+
+  curs_set(0);
+
+  if(strcmp(ret, cmd_data_extended[EXT_TOGGLE_NUMPAD])==0){
+    toggle_numpad();
+  }
+}
+
 /* This function will process user input and make the game respond to that.
  */
 void analyze_cmd(int cmd, int* x, int* y){
-  if(cmd == KEY_UP){*y-=1;}
-  else if(cmd == KEY_DOWN){*y+=1;}
-  else if(cmd == KEY_LEFT){*x-=1;}
-  else if(cmd == KEY_RIGHT){*x+=1;}
-  else if(cmd == KEY_HOME){ //Upper Left of keypad
+  if(cmd == cmd_data[CMD_QCKMV]){
+    qckmv_cmd = getch();
+    if(qckmv_cmd == cmd_data[CMD_UP]
+       || qckmv_cmd == cmd_data[CMD_DOWN] 
+       || qckmv_cmd == cmd_data[CMD_LEFT]
+       || qckmv_cmd == cmd_data[CMD_RIGHT]
+       || qckmv_cmd == cmd_data[CMD_UP_RIGHT]
+       || qckmv_cmd == cmd_data[CMD_UP_LEFT]
+       || qckmv_cmd == cmd_data[CMD_DOWN_RIGHT]
+       || qckmv_cmd == cmd_data[CMD_DOWN_LEFT]){
+      qckmv = true;
+      cmd = qckmv_cmd;
+    }
+    else{return;}
+  }
+  if(cmd == cmd_data[CMD_UP]){*y-=1;}
+  else if(cmd == cmd_data[CMD_DOWN]){*y+=1;}
+  else if(cmd == cmd_data[CMD_LEFT]){*x-=1;}
+  else if(cmd == cmd_data[CMD_RIGHT]){*x+=1;}
+  else if(cmd == cmd_data[CMD_UP_LEFT]){ 
     *x-=1;*y-=1;
   }
-  else if(cmd == KEY_PPAGE){ //Upper Right of keypad
+  else if(cmd == cmd_data[CMD_UP_RIGHT]){ 
     *x+=1;*y-=1;
   }
-  else if(cmd == KEY_END){ //Lower Left of keypad
+  else if(cmd == cmd_data[CMD_DOWN_LEFT]){
     *x-=1;*y+=1;
   }
-  else if(cmd == KEY_NPAGE){ //Lower Right of keypad
+  else if(cmd == cmd_data[CMD_DOWN_RIGHT]){
     *x+=1;*y+=1;
   }
-  else if(cmd == KEY_B2){//5 on keypad (qkmv command)
-    qckmv_cmd = getch();
-    if(qckmv_cmd == KEY_HOME 
-       || qckmv_cmd == KEY_UP 
-       || qckmv_cmd == KEY_PPAGE 
-       || qckmv_cmd == KEY_LEFT 
-       || qckmv_cmd == KEY_RIGHT 
-       || qckmv_cmd == KEY_END 
-       || qckmv_cmd == KEY_DOWN 
-       || qckmv_cmd == KEY_NPAGE){
-      qckmv = true;
-      analyze_cmd(qckmv_cmd, x, y);
-    }
-  }
-  else if(cmd=='o'){
-    //Open command
+  else if(cmd == cmd_data[CMD_OPEN]){
     open_tile();
   }
-  else if(cmd=='C'){
-    //Close command for doors
+  else if(cmd == cmd_data[CMD_CLOSE]){
     close_tile();
-  }else if(cmd==','){
+  }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile();
-  }else if(cmd=='i'){
+  }else if(cmd == cmd_data[CMD_INVENTORY]){
     display_inventory();
-  }else if(cmd=='~'){//Debug
+  }else if(cmd == cmd_data[CMD_REMAP]){
+    cmd_remap();
+  }else if(cmd == cmd_data[CMD_EXTENDED]){
+    analyze_cmd_extended();
+  }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
 }
@@ -351,6 +522,7 @@ void game_init(int seed){
   player_init();
   inventory_init(player);
   status_init();
+  cmd_init();
 
   //Setup floor
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
