@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include "colors.h"
 #include "items.h"
 #include "item_callbacks.h"
 #include "status.h"
@@ -11,24 +12,33 @@
 #include "player.h"
 
 void item_data_init(){
-  item_data[ITEM_UNKNOWN]=(item_t){
-    .id=ITEM_UNKNOWN,
-    .exam_text="This item does not exist.",
-    .use=&defaultUseCallback,
-    .consume=&defaultConsumeCallback,
-    .zap=&defaultZapCallback
+  item_data[ITEM_UNKNOWN] = (item_t){
+    .id = ITEM_UNKNOWN,
+    .exam_text = "This item does not exist.",
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
   };
-  item_data[ITEM_IRON_SWORD]=(item_t){
-    .id=ITEM_IRON_SWORD,
-    .display=')',
-    .exam_text="It is a plain sword made of iron.",
-    .gold_value=5,
-    .size=1,
-    .material=MAT_IRON,
-    .weight=10,
-    .use=&ironSwordUseCallback,
-    .consume=&defaultConsumeCallback,
-    .zap=&defaultZapCallback
+  item_data[CORPSE_HUMAN] = (item_t){
+    .id = CORPSE_HUMAN,
+    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
+    .exam_text = "It is the corpse of a human",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[ITEM_IRON_SWORD] = (item_t){
+    .id = ITEM_IRON_SWORD,
+    .display = ')',
+    .exam_text = "It is a plain sword made of iron.",
+    .gold_value = 5,
+    .size = 1,
+    .material = MAT_IRON,
+    .weight = 10,
+    .use = &ironSwordUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
   };
 
   //    1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./
@@ -37,18 +47,18 @@ void item_data_init(){
   //    ¡À£¤¥Þ¦ª¨©ß«Ñ×ÅÒÔÙÕÉÏÐûýüÁÓÄÆÇÈÊËÌº¢ÚØÃÖÂÎÍ¼¾¿
 }
 
-void items_map_init(struct item_map_t* items,int x,int y){
+void item_map_init(struct item_map_t* items, int x, int y){
   items->x=x;
   items->y=y;
 }
 
-int count_items(struct map_t* map,int x,int y){
+int count_items(struct map_t* map, int x, int y){
   if(x<0 || y<0 || get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
   //We will loop through this item stack until found
   for(item_map_t* i=map->items; i!=NULL; i=i->next){
-    //y first to be compatible with the main game loop
+    //y first to be compatible with the draw_map loop
     if(i->y>y || (i->y==y && i->x>x)){break;}
     if(i->y==y && i->x==x){
       return i->size;
@@ -57,21 +67,23 @@ int count_items(struct map_t* map,int x,int y){
   return 0;
 }
 
-bool add_item(struct map_t* map,int x,int y,struct item_t* item){
+bool add_item(struct map_t* map, int x, int y, struct item_t* item){
   if(map==NULL){quit("Error: NULL map");}
   if(item->size>map->max_item_height){return false;}
   item_map_t* cur = NULL;
   if(x<0 || y<0 || get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
+
   //Case where no items exist yet
-  else if(map->items==NULL){
-    item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
-    items_map_init(items,x,y);
-    map->items=items;
-    items->first=Calloc(1,sizeof(item_map_node_t));
-    items->first->item=item;
-    items->size+=item->size;
+  else if(map->items == NULL){
+    item_map_t* items = (item_map_t*)Calloc(1, sizeof(item_map_t));
+    item_map_init(items, x, y);
+    map->items = items;
+
+    items->first = Calloc(1,sizeof(item_map_node_t));
+    items->first->item = item;
+    items->size += item->size;
     return true;
   }
   //Now we loop through to find where to insert our data
@@ -82,7 +94,7 @@ bool add_item(struct map_t* map,int x,int y,struct item_t* item){
       //If we've gone too far, create a new spot for our data
       if(i->y > y || (i->y==y && i->x > x)){
 	item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
-	items_map_init(items,x,y);
+	item_map_init(items,x,y);
 
 	//Need to make sure this isn't first element
 	if(i->prev!=NULL){i->prev->next=items;}
@@ -104,7 +116,7 @@ bool add_item(struct map_t* map,int x,int y,struct item_t* item){
       msg_addf("(%d,%d) - %d",x,y,(int)time(NULL));
 
       item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
-      items_map_init(items,x,y);
+      item_map_init(items,x,y);
       last->next=items;
       items->prev=last;
       cur=items;
@@ -171,7 +183,7 @@ void destroy_item(struct item_t* item){
 /* This function returns a char representing the item at the given index on
  * the item stack at the given coordinates in the given map.
  */
-char get_item_sym(struct map_t* map,int x,int y,int index){
+int get_item_sym(struct map_t* map,int x,int y,int index){
   if(get_coord(x,y,map->width)>map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
@@ -192,23 +204,24 @@ char get_item_sym(struct map_t* map,int x,int y,int index){
     if(cur==NULL){quit("Error: Stack Index out of bounds");}
   }
   //Return the symbol from here
-  char to_return=cur_node->item->display;
+  char to_return = cur_node->item->display;
   return to_return;  
 }
 
 /* This function returns the top item in an item stack by calling
  * get_item_sym() with the index=0.
  */
-char get_top_item_sym(struct map_t* map,int x,int y){
+int get_top_item_sym(struct map_t* map,int x,int y){
   return get_item_sym(map,x,y,0);
 }
 
 /* This function returns the top item in a given item stack. It 
  * checks to make sure it can first, though.
  */
-char get_top_item_sym_from_stack(struct item_map_t* items){
+int get_top_item_sym_from_stack(struct item_map_t* items){
   if(items==NULL){quit("Error: NULL items stack");}
   if(items->first==NULL){quit("Error: No first item");}
+  
   return items->first->item->display;
 }
 

@@ -37,6 +37,8 @@ int main(int argc, char** argv){
   while(true){
 
     draw_map(cur_map);
+    draw_status(cur_map);
+    refresh();
 
     //Let each creature take its turn
     for(creature_list_node_t* cur = cur_map->creatures->first; 

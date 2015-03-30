@@ -139,7 +139,7 @@ char* msg_prompt(char* prompt){
     ch=getch();
     
     //special case for backspace and delete
-    if((ch==KEY_BACKSPACE || ch==KEY_DC) && ret_pos>=0){
+    if((ch==KEY_BACKSPACE || ch==127) && ret_pos>=0){
 	ret_pos--;
 	ret[ret_pos]=0;
       }

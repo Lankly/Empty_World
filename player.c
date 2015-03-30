@@ -1,4 +1,5 @@
 #include "player.h"
+#include "colors.h"
 #include "creature.h"
 #include <stdlib.h>
 
@@ -32,6 +33,8 @@ void playerTakeTurnCallback(struct creature_t* creature,
 
 void player_init(char* name){
   player = (struct creature_t*)Calloc(1,sizeof(struct creature_t));
+  player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
+  player->exam_text = "This is you!";
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);

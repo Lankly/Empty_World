@@ -111,6 +111,9 @@ typedef struct item_map_node_t{
   struct item_map_node_t* next;
 }item_map_node_t;
 
+/* This represents a stack of items on a given coordinate on the floor. Next and
+ * Prev help cycle through the list of item stacks.
+ */
 typedef struct item_map_t{
   struct item_map_t* next;
   struct item_map_t* prev;
@@ -122,16 +125,16 @@ typedef struct item_map_t{
 #include "map.h"
 
 void item_data_init();
-void items_map_init(struct item_map_t* items, int w, int h);
+void item_map_init(struct item_map_t* items, int w, int h);
 
 bool add_item(struct map_t* map, int x, int y, struct item_t* i);
 item_t* remove_item(struct map_t* map, int x, int y, int index);
 int count_items(struct map_t* map,int x,int y);
 void destroy_item(item_t* item);
 
-char get_item_sym(struct map_t* map,int x,int y, int index);
-char get_top_item_sym(struct map_t* map,int x,int y);
-char get_top_item_sym_from_stack(struct item_map_t* items);
+int get_item_sym(struct map_t* map,int x,int y, int index);
+int get_top_item_sym(struct map_t* map,int x,int y);
+int get_top_item_sym_from_stack(struct item_map_t* items);
 
 item_t* item_create_from_data(int index);
 int items_display(struct map_t* map,int x,int y);

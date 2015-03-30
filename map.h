@@ -33,6 +33,7 @@ void map_draw_random_rooms(struct map_t* map);
 
 bool map_coord_is_door(struct map_t*, int x,int y);
 bool map_tile_is_door(int tile);
+void map_examine_tile(struct map_t* map);
 
 void map_cleanup(struct map_t* map);
 

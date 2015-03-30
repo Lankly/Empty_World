@@ -171,11 +171,13 @@ struct creature_t{
 
   int corpse_type;
   int creature_id;
+  int display;
   int dlevel;
   int type;
   int x; int y;
 
   char* name;
+  char* exam_text;
   
   bool is_awake;
   bool can_move;

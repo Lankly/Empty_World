@@ -27,7 +27,8 @@
 #define CMD_INVENTORY 13
 #define CMD_REMAP 14
 #define CMD_EXTENDED 15
-#define CMD_MAX 15
+#define CMD_EXAMINE 16
+#define CMD_MAX 16
 
 #define EXT_TOGGLE_NUMPAD 0
 #define EXT_MAX 0
@@ -42,6 +43,7 @@ void* Calloc(int items, int size);
 char* str_lowercase(char* str);
 bool str_is_num(char* str);
 int get_coord(int x,int y,int width);
+void get_coord_via_cursor(int* y, int* x);
 void quit(const char* error_msg);
 void cmd_init();
 void cmd_remap();

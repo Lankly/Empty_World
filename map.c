@@ -1,15 +1,17 @@
-#include "creature.h"
-#include "map.h"
-#include "helpers.h"
 #include <curses.h>
 #include <stdlib.h>
 #include "creature.h"
+#include "map.h"
+#include "helpers.h"
+#include "creature.h"
+#include "player.h"
+#include "status.h"
 #include "tiles.h"
 
 void map_init(struct map_t* map, int w, int h, int max_item_height){
   map->width = w;
   map->height= h;
-  map->max_item_height=max_item_height;
+  map->max_item_height = max_item_height;
   map->tiles = (int*)Calloc(w * h,sizeof(int));
   map->creatures = (struct creature_list_t*)
     Calloc(1, sizeof(struct creature_list_t));
@@ -299,6 +301,43 @@ bool map_coord_is_door(struct map_t* map, int x, int y){
 
 bool map_tile_is_door(int tile){
   return (tile==TILE_DOOR_OPEN || tile==TILE_DOOR_CLOSE || tile==TILE_DOOR_BROKEN);
+}
+
+/* This function allows the player to get the description of a given tile. It 
+ * first gives them a cursor to move around with and select what they want with
+ * enter. Then, it checks that coordinate for a creature, then an item stack, then
+ * the tile.
+ */
+void map_examine_tile(struct map_t* map){
+  if(map == NULL){quit("Error: Cannot examine NULL Map");}
+  int x = player->x;
+  int y = player->y;
+  get_coord_via_cursor(&y, &x);
+  
+  //First loop through creatures
+  if(map->creatures != NULL){
+    for(struct creature_list_node_t* cur = map->creatures->first;
+	cur != NULL;
+	cur = cur->next){
+      if(cur->creature->x == x && cur->creature->y == y){
+	msg_addf("%s", cur->creature->exam_text);
+	return;
+      }
+    }
+  }
+  //Now check items
+  if(map->items != NULL){
+    for(struct item_map_t* cur = map->items;
+	cur != NULL && cur->y <= y;
+	cur = cur->next){
+      if(cur->x == x && cur->y == y){
+	msg_addf("%s", cur->first->item->exam_text);
+	return;
+      }
+    }
+  }
+  //Now the tile itself
+  msg_addf("%s", tile_data[map_get_tile(map, x, y)].exam_text);
 }
 
 void map_cleanup(struct map_t* map){

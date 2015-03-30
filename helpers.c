@@ -24,6 +24,46 @@ int get_coord(int x,int y,int width){
   return y*width+x;
 }
 
+/* This function gives the player a cursor to move around on-scren with. When
+ * they hit enter, the pointers we were given will be updated with that location
+ */
+void get_coord_via_cursor(int* y, int* x){
+  int temp_x = x != NULL? *x : 0;
+  int temp_y = y != NULL? *y : 0;
+  
+  int ch = ' ';
+  curs_set(2);
+  while(ch != '\n'){
+    move(temp_y, temp_x);
+    ch = getch();
+    if(ch == cmd_data[CMD_UP] 
+       || ch == cmd_data[CMD_UP_RIGHT] 
+       || ch == cmd_data[CMD_UP_LEFT]){
+      temp_y -= temp_y > 0 ? 1 :0;
+    }
+    else if(ch == cmd_data[CMD_DOWN]
+	    || ch == cmd_data[CMD_DOWN_RIGHT]
+	    || ch == cmd_data[CMD_DOWN_LEFT]){
+      //The -4 is -1 for movement, -3 for the status bar
+      temp_y += temp_y < TERMINAL_HEIGHT-4 ? 1 : 0;
+    }
+    if(ch == cmd_data[CMD_LEFT]
+       || ch == cmd_data[CMD_UP_LEFT]
+       || ch == cmd_data[CMD_DOWN_LEFT]){
+      temp_x -= temp_x > 0 ? 1 : 0;
+    }
+    else if(ch == cmd_data[CMD_RIGHT]
+	    || ch == cmd_data[CMD_UP_RIGHT]
+	    || ch == cmd_data[CMD_DOWN_RIGHT]){
+      temp_x += temp_x < TERMINAL_WIDTH-1 ? 1 : 0;
+    }
+  }
+  curs_set(0);
+  //Enter was pressed, so update the pointers
+  *x = temp_x;
+  *y = temp_y;
+}
+
 char* str_lowercase(char* str){
   char* ret = Calloc(strlen(str)+1,sizeof(char));
   for(int i=0;i<strlen(str);i++){
@@ -88,6 +128,7 @@ void cmd_init(){
   cmd_data[CMD_INVENTORY] = 'i';
   cmd_data[CMD_REMAP] = '=';
   cmd_data[CMD_EXTENDED] = '#';
+  cmd_data[CMD_EXAMINE] = 'x';
 
   cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
 }
@@ -132,10 +173,9 @@ void analyze_cmd(int cmd, int*x, int* y);
  * attempt to turn a closed door into an open door at this time. 
  * TODO: Include the ability to open items on the floor like chests.
  */
-void open_tile(){
-  int open_cmd=getch();
-  int open_x=player->x,open_y=player->y;
-  analyze_cmd(open_cmd,&open_x,&open_y);
+void open_tile(int x, int y, int direction){
+  int open_x = x, open_y = y;
+  analyze_cmd(direction, &open_x, &open_y);
   
   int otile=map_get_tile(cur_map,open_x,open_y);
   if(tile_data[otile].openable){
@@ -154,10 +194,9 @@ void open_tile(){
 /* This function handles what to do when the close action is executed. It will
  * attempt to turn an open door into a closed door at this time.
  */
-void close_tile(){
-  int close_cmd=getch();
-  int close_x = player->x, close_y = player->y;
-  analyze_cmd(close_cmd, &close_x, &close_y);
+void close_tile(int x, int y, int direction){
+  int close_x = x, close_y = y;
+  analyze_cmd(direction, &close_x, &close_y);
   
   int ctile = map_get_tile(cur_map, close_x, close_y);
   if(tile_data[ctile].openable){
@@ -173,8 +212,11 @@ void close_tile(){
 
 /* This function handles picking an item up off of the floor.
  */
-void pickup_tile(){
-  int count = count_items(cur_map,player->x,player->y);
+void pickup_tile(struct creature_t* creature, struct map_t* map){
+  if(creature == NULL){quit("Error: Cannot give item to NULL Creature");}
+  if(map == NULL){quit("Error: Cannot get item of NULL Map");}
+
+  int count = count_items(map, creature->x, creature->y);
   item_t* to_add;
   /* This is the case where the player has tried to pick up an item,
    * but there is nothing on the ground  beneath them.
@@ -183,64 +225,72 @@ void pickup_tile(){
     msg_add("No items to pick up!");
     return;
   }
+  
   /* This is the case where the there is only one item on the ground
    * beneath the player.
    */
   else if(count==1){
-    to_add = remove_item(cur_map, player->x, player->y, 0);
+    to_add = remove_item(map, creature->x, creature->y, 0);
   }
+
   /* This is the case where there are multiple items on the ground 
    * beneath the player. It will take the user to a screen where they
    * can select which item it is that they're trying to pick up.
    */
   else{
-    to_add=remove_item(cur_map,
-		       player->x,
-		       player->y,
-		       items_display(cur_map, player->x, player->y));
+    to_add=remove_item(map,
+		       creature->x,
+		       creature->y,
+		       items_display(map, creature->x, creature->y));
   }
-  inventory_add(player,to_add);
+  inventory_add(creature, to_add);
 }
 
 void debug(){
-  char* debug_cmd=msg_prompt("~ ");
-  char* debug_cmd_lower=str_lowercase(debug_cmd);
+  char* debug_cmd = msg_prompt("~ ");
+  char* debug_cmd_lower = str_lowercase(debug_cmd);
   if(!strcmp(debug_cmd_lower,"place")){
     free(debug_cmd_lower);
     free(debug_cmd);
-    char* debug_cmd=msg_prompt("Place where? ");
-    char* debug_cmd_lower=str_lowercase(debug_cmd);
-    int place_x=player->x;int place_y=player->y;
-    if(!strcmp(debug_cmd_lower,"nw")){
-      place_x=player->x-1;
-      place_y=player->y-1;}
-    else if(!strcmp(debug_cmd_lower,"n")){
-      place_y=player->y-1;}
-    else if(!strcmp(debug_cmd_lower,"ne")){
-      place_x=player->x+1;
-      place_y=player->y-1;}
-    else if(!strcmp(debug_cmd_lower,"w")){
-      place_x=player->x-1;}
-    else if(!strcmp(debug_cmd_lower,"e")){
-      place_x=player->x+1;}
-    else if(!strcmp(debug_cmd_lower,"sw")){
-      place_x=player->x-1;
-      place_y=player->y+1;}
-    else if(!strcmp(debug_cmd_lower,"s")){
-      place_y=player->y+1;}
-    else if(!strcmp(debug_cmd_lower,"se")){
-      place_x=player->x+1;
-      place_y=player->y+1;}
+    
+    char* debug_cmd = msg_prompt("Place where? ");
+    char* debug_cmd_lower = str_lowercase(debug_cmd);
+    int place_x = player->x; 
+    int place_y = player->y;
+    
+    if(!strcmp(debug_cmd_lower, "nw")){
+      place_x--;
+      place_y--;
+    }else if(!strcmp(debug_cmd_lower, "n")){
+      place_y--;
+    }else if(!strcmp(debug_cmd_lower,"ne")){
+      place_x++;
+      place_y--;
+    }else if(!strcmp(debug_cmd_lower, "w")){
+      place_x--;
+    }else if(!strcmp(debug_cmd_lower, "e")){
+      place_x++;
+    }else if(!strcmp(debug_cmd_lower, "sw")){
+      place_x--;
+      place_y++;
+    }else if(!strcmp(debug_cmd_lower, "s")){
+      place_y++;
+    }else if(!strcmp(debug_cmd_lower, "se")){
+      place_x++;
+      place_y++;
+    }
     
     free(debug_cmd_lower);
     free(debug_cmd);
     debug_cmd=msg_prompt("Place what? ");
     debug_cmd_lower=str_lowercase(debug_cmd);
+
     if(!strcmp(debug_cmd_lower,"tile")){
       free(debug_cmd_lower);
       free(debug_cmd);
       debug_cmd=msg_prompt("TILE ID: ");
       debug_cmd_lower=str_lowercase(debug_cmd);
+
       if(str_is_num(debug_cmd_lower)){
 	map_set_tile(cur_map,place_x,place_y,atoi(debug_cmd)); 
 	msg_add("Done");
@@ -250,18 +300,18 @@ void debug(){
       free(debug_cmd);
       debug_cmd=msg_prompt("ITEM ID: ");
       debug_cmd_lower=str_lowercase(debug_cmd);
+
       if(str_is_num(debug_cmd_lower)){
 	add_item(cur_map,
 		 place_x,
 		 place_y,
-		 (struct item_t*)item_create_from_data(atoi(debug_cmd)));
+		 (struct item_t*)item_create_from_data(atoi(debug_cmd)) );
 	//msg_add("Done");
       }
     }
     free(debug_cmd_lower);
     free(debug_cmd);
-  }
-  else if(!strcmp(debug_cmd_lower,"print items")){
+  }else if(!strcmp(debug_cmd_lower,"print items")){
     endwin();
     struct item_map_t* cur_items = cur_map->items;
     for(int j=0; j<cur_map->height; j++){
@@ -426,18 +476,20 @@ void analyze_cmd(int cmd, int* x, int* y){
     *x+=1;*y+=1;
   }
   else if(cmd == cmd_data[CMD_OPEN]){
-    open_tile();
+    open_tile(player->x, player->y, getch());
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
-    close_tile();
+    close_tile(player->x, player->y, getch());
   }else if(cmd == cmd_data[CMD_PICKUP]){
-    pickup_tile();
+    pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
     display_inventory();
   }else if(cmd == cmd_data[CMD_REMAP]){
     cmd_remap();
   }else if(cmd == cmd_data[CMD_EXTENDED]){
     analyze_cmd_extended();
+  }else if(cmd == cmd_data[CMD_EXAMINE]){
+    map_examine_tile(cur_map);
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
@@ -538,23 +590,26 @@ void game_init(int seed){
 }
 
 void draw_map(struct map_t* map){
-  item_map_t* items=map->items;
+  if(map == NULL){quit("Error: Cannot draw NULL Map");}
+  item_map_t* items = map->items;
 
   for(int j=0; j<map->height; j++){
     move(j,0);
     for(int i=0; i<map->width; i++){
       //Draw top item on each item stack if there is one
-      if(items!=NULL 
-	 && items->size!=0 
-	 && items->x==i 
-	 && items->y==j){
+      if(items != NULL 
+	 && items->size != 0 
+	 && items->x == i 
+	 && items->y == j){
 	addch(get_top_item_sym_from_stack(items));
 	items=items->next;
       }
       else{addch(tile_data[map_get_tile(map,i,j)].display);}
     }
   }
-  mvaddch(player->y,player->x,'@' | COLOR_PAIR(CP_YELLOW_BLACK));
-  draw_status();
-  refresh();
+  for(struct creature_list_node_t* cur = map->creatures->first;
+      cur != NULL;
+      cur = cur->next){
+    mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);
+  }
 }
