@@ -138,8 +138,8 @@ char* msg_prompt(char* prompt){
     //read in the next key
     ch=getch();
     
-    //special case for backspace
-    if(ch==KEY_BACKSPACE && ret_pos>=0){
+    //special case for backspace and delete
+    if((ch==KEY_BACKSPACE || ch==KEY_DC) && ret_pos>=0){
 	ret_pos--;
 	ret[ret_pos]=0;
       }

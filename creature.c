@@ -211,7 +211,7 @@ int creature_get_damage(struct creature_t* creature){
   if(creature == NULL){
     quit("ERROR: Cannot get damage of NULL creature.");
   }
-  int to_return = 0;
+  double to_return = 0;
   if(creature->inventory->weild != NULL){
     /* Base weapon damage is a function of strength, health, and weapon damage
      */
@@ -230,7 +230,7 @@ int creature_get_damage(struct creature_t* creature){
   else{
     to_return = creature->strength;
   }
-  return to_return;
+  return (int)to_return;
 }
  
 void set_level(struct creature_t* c, int l){c->level=l;}

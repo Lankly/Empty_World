@@ -16,7 +16,7 @@
 
 void quit(const char* error_msg){
   endwin();
-  printf(error_msg);
+  printf("%s\n",error_msg);
   exit(1);
 }
 
@@ -193,7 +193,7 @@ void pickup_tile(){
    * beneath the player. It will take the user to a screen where they
    * can select which item it is that they're trying to pick up.
    */
-  else if(count>1){
+  else{
     to_add=remove_item(cur_map,
 		       player->x,
 		       player->y,
