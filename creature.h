@@ -160,11 +160,10 @@ typedef struct{
 
 struct creature_t; struct map_t; struct item_map_t;
 typedef void (*creatureTakeTurnCallback)(struct creature_t* creature,
-					 struct map_t* map,
-					 struct item_map_t* items);
+					 struct map_t* map);
 
 #include "inventory.h"
-typedef struct creature_t{
+struct creature_t{
   int strength;  int perception;    int endurance;
   int charisma;  int intelligence;  int agility;
   int luck;      int health;        int hunger;
@@ -190,7 +189,7 @@ typedef struct creature_t{
 
   inventory_t* inventory;
   creatureTakeTurnCallback takeTurn;
-}creature_t;
+};
 
 #include "creature_callbacks.h"
 
@@ -199,12 +198,12 @@ typedef struct creature_list_node_t{
   struct creature_t* creature;
   struct creature_list_node_t* next;
 }creature_list_node_t;
-typedef struct{
+struct creature_list_t{
   struct creature_list_node_t* first;
-}creature_list_t;
+};
 
 //This is all the default kinds of creatures that can be created
-creature_t creature_data[CREATURE_TYPE_MAX+1];
+struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 int creature_types_data[CREATURE_TYPE_MAX+1];
 
 void creature_data_init();

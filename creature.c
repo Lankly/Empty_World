@@ -13,10 +13,10 @@
  * since that will be determined by the floor number and the player's level.
  */
 void creature_data_init(){
-  creature_data[CREATURE_UNKNOWN]=(creature_t){
+  creature_data[CREATURE_UNKNOWN]=(struct creature_t){
     .takeTurn=&defaultTakeTurnCallback
   };
-  creature_data[CREATURE_HUMAN_WARRIOR]=(creature_t){
+  creature_data[CREATURE_HUMAN_WARRIOR]=(struct creature_t){
     .corpse_type = CORPSE_HUMAN,
     .name = "This creature hasn't had it's name initialized!",
     .is_awake = true,

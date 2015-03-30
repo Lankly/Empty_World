@@ -8,7 +8,7 @@
 /* Move to the player, if visible.
  * Wander around randomly otherwise.
  */
-void defaultPathfindCallback(creature_t* creature, 
+void defaultPathfindCallback(struct creature_t* creature, 
 			     map_t* map, 
 			     item_map_t* items){
   //Make sure everything is right before starting
@@ -56,8 +56,7 @@ void defaultPathfindCallback(creature_t* creature,
 }
 
 void defaultTakeTurnCallback(struct creature_t* creature,
-			     struct map_t* map,
-			     struct item_map_t* items){
+			     struct map_t* map){
   //Make sure everything is right before starting
   if(creature==NULL){quit("ERROR: Cannot move NULL Creature");}
   if(map==NULL){quit("Error: Cannot move Creature on NULL Map");}
@@ -70,6 +69,6 @@ void defaultTakeTurnCallback(struct creature_t* creature,
     damage_creature(player,creature_get_damage(creature));
   }
   else{
-    (*creature->takeTurn)(creature, map, items);
+    (*creature->takeTurn)(creature, map);
   }
 }

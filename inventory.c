@@ -23,7 +23,7 @@ void inventory_init(struct creature_t* creature){
 
 /* This method handles adding an item into the given creature's inventory
  */
-bool inventory_add(creature_t* creature, item_t* item){
+bool inventory_add(struct creature_t* creature, item_t* item){
   if(item==NULL){quit("NULL item");}
   if(creature->inventory==NULL){quit("Creature->Inventory not initialized");}
   //Checks if there is room in the inventory
@@ -54,7 +54,7 @@ bool inventory_add(creature_t* creature, item_t* item){
  * It takes in the item that it will remove. Like remove_item_by_id, this 
  * method does not destroy the item, just removes it from the inventory.
  */
-void inventory_remove_by_item(creature_t* creature, item_t* item){
+void inventory_remove_by_item(struct creature_t* creature, item_t* item){
   if(creature==NULL){
     quit("Error: Cannot remove item from NULL creature's inventory.");}
   if(item==NULL){
@@ -93,7 +93,7 @@ void inventory_remove_by_item(creature_t* creature, item_t* item){
  * It takes in an integer representing the item's location in the inventory.
  * Returns the item that it removed.
  */
-item_t* inventory_remove_by_id(creature_t* creature, int inventory_id){
+item_t* inventory_remove_by_id(struct creature_t* creature, int inventory_id){
   if(inventory_id<0 || inventory_id>creature->inventory->last_inventory_id){
     quit("Error: Invalid inventory id.");}
   if(creature==NULL){
@@ -135,7 +135,7 @@ item_t* inventory_remove_by_id(creature_t* creature, int inventory_id){
  * to and will attempt to equip it there. Currently, an item can only be worn
  * on one slot, but I will change this to work with multiple slots in the future
  */
-bool equip_by_item(creature_t* creature, item_t* item){
+bool equip_by_item(struct creature_t* creature, item_t* item){
   if(creature==NULL){
     quit("Error: Cannot equip item to NULL creature.");}
   if(item==NULL){
@@ -251,7 +251,7 @@ bool equip_by_item(creature_t* creature, item_t* item){
 /* This method handles equipping an item in the given creature's inventory.
  * The item is given by its id.
  */
-bool equip_by_id(creature_t* creature, int inventory_id){
+bool equip_by_id(struct creature_t* creature, int inventory_id){
   if(creature == NULL){
     quit("Error: Cannot eqiup item to NULL creature");}
   if(inventory_id<0 || inventory_id>creature->inventory->last_inventory_id){
@@ -281,7 +281,7 @@ bool equip_by_id(creature_t* creature, int inventory_id){
 /* This method handles unequipping an item from the given creature. It takes
  * the item itself that will be removed.
  */
-bool unequip_by_item(creature_t* creature, item_t* item){
+bool unequip_by_item(struct creature_t* creature, item_t* item){
   /* This method does not error if the item cannot be unequipped. It
    * simply returns false instead.
    */
@@ -404,7 +404,7 @@ bool unequip_by_item(creature_t* creature, item_t* item){
  * the id of the item in that creature's inventory and uses it to unequip the
  * item.
  */
-bool unequip_by_id(creature_t* creature, int inventory_id){
+bool unequip_by_id(struct creature_t* creature, int inventory_id){
   /* This method does not error when removing an item if it can't. It simmply
    * returns false instead.
    */

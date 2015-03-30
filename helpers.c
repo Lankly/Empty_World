@@ -294,7 +294,7 @@ void toggle_numpad(){
   else{
     u = KEY_UP;     d = KEY_DOWN;    l = KEY_LEFT;  
     r = KEY_RIGHT;  ur = KEY_PPAGE;  ul = KEY_HOME;
-    dr = KEY_NPAGE;   dl = KEY_END; q = KEY_B2;
+    dr = KEY_NPAGE; dl = KEY_END;    q = KEY_B2;
   }
   
   for(int i = 0; i<CMD_MAX+1; i++){
@@ -530,6 +530,8 @@ void game_init(int seed){
   map_draw_random_rooms(cur_map);
   map_cleanup(cur_map);
   map_draw_borders(cur_map);
+
+  map_add_creature(cur_map, player);
 
   qckmv_cmd=0;
   qckmv=false;

@@ -4,6 +4,7 @@
 #include <curses.h>
 #include <time.h>
 #include "helpers.h"
+#include "creature.h"
 #include "map.h"
 #include "player.h"
 #include "tiles.h"
@@ -23,10 +24,8 @@ int main(int argc, char** argv){
   //1401917882
   //1410214243
   //1410291444
+  //1427689757
   game_init(seed);
-
-  //Variables
-  int cmd = 0;
   
   //Place character randomly
   while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
@@ -38,31 +37,13 @@ int main(int argc, char** argv){
   while(true){
 
     draw_map(cur_map);
-    
-    int plr_mv_to_x = player->x,
-      plr_mv_to_y = player->y;
-    
-    /* If the player is quickmoving, keep doing that. 
-     * Else, look for keyboard input.
-    */
-    if(qckmv){
-      cmd = qckmv_cmd;
-    }
-    else{cmd = getch();}
 
-    analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
-    
-    
-    /* Ensure that the player is light enough to pass through corners,
-       that they are not behind a closed door.
-     */
-    if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
-      player->x=plr_mv_to_x;
-      player->y=plr_mv_to_y;
+    //Let each creature take its turn
+    for(creature_list_node_t* cur = cur_map->creatures->first; 
+	cur != NULL; cur = cur->next){
+      cur->creature->takeTurn(cur->creature, cur_map);
     }
-    else{qckmv = false;}
-
-    if(qckmv){qckmv=qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
+    
   }
 
   endwin();

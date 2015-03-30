@@ -1,7 +1,9 @@
+#include "creature.h"
 #include "map.h"
 #include "helpers.h"
 #include <curses.h>
 #include <stdlib.h>
+#include "creature.h"
 #include "tiles.h"
 
 void map_init(struct map_t* map, int w, int h, int max_item_height){
@@ -9,6 +11,48 @@ void map_init(struct map_t* map, int w, int h, int max_item_height){
   map->height= h;
   map->max_item_height=max_item_height;
   map->tiles = (int*)Calloc(w * h,sizeof(int));
+  map->creatures = (struct creature_list_t*)
+    Calloc(1, sizeof(struct creature_list_t));
+}
+
+/* This function adds a creature to a given map.
+ */
+void map_add_creature(struct map_t* map, struct creature_t* creature){
+  if(map == NULL){quit("Error: Cannot add Creature to NULL Map");}
+  if(creature == NULL){quit("Error: Cannot add NULL Creature to Map");}
+  if(map->creatures == NULL){
+    map->creatures = (struct creature_list_t*)
+      Calloc(1, sizeof(struct creature_list_t));
+  }
+
+  struct creature_list_node_t* to_add = (struct creature_list_node_t*)
+    Calloc(1, sizeof(creature_list_node_t));
+  to_add->creature = creature;
+  to_add->next = map->creatures->first;
+  map->creatures->first = to_add;
+}
+
+/* This function removes a creature from a given map.
+ */
+void map_remove_creature(struct map_t* map, struct creature_t* creature){
+  if(map == NULL || map->creatures == NULL 
+     || map->creatures->first == NULL || creature == NULL){return;}
+  
+  struct creature_list_node_t* cur = map->creatures->first;
+  //Need to check if the thing we're removing is first in the list
+  if(cur->creature == creature){
+    map->creatures->first = cur->next;
+    free(cur); return;
+  }
+  
+  //Now we check everything else
+  for(; cur->next != NULL; cur = cur->next){
+    if(cur->next->creature == creature){
+      creature_list_node_t* temp = cur->next;
+      cur->next = temp->next;
+      free(temp);
+    }
+  }
 }
 
 void map_set_tile(struct map_t* map, int x, int y, int tile){

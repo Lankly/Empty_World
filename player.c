@@ -2,8 +2,36 @@
 #include "creature.h"
 #include <stdlib.h>
 
+void playerTakeTurnCallback(struct creature_t* creature,
+			    struct map_t* map){
+  int plr_mv_to_x = player->x,
+    plr_mv_to_y = player->y;
+  
+  /* If the player is quickmoving, keep doing that. 
+   * Else, look for keyboard input.
+   */
+  if(qckmv){
+    cmd = qckmv_cmd;
+  }
+  else{cmd = getch();}
+  
+  analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
+  
+  
+  /* Ensure that the player is light enough to pass through corners,
+       that they are not behind a closed door.
+  */
+  if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
+    player->x=plr_mv_to_x;
+    player->y=plr_mv_to_y;
+  }
+  else{qckmv = false;}
+  
+  if(qckmv){qckmv=qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
+}
+
 void player_init(char* name){
-  player = (creature_t*)Calloc(1,sizeof(creature_t));
+  player = (struct creature_t*)Calloc(1,sizeof(struct creature_t));
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);
@@ -29,4 +57,7 @@ void player_init(char* name){
   add_consumable(player, CONSUME_POTION);
   player->intrinsics = (intrinsics_list_t*)Calloc(1,sizeof(intrinsics_list_t));
   player->resistances = (resistances_list_t*)Calloc(1,sizeof(resistances_list_t));
+  player->takeTurn = &playerTakeTurnCallback;
+
+  cmd = 0;
 }
