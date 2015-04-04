@@ -447,17 +447,13 @@ void map_reveal(struct map_t* map, int x, int y, int rev_dist){
   //For each point in the map,
   for(int j=0; j < map->height; j++){
     for(int i=0; i < TERMINAL_WIDTH; i++){
-      //Has this tile already been revealed?
-      if(map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] 
-	 == TILE_UNKNOWN){
-	//Check to see if it's in the possible radius to reveal a tile
-	int dist = sqrt(pow(( (double)(i-x) ), 2) + pow(( (double)(j-y) ), 2));
-	//If it is, also check whether or not something's in the way
-	if(rev_dist - dist >= 0
-	   && map_tile_is_visible(map, i, j)){
-	  map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
-	    map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
-	}
+      //Check to see if it's in the possible radius to reveal a tile
+      int dist = sqrt(pow(( (double)(i-x) ), 2) + pow(( (double)(j-y) ), 2));
+      //If it is, also check whether or not something's in the way
+      if(rev_dist - dist >= 0
+	 && map_tile_is_visible(map, i, j)){
+	map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
+	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
       }
     }
   }
