@@ -419,7 +419,7 @@ void analyze_cmd_extended(){
     
     ch = getch();
     //special case for backspace
-    if(ch==KEY_BACKSPACE && ret_pos>=0){
+    if((ch==KEY_BACKSPACE || ch == 127) && ret_pos>=0){
       ret_pos--;
       ret[ret_pos]=0;
     }
