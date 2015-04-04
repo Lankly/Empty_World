@@ -36,8 +36,6 @@ int main(int argc, char** argv){
   //Main Game Loop
   while(true){
 
-    draw_map(cur_map);
-    draw_status(cur_map);
     refresh();
 
     //Let each creature take its turn
@@ -45,7 +43,6 @@ int main(int argc, char** argv){
 	cur != NULL; cur = cur->next){
       cur->creature->takeTurn(cur->creature, cur_map);
     }
-    
   }
 
   endwin();

@@ -15,6 +15,7 @@ typedef struct map_t{
   int* tiles;
   struct item_map_t* items;
   struct creature_list_t* creatures;
+  struct map_t* known_map;
 } map_t;
 
 map_t* cur_map;
@@ -33,8 +34,11 @@ void map_draw_random_rooms(struct map_t* map);
 
 bool map_coord_is_door(struct map_t*, int x,int y);
 bool map_tile_is_door(int tile);
+bool map_tile_is_visible(struct map_t* map, int x, int y);
 void map_examine_tile(struct map_t* map);
+void map_reveal(struct map_t* map, int x, int y, int rev_dist);
 
 void map_cleanup(struct map_t* map);
+void draw_map(struct map_t* map);
 
 #endif

@@ -1,4 +1,5 @@
 #include <curses.h>
+#include <math.h>
 #include <stdlib.h>
 #include "creature.h"
 #include "map.h"
@@ -8,7 +9,11 @@
 #include "status.h"
 #include "tiles.h"
 
+
+/* Initializes a given map. Expects the map to have already been allocated.
+ */
 void map_init(struct map_t* map, int w, int h, int max_item_height){
+  if(map == NULL){quit("Error: Cannot initialize NULL Map");}
   map->width = w;
   map->height= h;
   map->max_item_height = max_item_height;
@@ -340,6 +345,124 @@ void map_examine_tile(struct map_t* map){
   msg_addf("%s", tile_data[map_get_tile(map, x, y)].exam_text);
 }
 
+/* Line of sight code         *
+ * this is a Boolean function *
+ * that returns FALSE if the  *
+ * monster cannot see the     *
+ * player and TRUE if it can  *
+ *                            *
+ * It has the monsters x and y*
+ * coords as parameters       */
+bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
+  int t, x, y, abs_delta_x, abs_delta_y, sign_x, sign_y, delta_x, delta_y;
+  
+  /* Delta x is the players x minus the monsters x    *
+   * d is my dungeon structure and px is the players  *
+   * x position. monster_x is the monsters x position passed *
+   * to the function.                                 */
+  delta_x = player->x - check_x;
+  
+  /* delta_y is the same as delta_x using the y coordinates */
+  delta_y = player->y - check_y;
+  
+  /* abs_delta_x & abs_delta_y: these are the absolute values of delta_x & delta_y */
+  abs_delta_x = abs(delta_x);
+  abs_delta_y = abs(delta_y);
+  
+  /* sign_x & sign_y: these are the signs of delta_x & delta_y */
+  sign_x = delta_x < 0 ? -1 : 1;
+  sign_y = delta_y < 0 ? -1 : 1;
+  
+  /* x & y: these are the monster's x & y coords */
+  x = check_x;
+  y = check_y;
+  
+  /* The following if statement checks to see if the line *
+   * is x dominate or y dominate and loops accordingly    */
+  if(abs_delta_x > abs_delta_y){
+    /* X dominate loop */
+    /* t = twice the absolute of y minus the absolute of x*/
+    t = abs_delta_y * 2 - abs_delta_x;
+    do{
+      if(t >= 0){
+	/* if t is greater than or equal to zero then *
+	 * add the sign of delta_y to y                    *
+	 * subtract twice the absolute of delta_x from t   */
+	y += sign_y;
+	t -= abs_delta_x*2;
+      }
+      
+      /* add the sign of delta_x to x      *
+       * add twice the adsolute of delta_y to t  */
+      x += sign_x;
+      t += abs_delta_y * 2;
+      
+      /* check to see if we are at the player's position */
+      if(x == player->x && y == player->y){
+	/* return that the monster can see the player */
+	return true;
+      }
+      /* keep looping until the monster's sight is blocked *
+       * by an object at the updated x,y coord             */
+    }while(tile_data[map_get_tile(map, x, y)].transparent);
+    
+    /* the loop was exited because the monster's sight was blocked *
+     * return FALSE: the monster cannot see the player             */
+    return false;
+  }
+  else
+    {
+      /* Y dominate loop, this loop is basically the same as the x loop */
+      t = abs_delta_x * 2 - abs_delta_y;
+      do{
+	if(t >= 0){
+	  x += sign_x;
+	  t -= abs_delta_y * 2;
+	}
+	y += sign_y;
+	t += abs_delta_x * 2;
+	if(x == player->x && y == player->y){
+	  return true;
+	}
+      }while(tile_data[map_get_tile(map, x, y)].transparent);
+      return false;
+   }
+}
+
+/* This function uses a pair of coordinates and a radius to reveal the floor of
+ * a given map.
+ */
+void map_reveal(struct map_t* map, int x, int y, int rev_dist){
+  if(map == NULL){quit("Error: Cannot reveal NULL Map");}
+  if(x < 0 || y <0 || x > TERMINAL_WIDTH-1 || y > TERMINAL_HEIGHT-1){
+    return;
+  }
+
+  //If no map has been revealed yet, start revealing
+  if(map->known_map == NULL){
+    map->known_map = (struct map_t*)Calloc(1, sizeof(struct map_t));
+    map_init(map->known_map, map->width, map->height, map->max_item_height);
+  }
+
+  //For each point in the map,
+  for(int j=0; j < map->height; j++){
+    for(int i=0; i < TERMINAL_WIDTH; i++){
+      //Has this tile already been revealed?
+      if(map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] 
+	 == TILE_UNKNOWN){
+	//Check to see if it's in the possible radius to reveal a tile
+	int dist = sqrt(pow(( (double)(i-x) ), 2) + pow(( (double)(j-y) ), 2));
+	//If it is, also check whether or not something's in the way
+	if(rev_dist - dist >= 0
+	   && map_tile_is_visible(map, i, j)){
+	  map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
+	    map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
+	}
+      }
+    }
+  }
+}
+
 void map_cleanup(struct map_t* map){
   for(int y=1; y<map->height; y++){
     for(int x=1; x<map->width; x++){
@@ -569,5 +692,31 @@ void map_cleanup(struct map_t* map){
       }
 
     }
+  }
+}
+
+void draw_map(struct map_t* map){
+  if(map == NULL){quit("Error: Cannot draw NULL Map");}
+  struct map_t* m = map->known_map ? map->known_map : map;
+  item_map_t* items = map->items;
+
+  for(int j=0; j<m->height; j++){
+    move(j,0);
+    for(int i=0; i<m->width; i++){
+      //Draw top item on each item stack if there is one
+      if(items != NULL 
+	 && items->size != 0 
+	 && items->x == i 
+	 && items->y == j){
+	addch(get_top_item_sym_from_stack(items));
+	items=items->next;
+      }
+      else{addch(tile_data[map_get_tile(m,i,j)].display);}
+    }
+  }
+  for(struct creature_list_node_t* cur = map->creatures->first;
+      cur != NULL;
+      cur = cur->next){
+    mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);
   }
 }

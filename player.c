@@ -1,10 +1,16 @@
 #include "player.h"
 #include "colors.h"
 #include "creature.h"
+#include "map.h"
+#include "status.h"
 #include <stdlib.h>
 
 void playerTakeTurnCallback(struct creature_t* creature,
 			    struct map_t* map){
+  map_reveal(map, player->x, player->y, creature_see_distance(player));
+  draw_map(map);
+  draw_status(map);
+
   int plr_mv_to_x = player->x,
     plr_mv_to_y = player->y;
   
@@ -35,6 +41,9 @@ void player_init(char* name){
   player = (struct creature_t*)Calloc(1,sizeof(struct creature_t));
   player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
   player->exam_text = "This is you!";
+  
+  set_vision(player, true);
+  set_conscious(player, true);
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);

@@ -328,6 +328,8 @@ void debug(){
       }
     }
     exit(0);
+  }else if(!strcmp(debug_cmd_lower,"reveal")){
+    cur_map->known_map=cur_map;
   }
 }
 
@@ -587,29 +589,4 @@ void game_init(int seed){
 
   qckmv_cmd=0;
   qckmv=false;
-}
-
-void draw_map(struct map_t* map){
-  if(map == NULL){quit("Error: Cannot draw NULL Map");}
-  item_map_t* items = map->items;
-
-  for(int j=0; j<map->height; j++){
-    move(j,0);
-    for(int i=0; i<map->width; i++){
-      //Draw top item on each item stack if there is one
-      if(items != NULL 
-	 && items->size != 0 
-	 && items->x == i 
-	 && items->y == j){
-	addch(get_top_item_sym_from_stack(items));
-	items=items->next;
-      }
-      else{addch(tile_data[map_get_tile(map,i,j)].display);}
-    }
-  }
-  for(struct creature_list_node_t* cur = map->creatures->first;
-      cur != NULL;
-      cur = cur->next){
-    mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);
-  }
 }

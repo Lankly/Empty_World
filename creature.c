@@ -87,8 +87,8 @@ int creature_see_distance(struct creature_t* creature){
     quit("Error: Cannot get see-distance of NULL creature");}
   
   // Now we can calculate the correct value
-  int to_return = ((player->can_see ? 1 : 0)
-		   * (player->is_awake ? 1 : 0)
+  int to_return = (player->can_see
+		   * player->is_awake
 		   * (creature->intelligence
 		      + creature->luck
 		      + creature->level)
@@ -123,45 +123,7 @@ bool creature_is_visible(struct creature_t* creature){
     return false;
   }
 
-  /* Next we need to see if there are any obstructive tiles in the way.
-   * Creatures do not matter. It is assumed that the player can see all
-   * the creatures in a certain range if unobstructed.
-  */
-  int check_x = creature->x - player->x;
-  int check_y = creature->y - player->y;
-  int check_coord = get_coord(creature->x + check_x,
-			      creature->y + check_y,
-			      cur_map->width);
-  while(check_x != check_y){
-    if(!tile_data[cur_map->tiles[check_coord]].transparent){
-      return false;
-    }
-    /* This is how we will zone-in on the target, by finding which values
-     * to increment or decrement, checking the tiles along the way, until
-     * the difference between x and y is zero.
-     */
-    if(check_x>check_y && creature->x+check_x>creature->x){check_x--;}
-    else if(check_x>check_y && creature->x+check_x<creature->x){check_y--;}
-    else if(check_y>check_x && creature->y+check_y>creature->y){check_y++;}
-    else{check_x++;}
-    check_coord = get_coord(creature->x+check_x,
-			    creature->y+check_y,
-			    cur_map->width);
-  }
-  /* Now that x and y are the same, if the creature is "behind" any non-
-   * transparent tiles, we know the player can't see them. We increment/
-   * decrement both until we reach the creature's coordinates.
-   */
-  while(check_x != creature->x){
-    if(!tile_data[cur_map->tiles[check_coord]].transparent){
-      return false;
-    }
-    if(check_x > creature->x){check_x--;}
-    else{ check_x++;}
-    if(check_y > creature->y){check_y++;}
-    else{ check_y++;}
-  }
-  return true;
+  return map_tile_is_visible(cur_map, creature->x, creature->y);
 }
 
 /* This method returns true if a given creature can move to a given tile, not
@@ -233,43 +195,159 @@ int creature_get_damage(struct creature_t* creature){
   return (int)to_return;
 }
  
-void set_level(struct creature_t* c, int l){c->level=l;}
-void set_dlevel(struct creature_t* c, int d){c->dlevel=d;}
-void set_name(struct creature_t* c, char* n){c->name=n;}
+void set_level(struct creature_t* c, int l){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->level=l;
+}
 
-void set_strength(struct creature_t* c, int s){c->strength=s;}
-void set_perception(struct creature_t* c, int p){c->perception=p;}
-void set_endurance(struct creature_t* c, int e){c->endurance=e;}
-void set_charisma(struct creature_t* c, int ch){c->charisma=ch;}
-void set_intelligence(struct creature_t* c, int i){c->intelligence=i;}
-void set_agility(struct creature_t* c, int a){c->agility=a;}
-void set_luck(struct creature_t* c, int l){c->luck=l;}
-void set_gold(struct creature_t* c, int g){c->gold=g;}
+void set_dlevel(struct creature_t* c, int d){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->dlevel=d;
+}
+
+void set_name(struct creature_t* c, char* n){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->name=n;
+}
+
+void set_vision(struct creature_t* c, bool b){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->can_see = b;
+}
+
+void set_conscious(struct creature_t* c, bool b){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->is_awake = b;
+}
+
+void set_strength(struct creature_t* c, int s){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->strength=s;
+}
+
+void set_perception(struct creature_t* c, int p){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->perception=p;
+}
+
+void set_endurance(struct creature_t* c, int e){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->endurance=e;
+}
+
+void set_charisma(struct creature_t* c, int ch){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->charisma=ch;
+}
+
+void set_intelligence(struct creature_t* c, int i){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->intelligence=i;
+}
+
+void set_agility(struct creature_t* c, int a){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->agility=a;
+}
+
+void set_luck(struct creature_t* c, int l){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->luck=l;
+}
+
+void set_gold(struct creature_t* c, int g){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->gold=g;
+}
+
  
-void set_health(struct creature_t* c, int h){c->health=h;}
-void set_max_hunger(struct creature_t* c, int m){c->max_hunger=m;} 
-void set_hunger(struct creature_t* c, int h){c->hunger=h;}
+void set_health(struct creature_t* c, int h){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->health=h;
+}
+
+void set_max_hunger(struct creature_t* c, int m){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->max_hunger=m;
+}
  
-char* get_name(struct creature_t* c){return c-> name;}
-int get_health(struct creature_t* c){return c-> health;}
-int get_level(struct creature_t* c){return c-> level;}
-int get_dlevel(struct creature_t* c){return c-> dlevel;}
+void set_hunger(struct creature_t* c, int h){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->hunger=h;}
+ 
+char* get_name(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c-> name;
+}
 
-int get_strength(struct creature_t* c){return c->strength;}
-int get_perception(struct creature_t* c){return c->perception;}
-int get_endurance(struct creature_t* c){return c->endurance;}
-int get_charisma(struct creature_t* c){return c->charisma;}
-int get_intelligence(struct creature_t* c){return c->intelligence;}
-int get_agility(struct creature_t* c){return c->agility;}
-int get_luck(struct creature_t* c){return c->luck;}
-int get_gold(struct creature_t* c){return c->gold;}
+int get_health(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c-> health;
+}
 
-void add_health(struct creature_t* c, int h){c->health+=h;}
+int get_level(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c-> level;
+}
+
+int get_dlevel(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c-> dlevel;
+}
+
+
+int get_strength(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+ return c->strength;
+}
+
+int get_perception(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->perception;
+}
+
+int get_endurance(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->endurance;
+}
+
+int get_charisma(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->charisma;
+}
+
+int get_intelligence(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->intelligence;
+}
+
+int get_agility(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->agility;
+}
+
+int get_luck(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->luck;
+}
+
+int get_gold(struct creature_t* c){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  return c->gold;
+}
+
+
+void add_health(struct creature_t* c, int h){
+  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  c->health+=h;
+}
+
 
 int add_breathable(struct creature_t* creature, int type){
   //Make sure everything is right
-  if(creature==NULL){quit("ERROR: NULL Creature");}
+  if(creature==NULL){quit("Error: Cannot set values of NULL Creature");}
   if(creature->breathables==NULL){quit("ERROR: NULL Creature_Breathables");}
+
   if(type<0 || type>BREATHE_MAX){
     return 1;
 }

@@ -19,6 +19,7 @@ void tile_data_init(){
     .id = TILE_FLOOR, 
     .passable = true, 
     .display = '.', 
+    .transparent = true,
     .exam_text = "It is a hard stone floor.\n",
     .hardness = 3};
   tile_data[TILE_WALL] = (tile_t){
@@ -32,6 +33,7 @@ void tile_data_init(){
     .display = '-', 
     .exam_text = "It is an open wooden door.\n",
     .hardness = 2, 
+    .transparent = true,
     .stopme = true, 
     .openable = true};
   tile_data[TILE_DOOR_CLOSE] = (tile_t){
@@ -47,11 +49,13 @@ void tile_data_init(){
     .display = '|', 
     .exam_text = "It is a broken wooden door.\n",
     .hardness = 2, 
+    .transparent = true,
     .stopme = true, 
     .openable = true};
   tile_data[TILE_CORRIDOR] = (tile_t){
     .id = TILE_CORRIDOR, 
     .passable = true, 
+    .transparent = true,
     .display = ACS_CKBOARD | COLOR_PAIR(CP_DARK_GREY_BLACK),
     .exam_text = 
     "It is a hard stone corridor.\n", 

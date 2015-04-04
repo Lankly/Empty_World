@@ -16,4 +16,4 @@ add_executable(EmptyWorld
 	status.c
 	tiles.c
 )
-target_link_libraries(EmptyWorld ncurses)
+target_link_libraries(EmptyWorld ncurses m)

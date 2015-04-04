@@ -168,6 +168,14 @@ struct creature_t{
   int charisma;  int intelligence;  int agility;
   int luck;      int health;        int hunger;
   int gold;      int level;         int max_hunger;
+  
+  /* This is how hunger works:
+   * You have a max_hunger. This represents how much food can be in your stomach
+   * at one time. Above this, and the stomach will purge to 20% of its max. You 
+   * also have a hunger integer that represents how much food is in your stomach
+   * right now. Hunger is a large number, in the hundreds, and decrements once
+   * every turn cycle.
+   */
 
   int corpse_type;
   int creature_id;
@@ -217,6 +225,8 @@ bool creature_is_visible(struct creature_t* creature);
 bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd);
 int creature_get_damage(struct creature_t* creature);
 
+void set_vision(struct creature_t* c, bool b);
+void set_conscious(struct creature_t* c, bool b);
 void set_level(struct creature_t* c, int l);
 void set_dlevel(struct creature_t* c, int d);
 void set_name(struct creature_t* c, char* n);
