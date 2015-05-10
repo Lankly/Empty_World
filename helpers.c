@@ -515,11 +515,14 @@ void manual(){
       else if(page > 0){page--;}
     }
     ////Change forward
-    else if(ch == '>' && section < 5){
-      if((page+1)*TERMINAL_HEIGHT >= ar_pos){
-	section++;
+    else if(ch == '>'){
+      if(section < 5){
+	if((page+1)*TERMINAL_HEIGHT >= ar_pos){
+	  section++;
+	  page = 0;
+	}
+	else{page++;}
       }
-      else{page++;}
     }
     ////Jump to a section
     else{
