@@ -5,24 +5,26 @@
 #define ITEMS_H
 
 #define ITEM_UNKNOWN  0
-#define CORPSE_HUMAN  1
-#define CORPSE_WERE   2
-#define CORPSE_ORC    3
-#define CORPSE_GOBLIN 4
-#define CORPSE_SKELETON 5
-#define CORPSE_CANINE 6
-#define CORPSE_FELINE 7
-#define CORPSE_INSECT 8
-#define CORPSE_RODENT 9
-#define CORPSE_AVIAN  10
-#define CORPSE_DEMON  11
-#define CORPSE_MINDFLAYER 12
-#define CORPSE_GRIFFON 13
-#define CORPSE_SENTINEL 14
-#define CORPSE_PLANT  15
-#define CORPSE_EYE    16
-#define ITEM_IRON_SWORD 17
-#define ITEM_MAX 17
+#define ITEM_UP_STAIR 1
+#define ITEM_DOWN_STAIR 2
+#define CORPSE_HUMAN  3
+#define CORPSE_WERE   4
+#define CORPSE_ORC    5
+#define CORPSE_GOBLIN 6
+#define CORPSE_SKELETON 7
+#define CORPSE_CANINE 8
+#define CORPSE_FELINE 9
+#define CORPSE_INSECT 10
+#define CORPSE_RODENT 11
+#define CORPSE_AVIAN  12
+#define CORPSE_DEMON  13
+#define CORPSE_MINDFLAYER 14
+#define CORPSE_GRIFFON 15
+#define CORPSE_SENTINEL 16
+#define CORPSE_PLANT  17
+#define CORPSE_EYE    18
+#define ITEM_IRON_SWORD 19
+#define ITEM_MAX 19
 
 //These are callbacks that will be inside of each item
 struct item_use_t; struct item_consume_t; struct item_zap_t;
@@ -45,10 +47,13 @@ typedef struct item_t{
   bool legendary;//if true, only one may exist  
   int wearable;
   bool ranged;
+  bool is_static;
   bool is_two_handed;
   int extrinsic;
   int curse_lvl;//0=uncursed,1=blessed,2=cursed
   int water_breathing_lvl;//0=normal,1=shallow,2=deep
+
+  struct map_t* go_to_map;
 
   itemUseCallback use;
   itemConsumeCallback consume;
@@ -86,7 +91,8 @@ typedef struct item_zap_t{
 #define MAT_WOOD    3
 #define MAT_SILVER  4
 #define MAT_GOLD    5
-#define MAT_IRON    6
+#define MAT_STONE   6
+#define MAT_IRON    7
 
 //WEARABLE TYPES LIST
 #define WEAR_UNKNOWN 0

@@ -28,10 +28,16 @@
 #define CMD_REMAP 14
 #define CMD_EXTENDED 15
 #define CMD_EXAMINE 16
-#define CMD_MAX 16
+#define CMD_ASCEND 17
+#define CMD_DESCEND 18
+#define CMD_MANUAL 19
+#define CMD_MAX 19
 
+//Please keep this sorted alphabetically
 #define EXT_TOGGLE_NUMPAD 0
-#define EXT_MAX 0
+#define EXT_16_COLORS 1
+#define EXT_QUIT 2
+#define EXT_MAX 2
 
 int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
@@ -70,6 +76,9 @@ void open_tile();
 void close_tile();
 void pickup_tile();
 void debug();
+void manual();
+void xscend();
+void analyze_cmd_extended();
 void analyze_cmd(int cmd, int* x, int* y);
 
 #endif

@@ -30,7 +30,12 @@ void map_remove_creature(struct map_t* map, struct creature_t* creature);
 
 void map_draw_rect(struct map_t* map, int x, int y, int w, int h, int tile);
 void map_draw_borders(struct map_t* map);
-void map_draw_random_rooms(struct map_t* map);
+void map_draw_random_rooms(struct map_t* map, int x, int y);
+void map_place_up_stair(struct map_t* map, 
+			int x, 
+			int y, 
+			struct map_t* go_to_map);
+void map_place_down_stair_randomly(struct map_t* map);
 
 bool map_coord_is_door(struct map_t*, int x,int y);
 bool map_tile_is_door(int tile);

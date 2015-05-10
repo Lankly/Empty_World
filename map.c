@@ -98,28 +98,20 @@ int map_get_tile(struct map_t* map, int x, int y){
 
 void map_draw_rect(struct map_t* map, int x, int y, int w, int h, int tile){
   if(map == NULL){
-    endwin();
-    printf("Error: Map is null\n");
-    exit(1);
-  }
-  else if(x<0 || y<0 || x>=map->width || y>=map->height){
-    endwin();
-    printf("Error: Index out of bounds (draw)\n");
-    exit(1);
-  }
-  else if(w<0 || h<0 || (x+w)>map->width || (y+h)>map->height ){
-    endwin();
-    printf("Error: Rectangle out of bounds\n");
-    exit(1);
-  }
-  else if(tile<0 || tile>TILE_MAX){
-    endwin();
-    printf("Error: Tile nonexistant\n");
-    exit(1);
+    quit("Error: NULL map");
   }
 
-  for(int i=y;i<y+h;i++){
-    for(int j=x;j<x+w;j++){
+  if(x < 0){x = 1;}
+  else if(x + w >= TERMINAL_WIDTH){
+    w = TERMINAL_WIDTH-x-1;
+  }
+  if(y < 0){y = 1;}
+  else if(y + h >= TERMINAL_HEIGHT){
+    h = TERMINAL_HEIGHT-y-1;
+  }
+
+  for(int i = y; i < y+h; i++){
+    for(int j = x; j < x+w; j++){
       map->tiles[i*map->width+j]=tile;
     }
   }
@@ -197,7 +189,10 @@ void map_draw_borders(struct map_t* map){
   }
 }
 
-void map_draw_random_rooms(struct map_t* map){
+/* This function places a random number of randomly-sized rooms onto the map,
+ * with a guaranteed position of x and y, unless x and y are negative.
+ */
+void map_draw_random_rooms(struct map_t* map, int x, int y){
   //Assumes empty map
   int stop = rand()%7+2;
   int prevw=-1, prevh=-1, prevx=-1, prevy=-1;
@@ -206,9 +201,23 @@ void map_draw_random_rooms(struct map_t* map){
     int randh=rand()%(10-i)+3;
     int randx=rand()%(map->width-randw-3)+1;
     int randy=rand()%(map->height-randh-3)+1;
-    map_draw_rect(map, randx, randy, randw, randh, TILE_FLOOR);
+
+    /* If an initial position was given, we cannot advance until the first
+     * room generated contains the given position.
+     */
+    bool good = true;
+    if(i == 0 && x != -1 && y != -1
+       && ((randx > x || (randx + randw) <= x)
+	   || (randy > y || (randy + randh) <= y)
+	   )){
+      good = false;
+      i--;
+    }
+    else{
+      map_draw_rect(map, randx, randy, randw, randh, TILE_FLOOR);
+    }
     //draw corridors
-    if(prevw!=-1){
+    if(good && prevw!=-1){
       int prevmidx= prevx+(prevw/2);
       int prevmidy= prevy+(prevh/2);
       int curmidx = randx+(randw/2);
@@ -295,7 +304,77 @@ void map_draw_random_rooms(struct map_t* map){
 	
       }
     }
-    prevw=randw; prevh=randh; prevx=randx; prevy=randy;
+    if(good){
+      prevw=randw; prevh=randh; prevx=randx; prevy=randy;
+    }
+  }
+}
+/* This function checks whether a given coordinate on the map contains a
+ * down or an up stair.*/
+bool tile_has_stair(struct map_t* map, int x, int y){
+  if(map == NULL){quit("Error: Cannot check NULL Map");}
+  for(struct item_map_t* items = map->items;
+      items != NULL;
+      items = items->next){
+    if(items->x == x && items->y == y){
+      for(struct item_map_node_t* i = items->first;
+	  items != NULL;
+	  items = items->next){
+	if(i->item->id == ITEM_UP_STAIR
+	   || i->item->id == ITEM_DOWN_STAIR){
+	  return true;
+	}
+      }
+      return false;
+    }
+  }
+  return false;
+}
+
+void map_place_up_stair(struct map_t* map, 
+			int x, 
+			int y,
+			struct map_t* go_to_map){
+  if(map == NULL){
+    quit("Error: Cannot place Up-Stair on NULL Map");
+  }
+  item_t* stair = item_create_from_data(ITEM_UP_STAIR);
+  stair->go_to_map = go_to_map;
+  add_item(map, x, y, stair);
+}
+
+void map_place_down_stair_randomly(struct map_t* map){
+  if(map == NULL){
+    quit("Error: Cannot place Down-Stair on NULL Map");
+  }
+  bool done = false;
+  int c = 0;
+  while(!done){
+    c++;
+    int x = rand()%map->width;
+    int y = rand()%map->height;
+
+    if(c == 10000){endwin();}
+
+    if(map_get_tile(map, x, y) == TILE_FLOOR){
+      done = true;
+      //Check for nearby stairs
+      for(int i = -18; i < 15; i++){
+	for(int j = -18; j < 15; j++){
+	  int check_x = x + i;
+	  int check_y = y + j;
+	  if(check_x >= 0 && check_x < map->width
+	     && check_y >= 0 && check_y < map->height
+	     && tile_has_stair(map, check_x, check_y)){
+	    done = false;
+	  }
+	}
+      }
+      //If we're done, add the down stair to the map
+      if(done){
+	add_item(map, x, y, item_create_from_data(ITEM_DOWN_STAIR));
+      }
+    }
   }
 }
 

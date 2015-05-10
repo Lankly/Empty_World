@@ -1,0 +1,11 @@
+EmptyWorld
+----------
+
+Table of Contents:
+
+  1 - Story
+  2 - Gameplay
+  3 - Extended Commands
+  4 - Tips
+
+(Press number to jump to section)

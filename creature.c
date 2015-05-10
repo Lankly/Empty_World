@@ -186,8 +186,9 @@ int creature_get_damage(struct creature_t* creature){
 	to_return = to_return * creature->intelligence > 2 ? 1 : .8;
     }
   }
-  /* If the creature is attacking with no weapon, it is attacking with its hands,
-   * its claws, its teeth, etc., and the damage it does is equal to its stranth.
+  /* If the creature is attacking with no weapon, it is attacking with its 
+   * hands, its claws, its teeth, etc., and the damage it does is equal to its 
+   * stranth.
    */
   else{
     to_return = creature->strength;

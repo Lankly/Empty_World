@@ -22,9 +22,33 @@ void item_data_init(){
   item_data[CORPSE_HUMAN] = (item_t){
     .id = CORPSE_HUMAN,
     .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
-    .exam_text = "It is the corpse of a human",
+    .exam_text = "It is the corpse of a human.",
     .size = 1,
     .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[ITEM_DOWN_STAIR] = (item_t){
+    .id = ITEM_DOWN_STAIR,
+    .display = '>',
+    .exam_text = "It is the stair down to the next floor.",
+    .gold_value = -1,
+    .size = 5,
+    .material = MAT_STONE,
+    .weight = 1000,
+    .use = &downStairUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[ITEM_UP_STAIR] = (item_t){
+    .id = ITEM_UP_STAIR,
+    .display = '<',
+    .exam_text = "It is the stair up to the previous floor.",
+    .gold_value = -1,
+    .size = 5,
+    .material = MAT_STONE,
+    .weight = 1000,
+    .use = &upStairUseCallback,
     .consume = &defaultConsumeCallback,
     .zap = &defaultZapCallback
   };

@@ -129,8 +129,13 @@ void cmd_init(){
   cmd_data[CMD_REMAP] = '=';
   cmd_data[CMD_EXTENDED] = '#';
   cmd_data[CMD_EXAMINE] = 'x';
+  cmd_data[CMD_ASCEND] = '<';
+  cmd_data[CMD_DESCEND] = '>';
+  cmd_data[CMD_MANUAL] = '?';
 
   cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
+  cmd_data_extended[EXT_QUIT] = "quit";
+  cmd_data_extended[EXT_16_COLORS] = "16-colors";
 }
 
 /* This function will remap a given CMD to a new key, assuming that the input
@@ -305,7 +310,7 @@ void debug(){
 	add_item(cur_map,
 		 place_x,
 		 place_y,
-		 (struct item_t*)item_create_from_data(atoi(debug_cmd)) );
+		 (struct item_t*)item_create_from_data(atoi(debug_cmd)));
 	//msg_add("Done");
       }
     }
@@ -374,6 +379,140 @@ void toggle_numpad(){
   cmd_data[CMD_QCKMV] = q;
 }
 
+/* This function allows a player to ascend or descend a staircase if they are
+ * standing on one. The id is used to determine if they are trying to ascend
+ * or descend by checking the id of the items on the tile.
+ */
+void xscend(int id){
+  int x = player->x;
+  int y = player->y;
+  struct map_t* m = cur_map;
+
+  for(struct item_map_t* items = m->items;
+      items != NULL;
+      items = items->next){
+    if(x == items->x && y == items->y){
+      for(struct item_map_node_t* i = items->first;
+	  i != NULL;
+	  i = i->next){
+	if(i->item->id == id){
+	  struct item_use_t* data = 
+	    (struct item_use_t*)Calloc(1, sizeof(item_use_t));
+	  data->item = i->item;
+	  i->item->use(data);
+	}
+      }
+      return;
+    }
+  }
+}
+
+/* Displays the user manual.
+ */
+void manual(){
+  FILE *f = fopen("./manuals/manual.txt","r");
+  if(f == NULL){
+    msg_add("Manual missing!");
+    return;
+  }
+
+  int page = 0;
+  char ch = 0; //the character that the player presses
+
+  while(ch != 'q'){
+    clear();
+    int buffer_pos = 0;
+
+    //Read the entire file into memory
+    fseek(f, 0, SEEK_END);
+    int buffer_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    char *file = (char*)calloc(buffer_size + 1, sizeof(char));
+    fread(file, buffer_size, 1, f);
+    fclose(f);
+
+    buffer_pos = 0;
+
+    for(int j=0;  j < TERMINAL_HEIGHT; j++){
+      move(j,0);
+      
+      for(int i=0; i < TERMINAL_WIDTH; i++){
+	//Make the borders
+	if(j==0 || j == TERMINAL_HEIGHT-1){
+	  //Corners handled here
+	  addch((i==0 || i == TERMINAL_WIDTH-1) ? '+' : '-');
+	}
+	else if(i==0 || i == TERMINAL_WIDTH-1){
+	  mvaddch(j,i,'|');
+	}//Space between border and text
+	else if(j!=1 && j != TERMINAL_HEIGHT-2
+		&& i!=1 && i != TERMINAL_WIDTH-2){
+
+	  //Get data from file
+	  char s[TERMINAL_WIDTH-3] = {0};
+	  ////-3 leaves room for border, accounts for \0
+	  int s_pos = buffer_pos;
+	  buffer_pos += TERMINAL_WIDTH-4;
+	  
+	  /* Copy end of string into the buffer for the current line, 
+	   * with word wrap
+	   */
+	  if(buffer_pos >= buffer_size){
+	    strncpy(s, file+s_pos, TERMINAL_WIDTH-3);
+	    buffer_pos = buffer_size;
+	  }
+	  else{
+	    while(file[buffer_pos] != ' ' && file[buffer_pos] != '\n'){
+	      buffer_pos--;
+	    }
+	    strncpy(s, file+s_pos, buffer_pos-s_pos);
+	    int newline = strcspn(s, "\n");
+	    buffer_pos -= strlen(s) - newline-1; //1 to get around newline
+	    s[newline] = 0;
+	  }
+
+	  //Print the string
+	  mvaddstr(j,2, s);
+	  i = TERMINAL_WIDTH-2;
+	}
+      } //for
+    } //for
+
+    //Add quick nav information
+    mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-9 to skip, q to quit");
+
+    //Get input
+    ch = getch();
+    while(ch != '<' && ch != '>' && ch != 'q' && ch != 'Q'
+	  && ch != '0' && ch != '1'){
+      ch = getch();}
+
+    //If the page is changed, change it
+    ////Change back
+    if(ch == '<' && page > 0){
+      page--;
+    }
+    ////Change forward
+    else if(ch == '>' && page < 9){
+      page++;
+    }
+    ////Jump to a section
+    else{
+      page = ch - '0';
+    }
+    if(page != 0){
+      char path[17];
+      sprintf(path, "./manuals/%d.txt", page);
+      f = fopen(path, "r");
+    }
+    else{
+      f = fopen("./manuals/manual.txt", "r");
+    }
+    free(file);
+    if(f == NULL){return;} //This should happen when q is pressed
+  } //while
+}
+
 /* This command will let the user type a command
  */
 void analyze_cmd_extended(){
@@ -397,7 +536,7 @@ void analyze_cmd_extended(){
 
     int i = 0; bool done = false;
     //Predict what they want
-    if(strlen(ret) > 2){
+    if(strlen(ret) > 0){
       //Loop through all the extended commands
       for(i=0; i <= EXT_MAX && !done; i++){
 	//For each, examine for similarity to what's been typed
@@ -440,6 +579,20 @@ void analyze_cmd_extended(){
 
   if(strcmp(ret, cmd_data_extended[EXT_TOGGLE_NUMPAD])==0){
     toggle_numpad();
+  }
+  else if(strcmp(ret, cmd_data_extended[EXT_QUIT])==0){
+    endwin();
+    exit(0);
+  }
+  else if(strcmp(ret, cmd_data_extended[EXT_16_COLORS])==0){
+    for(int i =0; i < TILE_MAX; i++){
+      char sym = (char)tile_data[i].display;
+      int color = tile_data[i].display-((int)sym);
+      //GREY/BLACK -> YELLOW/BLACK
+      if(color == COLOR_PAIR(CP_GREY_BLACK)){
+	tile_data[i].display = sym | COLOR_PAIR(CP_YELLOW_BLACK);
+      }
+    }
   }
 }
 
@@ -492,6 +645,12 @@ void analyze_cmd(int cmd, int* x, int* y){
     analyze_cmd_extended();
   }else if(cmd == cmd_data[CMD_EXAMINE]){
     map_examine_tile(cur_map);
+  }else if(cmd == cmd_data[CMD_ASCEND]){
+    xscend(ITEM_UP_STAIR);
+  }else if(cmd == cmd_data[CMD_DESCEND]){
+    xscend(ITEM_DOWN_STAIR);
+  }else if(cmd == cmd_data[CMD_MANUAL]){
+    manual();
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
@@ -581,11 +740,12 @@ void game_init(int seed){
   //Setup floor
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
-  map_draw_random_rooms(cur_map);
+  map_draw_random_rooms(cur_map, -1, -1);
   map_cleanup(cur_map);
   map_draw_borders(cur_map);
 
   map_add_creature(cur_map, player);
+  map_place_down_stair_randomly(cur_map);
 
   qckmv_cmd=0;
   qckmv=false;

@@ -10,6 +10,49 @@ void defaultConsumeCallback(struct item_consume_t* data){
 void defaultZapCallback(struct item_zap_t* data){
   msg_add("Nothing happened!");}
 
+void downStairUseCallback(struct item_use_t* data){
+  if(data == NULL || data->item == NULL){
+    quit("Error: Cannot access NULL Stair");
+  }
+  //If there's no map to go down to, make a new one.
+  if(data->item->go_to_map == NULL){
+    data->item->go_to_map = (struct map_t*)Calloc(1, sizeof(struct map_t));
+    //map initialization
+    map_init(data->item->go_to_map, 
+	     cur_map->width, 
+	     cur_map->height,
+	     cur_map->max_item_height);
+    //Map draw
+    map_draw_random_rooms(data->item->go_to_map, player->x, player->y);
+    map_cleanup(data->item->go_to_map);
+    map_draw_borders(data->item->go_to_map);
+    //Move player
+    map_remove_creature(cur_map, player);
+    map_add_creature(data->item->go_to_map, player);
+    //Place stairs
+    map_place_up_stair(data->item->go_to_map,
+		       player->x,
+		       player->y,
+		       cur_map);
+    map_place_down_stair_randomly(data->item->go_to_map);
+  }
+  else{  //Just move player if the map exists
+  map_remove_creature(cur_map, player);
+  map_add_creature(data->item->go_to_map, player);
+  }
+  //Make the actual change of map
+  cur_map = data->item->go_to_map;
+}
+
+void upStairUseCallback(struct item_use_t* data){
+  if(data == NULL || data->item == NULL || data->item->go_to_map == NULL){
+    quit("Error: Cannot change to NULL Map");
+  }
+  map_add_creature(data->item->go_to_map, player);
+  map_remove_creature(cur_map, player);
+  cur_map = data->item->go_to_map;
+}
+
 void ironSwordUseCallback(struct item_use_t* data){
   if(data==NULL){
     quit("Error: Cannot use item on NULL");
