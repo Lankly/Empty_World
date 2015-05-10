@@ -1,0 +1,24 @@
+Menus and Commands
+------------------
+
+  Menus, like the help menu, are navigated page-by-page with the keys '<' for back and '>' for forward. 'q' exits the menu and returns you to the game. Certain menus are broken up into categories, which can be jumped to by pressing the section's number.
+
+  The following is a list of commands available to you as a player during normal gameplay. Commands are case sensitive.
+    <   Ascends a staircase (represented by the same symbol)
+    >   Descends a staircase (represented by the same symbol)
+    #   Open un Extended Commands
+    =   Reassign a command
+    ,   Pickup an item on the ground (if multiple, opens item menu)
+    .   Do nothing for the turn
+    e   Eat an item
+    k   Kick something (Requires direction) 
+    o   Open something (i.e. door, chest, bag)
+    C   Close something
+    q   Quaff an item
+    u   Use an item
+    w   Wield an item to use as a weapon
+    z   Zap an item (Wands only)
+
+  The following is a list of Extended Commands. Extended Commands are commands that are written out in the Extended Commands Console, which is opened with '#'.
+    toggle-numpad   Swaps numpad movement with hjklyubn movement
+    quit            Quits the game

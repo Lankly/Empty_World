@@ -416,6 +416,7 @@ void manual(){
     return;
   }
 
+  int section = 0; 
   int page = 0;
   char ch = 0; //the character that the player presses
 
@@ -433,76 +434,100 @@ void manual(){
 
     buffer_pos = 0;
 
-    for(int j=0;  j < TERMINAL_HEIGHT; j++){
-      move(j,0);
+    //Turn the file into an array of lines
+    int num_lines = 10;
+    int ar_pos = 0;
+    char **lines = (char**)calloc(num_lines, sizeof(char*));
+    while(buffer_pos < buffer_size){
+      //Check for realloc
+      if(ar_pos >= num_lines){
+	num_lines *= 2;
+	lines = (char**)realloc(lines, num_lines * sizeof(char*)); 
+      }
+
+      /* Get data from file, put it into array,
+       * -3 leaves room for border, accounts for \0
+       */
+      lines[ar_pos] = (char*)calloc(TERMINAL_WIDTH-3, sizeof(char));
+      int s_pos = buffer_pos;
+      buffer_pos += TERMINAL_WIDTH-4;
+    
+      /* Copy end of string into the buffer for the current line, 
+       * with word wrap
+       */
+      if(buffer_pos >= buffer_size){
+	strncpy(lines[ar_pos], file+s_pos, TERMINAL_WIDTH-3);
+	buffer_pos = buffer_size;
+      }
+      else{
+	while(file[buffer_pos] != ' '){
+	  buffer_pos--;
+	}
+      }
+      strncpy(lines[ar_pos], file+s_pos, buffer_pos-s_pos);
+      int newline = strcspn(lines[ar_pos], "\n");
+      if(newline != strlen(lines[ar_pos])){
+	buffer_pos -= strlen(lines[ar_pos]) - newline-1; //1 to get around newline
+	lines[ar_pos][newline] = 0;
+      }
+      ar_pos++;
+    }
+
+    //Print the top and bottom
+    mvaddch(0,0, '+');
+    mvaddch(0,TERMINAL_WIDTH-1, '+');
+    mvaddch(TERMINAL_HEIGHT-1,0, '+');
+    mvaddch(TERMINAL_HEIGHT-1, TERMINAL_WIDTH-1, '+');
+    //Add top and bottom border
+    mvaddch(1,0, '|');
+    mvaddch(TERMINAL_HEIGHT-2,0, '|');
+    mvaddch(1, TERMINAL_WIDTH-1, '|');
+    mvaddch(TERMINAL_HEIGHT-2, TERMINAL_WIDTH-1, '|');
+    for(int i=1; i < TERMINAL_WIDTH-1; i++){
+      mvaddch(0,i, '-');
+      mvaddch(TERMINAL_HEIGHT-1, i, '-');
+    }
+
+    for(int j=2;  j < TERMINAL_HEIGHT-2; j++){
+      mvaddch(j,0, '|');
+      if(page*(TERMINAL_HEIGHT-4)+j-2 < ar_pos){
+	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-4)+j-2]);}
+      mvaddch(j, TERMINAL_WIDTH-1, '|');
       
-      for(int i=0; i < TERMINAL_WIDTH; i++){
-	//Make the borders
-	if(j==0 || j == TERMINAL_HEIGHT-1){
-	  //Corners handled here
-	  addch((i==0 || i == TERMINAL_WIDTH-1) ? '+' : '-');
-	}
-	else if(i==0 || i == TERMINAL_WIDTH-1){
-	  mvaddch(j,i,'|');
-	}//Space between border and text
-	else if(j!=1 && j != TERMINAL_HEIGHT-2
-		&& i!=1 && i != TERMINAL_WIDTH-2){
-
-	  //Get data from file
-	  char s[TERMINAL_WIDTH-3] = {0};
-	  ////-3 leaves room for border, accounts for \0
-	  int s_pos = buffer_pos;
-	  buffer_pos += TERMINAL_WIDTH-4;
-	  
-	  /* Copy end of string into the buffer for the current line, 
-	   * with word wrap
-	   */
-	  if(buffer_pos >= buffer_size){
-	    strncpy(s, file+s_pos, TERMINAL_WIDTH-3);
-	    buffer_pos = buffer_size;
-	  }
-	  else{
-	    while(file[buffer_pos] != ' ' && file[buffer_pos] != '\n'){
-	      buffer_pos--;
-	    }
-	    strncpy(s, file+s_pos, buffer_pos-s_pos);
-	    int newline = strcspn(s, "\n");
-	    buffer_pos -= strlen(s) - newline-1; //1 to get around newline
-	    s[newline] = 0;
-	  }
-
-	  //Print the string
-	  mvaddstr(j,2, s);
-	  i = TERMINAL_WIDTH-2;
-	}
-      } //for
     } //for
 
     //Add quick nav information
-    mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-9 to skip, q to quit");
+    mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
 
     //Get input
     ch = getch();
     while(ch != '<' && ch != '>' && ch != 'q' && ch != 'Q'
-	  && ch != '0' && ch != '1'){
+	  && ch != '0' && ch != '1' && ch != '2'
+	  && ch != '3' && ch != '4' && ch != '5'){
       ch = getch();}
 
-    //If the page is changed, change it
+    //If the section or page is changed, change it
     ////Change back
-    if(ch == '<' && page > 0){
-      page--;
+    if(ch == '<'){
+      if(page==0 && section > 0){
+	section--;
+      }
+      else if(page > 0){page--;}
     }
     ////Change forward
-    else if(ch == '>' && page < 9){
-      page++;
+    else if(ch == '>' && section < 5){
+      if((page+1)*TERMINAL_HEIGHT >= ar_pos){
+	section++;
+      }
+      else{page++;}
     }
     ////Jump to a section
     else{
-      page = ch - '0';
+      section = ch - '0';
     }
-    if(page != 0){
+    if(section != 0){
       char path[17];
-      sprintf(path, "./manuals/%d.txt", page);
+      sprintf(path, "./manuals/%d.txt", section);
       f = fopen(path, "r");
     }
     else{

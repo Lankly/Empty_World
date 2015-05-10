@@ -152,8 +152,8 @@ bool equip_by_item(struct creature_t* creature, item_t* item){
   }
   //Chest
   if(item->wearable == WEAR_CHEST){
-    if(!item->material == MAT_LEATHER 
-       && !item->material == MAT_CLOTH 
+    if(item->material != MAT_LEATHER 
+       && item->material != MAT_CLOTH 
        && creature->inventory->chest->armour == NULL){
       creature->inventory->chest->armour = item;
       to_return = true;
