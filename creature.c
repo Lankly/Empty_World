@@ -277,22 +277,22 @@ void set_hunger(struct creature_t* c, int h){
   c->hunger=h;}
  
 char* get_name(struct creature_t* c){
-  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
-  return c-> name;
+  if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
+  return c->name;
 }
 
 int get_health(struct creature_t* c){
-  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
   return c-> health;
 }
 
 int get_level(struct creature_t* c){
-  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
   return c-> level;
 }
 
 int get_dlevel(struct creature_t* c){
-  if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
+  if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
   return c-> dlevel;
 }
 

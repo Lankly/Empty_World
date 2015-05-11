@@ -508,6 +508,28 @@ bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
    }
 }
 
+/* Returns true if the tile at coordinates x and y contains an item that stops
+ * the player's quick-movement. Passing out-of-bounds coordinates returns false.
+ */
+bool map_tile_stopme(struct map_t *map, int x, int y){
+  if(map == NULL){quit("Error: Cannot examine NULL Map");}
+  if(x < 0 || y < 0 || x >= TERMINAL_WIDTH || y >= TERMINAL_HEIGHT){
+    return false;}
+  
+  //Find the item stack at the given coordinates
+  item_map_t *i = map->items;
+  while(i != NULL && i->x < x && i->y < y){
+    i = i->next;}
+  if(i == NULL || i->x != x || i->y != y){return false;}
+
+  //If any item on the stack stops the player, return
+  item_map_node_t *cur = i->first;
+  while(cur != NULL){
+    if(cur->item->stopme){return true;}
+  }
+  return false;
+}
+
 /* This function uses a pair of coordinates and a radius to reveal the floor of
  * a given map.
  */

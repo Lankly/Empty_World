@@ -482,16 +482,18 @@ void manual(){
     mvaddch(1,0, '|');
     mvaddch(TERMINAL_HEIGHT-2,0, '|');
     mvaddch(1, TERMINAL_WIDTH-1, '|');
+    mvaddch(TERMINAL_HEIGHT-3,0, '|');
+    mvaddch(TERMINAL_HEIGHT-3, TERMINAL_WIDTH-1, '|');
     mvaddch(TERMINAL_HEIGHT-2, TERMINAL_WIDTH-1, '|');
     for(int i=1; i < TERMINAL_WIDTH-1; i++){
       mvaddch(0,i, '-');
       mvaddch(TERMINAL_HEIGHT-1, i, '-');
     }
 
-    for(int j=2;  j < TERMINAL_HEIGHT-2; j++){
+    for(int j=2;  j < TERMINAL_HEIGHT-3; j++){
       mvaddch(j,0, '|');
-      if(page*(TERMINAL_HEIGHT-4)+j-2 < ar_pos){
-	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-4)+j-2]);}
+      if(page*(TERMINAL_HEIGHT-5)+j-2 < ar_pos){
+	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-5)+j-2]);}
       mvaddch(j, TERMINAL_WIDTH-1, '|');
       
     } //for
@@ -517,7 +519,7 @@ void manual(){
     ////Change forward
     else if(ch == '>'){
       if(section < 5){
-	if((page+1)*TERMINAL_HEIGHT >= ar_pos){
+	if((page+1)*(TERMINAL_HEIGHT-2-3) >= ar_pos){
 	  section++;
 	  page = 0;
 	}
@@ -697,22 +699,22 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 
   //Check for at-corner in corridor
   if(cur_tile == TILE_CORRIDOR){
-    if(qckmv_cmd==KEY_UP 
+    if(qckmv_cmd==cmd_data[CMD_DOWN]
        && (ul==TILE_CORRIDOR 
 	   || ur==TILE_CORRIDOR)){
       return false;
     }
-    if(qckmv_cmd==KEY_DOWN 
+    if(qckmv_cmd==cmd_data[CMD_DOWN] 
        && (dl==TILE_CORRIDOR 
 	   || dr==TILE_CORRIDOR)){
       return false;
     }
-    if(qckmv_cmd==KEY_LEFT 
+    if(qckmv_cmd==cmd_data[CMD_LEFT]
        && (ul==TILE_CORRIDOR 
 	   || dl==TILE_CORRIDOR)){
       return false;
     }
-    if(qckmv_cmd==KEY_RIGHT 
+    if(qckmv_cmd==cmd_data[CMD_RIGHT]
        && (ur==TILE_CORRIDOR 
 	   || dr==TILE_CORRIDOR)){
       return false;
@@ -720,34 +722,62 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
   }
 
   //Check for change in tile type during quickmove
-  if(qckmv_cmd==KEY_UP
+  if(qckmv_cmd==cmd_data[CMD_UP]
      && (u!=cur_tile 
 	 || tile_data[ul].stopme 
-	 || tile_data[ur].stopme)){
+	 || tile_data[ur].stopme
+	 || map_tile_stopme(map, x-1, y-1)
+	 || map_tile_stopme(map, x, y-1)
+	 || map_tile_stopme(map, x+1, y-1))){
     return false;
   }
-  if(qckmv_cmd==KEY_DOWN
+  if(qckmv_cmd==cmd_data[CMD_DOWN]
      && (d!=cur_tile 
 	 || tile_data[dl].stopme 
-	 || tile_data[dr].stopme)){
+	 || tile_data[dr].stopme
+	 || map_tile_stopme(map, x-1, y+1)
+	 || map_tile_stopme(map, x, y+1)
+	 || map_tile_stopme(map, x+1, y+1))){
     return false;
   }
-  if(qckmv_cmd==KEY_LEFT
+  if(qckmv_cmd==cmd_data[CMD_LEFT]
      && (l!=cur_tile 
 	 || tile_data[dl].stopme 
-	 || tile_data[ul].stopme)){
+	 || tile_data[ul].stopme
+	 || map_tile_stopme(map, x-1, y-1)
+	 || map_tile_stopme(map, x-1, y)
+	 || map_tile_stopme(map, x-1, y+1))){
     return false;
   }
-  if(qckmv_cmd==KEY_RIGHT
+  if(qckmv_cmd==cmd_data[CMD_RIGHT]
      && (r!=cur_tile 
 	 || tile_data[dr].stopme 
-	 || tile_data[ur].stopme)){
+	 || tile_data[ur].stopme
+	 || map_tile_stopme(map, x+1, y-1)
+	 || map_tile_stopme(map, x+1, y)
+	 || map_tile_stopme(map, x+1, y+1))){
     return false;
   }
-  if((qckmv_cmd==KEY_HOME && ul!=cur_tile)
-     || (qckmv_cmd==KEY_PPAGE && ur!=cur_tile)
-     || (qckmv_cmd==KEY_END && dl!=cur_tile)
-     || (qckmv_cmd==KEY_NPAGE && dr!=cur_tile)){
+  if((qckmv_cmd==cmd_data[CMD_UP_LEFT] 
+      && (ul!=cur_tile
+	  || map_tile_stopme(map, x-1, y-1)
+	  || map_tile_stopme(map, x, y-1)
+	  || map_tile_stopme(map, x-1, y)))
+     || (qckmv_cmd==cmd_data[CMD_UP_RIGHT]
+	 && (ur!=cur_tile
+	     || map_tile_stopme(map, x+1, y-1)
+	     || map_tile_stopme(map, x, y-1)
+	     || map_tile_stopme(map, x+1, y)))
+      || (qckmv_cmd==cmd_data[CMD_DOWN_LEFT] 
+	  && (dl!=cur_tile
+	      || map_tile_stopme(map, x-1, y+1)
+	      || map_tile_stopme(map, x, y+1)
+	      || map_tile_stopme(map, x-1, y)))
+      || (qckmv_cmd==cmd_data[CMD_DOWN_RIGHT]
+	  && (dr!=cur_tile
+	      || map_tile_stopme(map, x+1, y+1)
+	      || map_tile_stopme(map, x, y+1)
+	      || map_tile_stopme(map, x+1, y)))){
     return false;
   }
   return true;

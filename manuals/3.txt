@@ -6,7 +6,7 @@ Menus and Commands
   The following is a list of commands available to you as a player during normal gameplay. Commands are case sensitive.
     <   Ascends a staircase (represented by the same symbol)
     >   Descends a staircase (represented by the same symbol)
-    #   Open un Extended Commands
+    #   Open Extended Commands
     =   Reassign a command
     ,   Pickup an item on the ground (if multiple, opens item menu)
     .   Do nothing for the turn

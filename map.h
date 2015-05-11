@@ -40,6 +40,7 @@ void map_place_down_stair_randomly(struct map_t* map);
 bool map_coord_is_door(struct map_t*, int x,int y);
 bool map_tile_is_door(int tile);
 bool map_tile_is_visible(struct map_t* map, int x, int y);
+bool map_tile_stopme(struct map_t *map, int x, int y);
 void map_examine_tile(struct map_t* map);
 void map_reveal(struct map_t* map, int x, int y, int rev_dist);
 

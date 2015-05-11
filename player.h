@@ -3,6 +3,8 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#define PLAYER_NAME_SIZE 12
+
 #include "creature.h"
 #include "items.h"
 

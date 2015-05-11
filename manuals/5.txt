@@ -1,11 +1,11 @@
 Credits
 -------
 
-  The main game is written by me, GitHub user Lankly. I have received advice and assistance in execution from GitHub user HatKirby.
+  The main game is written by me, GitHub user Lankly. I have received advice and assistance in execution from GitHub user hatkirby.
 
   This game uses NCURSES and is written in C. My text editor of choice is Emacs.
 
   The game's ASCII-art name was taken from http://patorjk.com/ and uses the 'Ogre' font with slight modification.
 
   I would like to thank the following testers:
-    -HatKirby
+    -hatkirby
