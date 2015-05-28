@@ -43,12 +43,6 @@ void player_init(char* name){
   player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
   player->exam_text = "This is you!";
   player->name = (char*)calloc(PLAYER_NAME_SIZE+1, sizeof(char));
-  char* input_name = msg_prompt("What is your name? ");
-  if(strcmp(input_name, "") == 0){
-    player->name = "Player";
-  }
-  else{
-    strncpy(player->name, input_name, PLAYER_NAME_SIZE);}
   
   set_vision(player, true);
   set_conscious(player, true);

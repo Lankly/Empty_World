@@ -133,6 +133,7 @@ void cmd_init(){
   cmd_data[CMD_DESCEND] = '>';
   cmd_data[CMD_MANUAL] = '?';
 
+  cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
   cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
   cmd_data_extended[EXT_QUIT] = "quit";
   cmd_data_extended[EXT_16_COLORS] = "16-colors";
@@ -529,6 +530,7 @@ void manual(){
     ////Jump to a section
     else{
       section = ch - '0';
+      page = 0;
     }
     if(section != 0){
       char path[17];
@@ -576,7 +578,9 @@ void analyze_cmd_extended(){
 	  if(j == strlen(ret)-1){
 	    move(MSG_ROW, strlen(ret)+1);
 	    for(int k=j+1; k < strlen(cmd_data_extended[i]); k++){
-	      addch(cmd_data_extended[i][k] | COLOR_PAIR(CP_GREY_BLACK));
+	      addch(cmd_data_extended[i][k] | (use_16_colors ?
+					       COLOR_PAIR(CP_YELLOW_BLACK)
+					       : COLOR_PAIR(CP_GREY_BLACK)));
 	    }
 	    done = true; i--; break;
 	  }
@@ -606,21 +610,47 @@ void analyze_cmd_extended(){
   }
 
   curs_set(0);
-
+  
   if(strcmp(ret, cmd_data_extended[EXT_TOGGLE_NUMPAD])==0){
     toggle_numpad();
+  }
+  else if(strcmp(ret, cmd_data_extended[EXT_NUM_LOCK])==0){
+    for(int i=0; i < CMD_MAX; i++){
+      if(cmd_data[i] == KEY_UP){
+	cmd_data[i] = '8';}
+      else if(cmd_data[i] == KEY_DOWN){
+	cmd_data[i] = '2';}
+      else if(cmd_data[i] == KEY_LEFT){
+	cmd_data[i] = '4';}
+      else if(cmd_data[i] == KEY_RIGHT){
+	cmd_data[i] = '6';}
+      else if(cmd_data[i] == KEY_PPAGE){
+	cmd_data[i] = '9';}
+      else if(cmd_data[i] == KEY_NPAGE){
+	cmd_data[i] = '3';}
+      else if(cmd_data[i] == KEY_HOME){
+	cmd_data[i] = '7';}
+      else if(cmd_data[i] == KEY_END){
+	cmd_data[i] = '1';}
+      else if(cmd_data[i] == KEY_B2){
+	cmd_data[i] = '5';}
+    }
   }
   else if(strcmp(ret, cmd_data_extended[EXT_QUIT])==0){
     endwin();
     exit(0);
   }
   else if(strcmp(ret, cmd_data_extended[EXT_16_COLORS])==0){
-    for(int i =0; i < TILE_MAX; i++){
-      char sym = (char)tile_data[i].display;
-      int color = tile_data[i].display-((int)sym);
+    use_16_colors = true;
+
+    //Replace all off-color tiles with new colors
+    for(int i = 0; i <= TILE_MAX; i++){
+      int color = tile_data[i].display;
+      int cp = COLOR_PAIR(CP_DARK_GREY_BLACK);
+      int sym = color ^ cp;
       //GREY/BLACK -> YELLOW/BLACK
-      if(color == COLOR_PAIR(CP_GREY_BLACK)){
-	tile_data[i].display = sym | COLOR_PAIR(CP_YELLOW_BLACK);
+      if((color & cp) == cp){
+	tile_data[i].display = (sym | COLOR_PAIR(CP_YELLOW_BLACK));
       }
     }
   }
@@ -805,6 +835,7 @@ void game_init(int seed){
   map_add_creature(cur_map, player);
   map_place_down_stair_randomly(cur_map);
 
-  qckmv_cmd=0;
-  qckmv=false;
+  qckmv_cmd = 0;
+  qckmv = false;
+  use_16_colors = false;
 }

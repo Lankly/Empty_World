@@ -34,15 +34,17 @@
 #define CMD_MAX 19
 
 //Please keep this sorted alphabetically
-#define EXT_TOGGLE_NUMPAD 0
-#define EXT_16_COLORS 1
-#define EXT_QUIT 2
-#define EXT_MAX 2
+#define EXT_16_COLORS 0
+#define EXT_NUM_LOCK 1
+#define EXT_TOGGLE_NUMPAD 2
+#define EXT_QUIT 3
+#define EXT_MAX 3
 
 int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
 
 bool qckmv;
+bool use_16_colors;
 int qckmv_cmd;
 
 void* Calloc(int items, int size);
