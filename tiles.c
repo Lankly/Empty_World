@@ -41,7 +41,7 @@ void tile_data_init(){
     .display = '+', 
     .exam_text = "It is a closed wooden door.\n",
     .hardness = 2, 
-    .stopme = true, 
+    .stopme = true,
     .openable = true};
   tile_data[TILE_DOOR_BROKEN] = (tile_t){
     .id = TILE_DOOR_BROKEN,

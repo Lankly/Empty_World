@@ -152,16 +152,43 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
    * corner, they cannot be caryying too much.
    */
   if(creature->inventory->cur_weight > PASS_WEIGHT 
-     && ((cmd==KEY_HOME && !u.passable && !l.passable) 
-	 || (cmd==KEY_PPAGE && !u.passable && !r.passable) 
-	 || (cmd==KEY_END && !d.passable && !l.passable) 
-	 || (cmd==KEY_NPAGE && !d.passable && !r.passable))){
+     && ((cmd==KEY_HOME && !d.passable && !r.passable) 
+	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
+	 || (cmd==KEY_END && !u.passable && !r.passable) 
+	 || (cmd==KEY_NPAGE && !u.passable && !l.passable))){
     //If we were trying to move the player, print out a quick alert
     if(creature == player){
       msg_add("You are too heavy to pass through.");}
     return false;
   }
-
+  // Also cannot pass through closed door.
+  if((cmd==cmd_data[CMD_UP_LEFT] && ((map_tile_is_door(d.id)
+				      && !d.passable
+				      && !r.passable)
+				     ||(map_tile_is_door(r.id)
+					&& !r.passable
+					&& !d.passable)))
+     ||(cmd==cmd_data[CMD_UP_RIGHT]&&((map_tile_is_door(d.id)
+				       && !d.passable
+				       && !l.passable)
+				      ||(map_tile_is_door(l.id)
+					 && !l.passable
+					 && !d.passable)))
+     ||(cmd==cmd_data[CMD_DOWN_LEFT]&&((map_tile_is_door(u.id)
+					&& !u.passable
+					&& !r.passable)
+				       ||(map_tile_is_door(r.id)
+					  && !r.passable
+					  && !u.passable)))
+     ||(cmd==cmd_data[CMD_DOWN_RIGHT]&&((map_tile_is_door(u.id)
+					 && !u.passable
+					 && !l.passable)
+					||(map_tile_is_door(l.id)
+					   && !l.passable
+					   && !u.passable))))
+    {
+      return false;
+    }
   return true;
 
 }
