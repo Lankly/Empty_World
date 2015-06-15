@@ -68,6 +68,8 @@ void draw_status(map_t* map){
 }
 
 void msg_add(char* new_msg){
+  if(new_msg == NULL){new_msg = "Bad message";}
+  
   char* m = (char*) Calloc(MAX_MSG_LEN+1,sizeof(char*));
   strncpy(m,new_msg,MAX_MSG_LEN);
   //If no messages exist

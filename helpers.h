@@ -72,6 +72,7 @@ int display(display_list_t* list,int width,int height);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
 
 void game_init();
+void game_over();
 void draw_map(struct map_t* map);
 
 void open_tile();

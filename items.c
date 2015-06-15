@@ -93,19 +93,25 @@ int count_items(struct map_t* map, int x, int y){
   return 0;
 }
 
-bool add_item(struct map_t* map, int x, int y, struct item_t* item){
+/* Adds an item to the given map at the given coordinates. reveal is to tell
+ * if we are adding this to the list of known items or not.
+ */
+bool add_item(struct map_t* map, int x, int y, struct item_t* item, bool reveal){
   if(map==NULL){quit("Error: NULL map");}
-  if(item->size>map->max_item_height){return false;}
-  item_map_t* cur = NULL;
-  if(x<0 || y<0 || get_coord(x,y,map->width)>map->width*map->height){
-    quit("Error: Items Index Out of Bounds");
+  if(item->size > map->max_item_height){return false;}
+  item_map_t *cur = NULL;
+  if(x<0 || y<0 || get_coord(x,y,map->width) > map->width*map->height){
+    return false;
   }
 
   //Case where no items exist yet
-  else if(map->items == NULL){
+  if((!reveal && map->items == NULL) || (reveal && map->known_items == NULL)){
     item_map_t* items = (item_map_t*)Calloc(1, sizeof(item_map_t));
     item_map_init(items, x, y);
-    map->items = items;
+    if(reveal){
+      map->known_items = items;}
+    else{
+      map->items = items;}
 
     items->first = Calloc(1,sizeof(item_map_node_t));
     items->first->item = item;
@@ -115,21 +121,28 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item){
   //Now we loop through to find where to insert our data
   else{
     item_map_t* last;
-    for(item_map_t* i=map->items; i!=NULL; i=i->next){
+    for(item_map_t* i = reveal ? map->known_items : map->items;
+	i!=NULL;
+	i=i->next){
       last = i;
       //If we've gone too far, create a new spot for our data
       if(i->y > y || (i->y==y && i->x > x)){
-	item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
-	item_map_init(items,x,y);
+	item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
+	item_map_init(items, x, y);
 
 	//Need to make sure this isn't first element
-	if(i->prev!=NULL){i->prev->next=items;}
-	else{map->items=items;}
+	if(i->prev!=NULL){
+	  i->prev->next=items;}
+	else if(reveal){
+	  map->known_items = items;}
+	else{
+	  map->items = items;}
 
-	items->prev=i->prev;
-	items->next=i;
-	i->prev=items;
-	cur=items;break;
+	items->prev = i->prev;
+	items->next = i;
+	i->prev = items;
+	cur = items; 
+	break;
       }
       //Linked List already exists at x,y
       else if(i->y==y && i->x==x){
@@ -138,14 +151,11 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item){
     }
     //Case where it is inserted last
     if(cur==NULL){
-          
-      msg_addf("(%d,%d) - %d",x,y,(int)time(NULL));
-
-      item_map_t* items=(item_map_t*)Calloc(1,sizeof(item_map_t));
-      item_map_init(items,x,y);
-      last->next=items;
-      items->prev=last;
-      cur=items;
+      item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
+      item_map_init(items, x, y);
+      last->next = items;
+      items->prev = last;
+      cur = items;
     }
   }
   //If there is no more room in this stack or it cannot fit
@@ -154,10 +164,10 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item){
   }
   //Finally, add the item
   item_map_node_t* insert = (item_map_node_t*)Calloc(1,sizeof(item_map_node_t));
-  insert->item=item;
-  insert->next=cur->first;
-  cur->first=insert;
-  cur->size+=item->size;
+  insert->item = item;
+  insert->next = cur->first;
+  cur->first = insert;
+  cur->size += item->size;
   return true;
 }
 
@@ -210,18 +220,19 @@ void destroy_item(struct item_t* item){
  * the item stack at the given coordinates in the given map.
  */
 int get_item_sym(struct map_t* map,int x,int y,int index){
-  if(get_coord(x,y,map->width)>map->width*map->height){
+  if(get_coord(x, y, map->width) > map->width*map->height){
     quit("Error: Items Index Out of Bounds");
   }
 
   //Navigate to the correct item-stack on the map
-  item_map_t* cur=NULL;
-  for(item_map_t* i=map->items;i!=NULL;i=i->next){
-    if(i->y>y || (i->y==y && i->x>x)){break;}
-    cur=i;
-    if(i->y==y && i->x==x){break;}
+  item_map_t *cur=NULL;
+  for(item_map_t *i = map->items; i != NULL; i = i->next){
+    if(i->y > y || (i->y == y && i->x > x)){
+      break;}
+    if(i->y == y && i->x == x){
+      cur = i;}
   }
-  if(cur==NULL){quit("Error: NULL item stack");}
+  if(cur==NULL){return -1;}
 
   //Navigate to the correct item on the stack
   item_map_node_t* cur_node = cur->first;

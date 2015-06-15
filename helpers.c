@@ -7,10 +7,12 @@
 #include "player.h"
 #include "status.h"
 #include "tiles.h"
+#include <ctype.h>
 #include <curses.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <time.h>
+#include <unistd.h>
 
 //Helper Methods
 
@@ -311,7 +313,8 @@ void debug(){
 	add_item(cur_map,
 		 place_x,
 		 place_y,
-		 (struct item_t*)item_create_from_data(atoi(debug_cmd)));
+		 (struct item_t*)item_create_from_data(atoi(debug_cmd)),
+		 false);
 	//msg_add("Done");
       }
     }
@@ -335,7 +338,22 @@ void debug(){
     }
     exit(0);
   }else if(!strcmp(debug_cmd_lower,"reveal")){
-    cur_map->known_map=cur_map;
+    cur_map->known_map = cur_map;
+  }else if(!strcmp(debug_cmd_lower,"kill")){
+    int k_x = player->x;
+    int k_y = player->y;
+    get_coord_via_cursor(&k_y,&k_x);
+
+    if(cur_map->creatures != NULL){
+      for(struct creature_list_node_t *cur = cur_map->creatures->first;
+	  cur != NULL;
+	  cur = cur->next){
+	if(cur->creature->x == k_x && cur->creature->y == k_y){
+	  damage_creature(cur->creature, "GOD", 10000);
+	  break;
+	}
+      }
+    }
   }
 }
 
@@ -814,12 +832,14 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 }
 
 void game_init(int seed){
+  if(seed == 0){seed = time(NULL);}
   initscr(); color_init(); cbreak(); noecho();
   keypad(stdscr, true); curs_set(0);  
 
   //Initialize game data
   tile_data_init();
   item_data_init();
+  creature_data_init();
   player_init();
   inventory_init(player);
   status_init();
@@ -827,15 +847,34 @@ void game_init(int seed){
 
   //Setup floor
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
-  map_init(cur_map, TERMINAL_WIDTH, TERMINAL_HEIGHT-3,DEFAULT_ITEMS_STACK_SIZE);
+  map_init(cur_map,
+	   TERMINAL_WIDTH,
+	   TERMINAL_HEIGHT-3,
+	   DEFAULT_ITEMS_STACK_SIZE,
+	   1);
   map_draw_random_rooms(cur_map, -1, -1);
   map_cleanup(cur_map);
   map_draw_borders(cur_map);
 
   map_add_creature(cur_map, player);
   map_place_down_stair_randomly(cur_map);
+  map_place_spawners(cur_map);  
 
+  //Set flags
   qckmv_cmd = 0;
   qckmv = false;
   use_16_colors = false;
+}
+
+void game_over(){
+  char res = msg_promptchar("Game Over! Restart? (y/N)");
+  if(res == 'y' || res == 'Y'){
+    endwin();
+    printf("You died!");
+    exit(0);
+  }
+  else{
+    sleep(1000);
+    game_init(0);
+  }
 }

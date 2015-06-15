@@ -21,7 +21,8 @@ void downStairUseCallback(struct item_use_t* data){
     map_init(data->item->go_to_map, 
 	     cur_map->width, 
 	     cur_map->height,
-	     cur_map->max_item_height);
+	     cur_map->max_item_height,
+	     cur_map->dlevel+1);
     //Map draw
     map_draw_random_rooms(data->item->go_to_map, player->x, player->y);
     map_cleanup(data->item->go_to_map);
@@ -37,11 +38,12 @@ void downStairUseCallback(struct item_use_t* data){
     map_place_down_stair_randomly(data->item->go_to_map);
   }
   else{  //Just move player if the map exists
-  map_remove_creature(cur_map, player);
-  map_add_creature(data->item->go_to_map, player);
+    map_remove_creature(cur_map, player);
+    map_add_creature(data->item->go_to_map, player);
   }
   //Make the actual change of map
   cur_map = data->item->go_to_map;
+  player->dlevel++;
 }
 
 void upStairUseCallback(struct item_use_t* data){
@@ -51,6 +53,7 @@ void upStairUseCallback(struct item_use_t* data){
   map_add_creature(data->item->go_to_map, player);
   map_remove_creature(cur_map, player);
   cur_map = data->item->go_to_map;
+  player->dlevel--;
 }
 
 void ironSwordUseCallback(struct item_use_t* data){
@@ -59,11 +62,11 @@ void ironSwordUseCallback(struct item_use_t* data){
   }
   //If the item was used on a player
   if(data->type==CALLBACK_TYPE_PLAYER){
-    damage_creature(player,data->item->damage);
+    damage_creature(player, data->item->name, data->item->damage);
   }
   //If it was used on a creature
   else if(data->type==CALLBACK_TYPE_CREATURE){
-    damage_creature(data->creature, data->caller->damage);
+    damage_creature(data->creature, data->item->name, data->item->damage);
   }
   //If it was used on another item
   else if(data->type==CALLBACK_TYPE_ITEM){

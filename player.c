@@ -8,7 +8,7 @@
 
 void playerTakeTurnCallback(struct creature_t* creature,
 			    struct map_t* map){
-  map_reveal(map, player->x, player->y, creature_see_distance(player));
+  map_reveal(map, creature_see_distance(player));
   draw_map(map);
   draw_status(map);
 
@@ -42,8 +42,14 @@ void player_init(char* name){
   player = (struct creature_t*)Calloc(1,sizeof(struct creature_t));
   player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
   player->exam_text = "This is you!";
-  player->name = (char*)calloc(PLAYER_NAME_SIZE+1, sizeof(char));
   
+  //Get player's name
+  player->name = (char*)calloc(PLAYER_NAME_SIZE+1, sizeof(char));
+  strncpy(player->name, msg_prompt("What is your name? "), PLAYER_NAME_SIZE);
+  if(!strcmp(player->name, "")){
+    player->name = "Lan";}
+
+  player->corpse_type = CORPSE_HUMAN;
   set_vision(player, true);
   set_conscious(player, true);
   set_strength(player, 1);
@@ -57,8 +63,8 @@ void player_init(char* name){
   set_hunger(player, player->max_hunger);
   set_gold(player, 5);
   set_level(player, 1);
-  set_name(player, name);
-
+  set_dlevel(player, 1);
+  
   player->breathables = (breathe_list_t*)Calloc(1,sizeof(breathe_list_t));
   add_breathable(player, BREATHE_AIR);
   player->consumables = (consume_list_t*)Calloc(1,sizeof(consume_list_t));

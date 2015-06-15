@@ -1,3 +1,4 @@
+#include "colors.h"
 #include "creature.h"
 #include "creature_callbacks.h"
 #include "items.h"
@@ -6,7 +7,9 @@
 #include "player.h"
 #include "status.h"
 #include "tiles.h"
+#include <math.h>
 #include <stdbool.h>
+#include <string.h>
 
 /* Initializes all the possible default creatures. Certain fields will not be
  * initialized, because we can't know what they'll be in advance, such as level,
@@ -14,17 +17,481 @@
  */
 void creature_data_init(){
   creature_data[CREATURE_UNKNOWN] = (struct creature_t){
-    .takeTurn=&defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_SPAWNER] = (struct creature_t){
+    .corpse_type = CORPSE_SPAWNER,
+    .creature_id = CREATURE_SPAWNER,
+    .display = '%' | COLOR_PAIR(CP_GREEN_BLACK),
+    .exam_text = "???",
+    .health = 100,
+    .is_awake = true,
+    .takeTurn = &spawnerTakeTurnCallback
   };
   creature_data[CREATURE_HUMAN_WARRIOR] = (struct creature_t){
     .corpse_type = CORPSE_HUMAN,
+    .display = '@',
     .name = "Human Warrior",
     .exam_text = "This is a human warrior.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 2,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HUMAN_BOWMAN] = (struct creature_t){
+    .corpse_type = CORPSE_HUMAN,
+    .display = '@',
+    .name = "Human Bowman.",
+    .exam_text = "This is a human bowman.",
+    .health = 20,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HUMAN_PIKEMAN] = (struct creature_t){
+    .corpse_type = CORPSE_HUMAN,
+    .display = '@',
+    .name = "Human Pikeman",
+    .exam_text = "This is a human pikeman.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HUMAN_MONK] = (struct creature_t){
+    .corpse_type = CORPSE_HUMAN,
+    .display = '@',
+    .name = "Human Monk",
+    .exam_text = "This is a human monk.",
+    .health = 25,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HUMAN_WIZARD] = (struct creature_t){
+    .corpse_type = CORPSE_HUMAN,
+    .display = '@',
+    .name = "Human Wizard",
+    .exam_text = "This is a human wizard.",
+    .health = 20,
     .is_awake = true,
     .can_move = true,
     .can_see = true,
     .takeTurn = &defaultTakeTurnCallback
   };
+  creature_data[CREATURE_WERECREATURE] = (struct creature_t){
+    .corpse_type = CORPSE_WERE,
+    .display = 'W',
+    .name = "Werecreature",
+    .exam_text = "This is a were-something.",
+    .health = 50,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 5,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_GOBLIN_WARRIOR] = (struct creature_t){
+    .corpse_type = CORPSE_GOBLIN,
+    .display = 'G',
+    .name = "Goblin Warrior",
+    .exam_text = "This is a goblin warrior.",
+    .health = 35,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 3,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_GOBLIN_BOWMAN] = (struct creature_t){
+    .corpse_type = CORPSE_GOBLIN,
+    .display = 'G',
+    .name = "Goblin Bowman",
+    .exam_text = "This is a goblin bowman.",
+    .health = 25,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 2,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_GOBLIN_PIKEMAN] = (struct creature_t){
+    .corpse_type = CORPSE_GOBLIN,
+    .display = 'G',
+    .name = "Goblin Pikeman",
+    .exam_text = "This is a goblin pikeman.",
+    .health = 35,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 3,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_GOBLIN_WIZARD] = (struct creature_t){
+    .corpse_type = CORPSE_GOBLIN,
+    .display = 'G',
+    .name = "Goblin Wizard",
+    .exam_text = "This is a goblin wizard.",
+    .health = 25,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_ORC_WARRIOR] = (struct creature_t){
+    .corpse_type = CORPSE_ORC,
+    .display = 'R',
+    .name = "Orc Warrior",
+    .exam_text = "This is an orc warrior.",
+    .health = 40,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 4,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_ORC_BOWMAN] = (struct creature_t){
+    .corpse_type = CORPSE_ORC,
+    .display = 'R',
+    .name = "Orc Bowman",
+    .exam_text = "This is an orc bowman.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 3,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_ORC_PIKEMAN] = (struct creature_t){
+    .corpse_type = CORPSE_ORC,
+    .display = 'R',
+    .name = "Orc Pikeman",
+    .exam_text = "This is an orc pikeman.",
+    .health = 40,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 4,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_ORC_WIZARD] = (struct creature_t){
+    .corpse_type = CORPSE_ORC,
+    .display = 'R',
+    .name = "Orc Wizard",
+    .exam_text = "This is an orc wizard.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_MINDFLAYER] = (struct creature_t){
+    .corpse_type = CORPSE_MINDFLAYER,
+    .display = 'M',
+    .name = "Mindflayer",
+    .exam_text = "This is a mindflayer.",
+    .health = 120,
+    .is_awake = true,
+    .can_move = true,
+    .strength = 15,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_SKELETON_WARRIOR] = (struct creature_t){
+    .corpse_type = CORPSE_SKELETON,
+    .display = 'S',
+    .name = "Skeleton Warrior",
+    .exam_text = "This is a skeleton Warrior.",
+    .health = 10,
+    .is_awake = true,
+    .can_move = true,
+    .strength = 2,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_SKELETON_BOWMAN] = (struct creature_t){
+    .corpse_type = CORPSE_SKELETON,
+    .display = 'S',
+    .name = "Skeleton Bowman",
+    .exam_text = "This is a skeleton bowman.",
+    .health = 10,
+    .is_awake = true,
+    .can_move = true,
+    .strength = 2,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_SKELETON_PIKEMAN] = (struct creature_t){
+    .corpse_type = CORPSE_SKELETON,
+    .display = 'S',
+    .name = "Skeleton Pikeman",
+    .exam_text = "This is a skeleton pikeman.",
+    .health = 10,
+    .is_awake = true,
+    .can_move = true,
+    .strength = 2,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_PUPPY] = (struct creature_t){
+    .corpse_type = CORPSE_CANINE,
+    .display = 'd',
+    .name = "Puppy",
+    .exam_text = "This is a cute little puppy!",
+    .health = 12,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_DOG] = (struct creature_t){
+    .corpse_type = CORPSE_CANINE,
+    .display = 'D',
+    .name = "Dog",
+    .exam_text = "This is a dog.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 4,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_WARDOG] = (struct creature_t){
+    .corpse_type = CORPSE_CANINE,
+    .display = 'D',
+    .name = "Wardog",
+    .exam_text = "This is a trained wardog.",
+    .health = 100,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 10,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_KITTEN] = (struct creature_t){
+    .corpse_type = CORPSE_FELINE,
+    .display = 'c',
+    .name = "Kitten",
+    .exam_text = "This is a cute little kitten!",
+    .health = 5,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HOUSECAT] = (struct creature_t){
+    .corpse_type = CORPSE_FELINE,
+    .display = 'C',
+    .name = "Housecat",
+    .exam_text = "This is a housecat.",
+    .health = 9,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 3,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_WARCAT] = (struct creature_t){
+    .corpse_type = CORPSE_FELINE,
+    .display = 'C',
+    .name = "Warcat",
+    .exam_text = "This is a trained warcat.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 8,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_LION] = (struct creature_t){
+    .corpse_type = CORPSE_FELINE,
+    .display = 'C',
+    .name = "Lion",
+    .exam_text = "This is a ferocious lion.",
+    .health = 50,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 5,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_PUMA] = (struct creature_t){
+    .corpse_type = CORPSE_FELINE,
+    .display = 'C',
+    .name = "Puma",
+    .exam_text = "This is a deadly puma.",
+    .health = 60,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 6,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_WOLF] = (struct creature_t){
+    .corpse_type = CORPSE_CANINE,
+    .display = 'D',
+    .name = "Wolf",
+    .exam_text = "This is a wild wolf.",
+    .health = 10,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 7,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_HORSE] = (struct creature_t){
+    .corpse_type = CORPSE_EQUUS,
+    .display = 'H',
+    .name = "Horse",
+    .exam_text = "This is a horse. How did it get in a cave?",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 8,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_UNICORN] = (struct creature_t){
+    .corpse_type = CORPSE_EQUUS,
+    .display = 'U',
+    .name = "Unicorn",
+    .exam_text = "This is a unicorn.",
+    .health = 80,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 9,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_UNICORN_GOOD] = (struct creature_t){
+    .corpse_type = CORPSE_EQUUS,
+    .display = 'U',
+    .name = "Unicorn",
+    .exam_text = "This is a unicorn.",
+    .health = 70,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 8,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_UNICORN_EVIL] = (struct creature_t){
+    .corpse_type = CORPSE_EQUUS,
+    .display = 'U',
+    .name = "Unicorn",
+    .exam_text = "This is a unicorn.",
+    .health = 90,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 10,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_PAPER_GOLEM] = (struct creature_t){
+    .corpse_type = CORPSE_GOLEM,
+    .display = 'O',
+    .name = "Paper Golem",
+    .exam_text = "This is a golem made of paper.",
+    .health = 30,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 3,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_ROCK_GOLEM] = (struct creature_t){
+    .corpse_type = CORPSE_GOLEM,
+    .display = 'O',
+    .name = "Rock Golem",
+    .exam_text = "This is a golem made of rock.",
+    .health = 50,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 4,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_SILVER_GOLEM] = (struct creature_t){
+    .corpse_type = CORPSE_GOLEM,
+    .display = 'O',
+    .name = "Silver Golem",
+    .exam_text = "This is a golem made of silver.",
+    .health = 80,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 5,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_GOLD_GOLEM] = (struct creature_t){
+    .corpse_type = CORPSE_GOLEM,
+    .display = 'O',
+    .name = "Gold Golem",
+    .exam_text = "This is a golem made of gold.",
+    .health = 70,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 6,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_IRON_GOLEM] = (struct creature_t){
+    .corpse_type = CORPSE_GOLEM,
+    .display = 'O',
+    .name = "Iron Golem",
+    .exam_text = "This is a golem made of iron.",
+    .health = 100,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 7,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+  creature_data[CREATURE_FLOATING_EYE] = (struct creature_t){
+    .corpse_type = CORPSE_EYE,
+    .display = 'E',
+    .name = "Floating Eye",
+    .exam_text = "This is an eyball floating over the floor.",
+    .health = 120,
+    .is_awake = true,
+    .can_move = true,
+    .can_see  = true,
+    .strength = 1,
+    .takeTurn = &defaultTakeTurnCallback
+  };
+}
+
+struct creature_t* creature_create_from_data(int index){
+  //Error checking
+  if(index < 0 || index > CREATURE_MAX){
+    quit("Error: Cannot create creature with unknown id");}
+
+  //Actually create the creature here
+  struct creature_t *to_return = (struct creature_t*)Calloc(1, sizeof(struct creature_t));
+  memcpy(to_return, &creature_data[index], sizeof(struct creature_t));
+
+  //Return the creature
+  return to_return;
+}
+
+void creature_spawn(int creature_id, struct map_t* map){
+  if(map == NULL){
+    quit("Error: Cannot spawn creature on NULL Map");}
+  if(creature_id < 0 || creature_id > CREATURE_MAX){
+    quit("Error: Cannot spawn creature with unknown id");}
+
+  struct creature_t* c = creature_create_from_data(creature_id);
+  c->dlevel = map->dlevel;
+  creature_place_on_map(c, map);
+  map_add_creature(map, c);
 }
 
 /* This method will kill the creature and place its corpse and items
@@ -32,13 +499,13 @@ void creature_data_init(){
 void creature_kill(struct creature_t* creature){
   if(creature==NULL){quit("ERROR: Cannot kill NULL Creature");}
   item_t* corpse = item_create_from_data(creature->corpse_type);
-  add_item(cur_map, creature->x, creature->y, corpse);
+  add_item(cur_map, creature->x, creature->y, corpse, false);
 
   if(creature->inventory!=NULL){
     while(creature->inventory->first!=NULL){
       item_t* next = creature->inventory->first->item;
       if(next!=NULL && rand()%2){
-	add_item(cur_map, creature->x, creature->y, next);
+	add_item(cur_map, creature->x, creature->y, next, false);
       }
       inventory_node_t* to_remove = creature->inventory->first;
       creature->inventory->first = to_remove->next;
@@ -46,15 +513,37 @@ void creature_kill(struct creature_t* creature){
     }
     free(creature->inventory);
   }
+  msg_addf("%s is slain!", creature->name);
+  map_remove_creature(cur_map, creature);
+
+  bool was_player = creature == player;
+  if(was_player){
+    draw_map(cur_map);
+    draw_status(cur_map);}
+
+  free(creature->name);
   free(creature);
+
+  if(was_player){
+    game_over();}
 }
 
 /* This method handles how a creature takes damage.
  */
-void damage_creature(struct creature_t* creature,int dmg){
-  creature->health -= dmg;
-  if(creature->health<=0){
-    creature_kill(creature);}
+void damage_creature(struct creature_t *target, char *source, int dmg){
+  if(target == NULL){return;}
+  
+  target->health -= dmg;
+  if(target->health<=0){
+    creature_kill(target);}
+
+  //Damage message
+  if(dmg == 0){
+    msg_addf("%s is hit, but it does nothing!", target->name);
+  }else if(source == NULL){
+    msg_addf("%s is hit!", target->name);}
+  else{
+    msg_addf("%s is hit by %s!", target->name, source);}
 }
 
 /* This method places the given creature on the given map
@@ -94,36 +583,28 @@ int creature_see_distance(struct creature_t* creature){
 		      + creature->level)
 		   * creature->perception 
 		   / ((creature->max_hunger - creature->hunger) / 100 + 1));
-  /* Had to assign to variable b/c returning the equation was causing
-   * the control to reach the end of the function. This stopped it for
-   * some reason unknown to me at this time.
-   */
   return to_return;
 }
 
-/* This method returns true if the given creature is visible to the player,
- * and false otherwise
+/* This method returns true if the given target creature can be seen by the seer
+ * creature and false otherwise.
  */
-bool creature_is_visible(struct creature_t* creature){
-  if(creature == NULL){
+bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
+  if(target == NULL || seer == NULL){
     quit("ERROR: Cannot get visibility of NULL creature.");
   }
 
-  /* Initial check to see if the creature is too far away or 
-   * if the player is blind
-   */
-  int diff_x = player->x - creature->x;
-  int diff_y = player->y - creature->y;
+  //If on different floors, return false
+  if(target->dlevel != seer->dlevel){
+    return false;}
 
-  diff_x = diff_x<0 ? -diff_x : diff_x;
-  diff_y = diff_y<0 ? -diff_y : diff_y;
+  if(sqrt(pow(target->x - seer->x, 2) + pow(target->y - seer->y, 2))
+     > creature_see_distance(seer)){
+    return false;}
 
-  if(diff_x>creature_see_distance(player) 
-     || diff_y>creature_see_distance(player)){
-    return false;
-  }
-
-  return map_tile_is_visible(cur_map, creature->x, creature->y);
+  //If the seer is the player, do a wall-check. Return true otherwise.
+  return seer == player ? map_tile_is_visible(cur_map, target->x, target->y)
+    : true;
 }
 
 /* This method returns true if a given creature can move to a given tile, not
@@ -200,6 +681,11 @@ int creature_get_damage(struct creature_t* creature){
   if(creature == NULL){
     quit("ERROR: Cannot get damage of NULL creature.");
   }
+
+  //If no inventory, just use stranth
+  if(creature->inventory == NULL){
+    return creature->strength;}
+  
   double to_return = 0;
   if(creature->inventory->weild != NULL){
     /* Base weapon damage is a function of strength, health, and weapon damage

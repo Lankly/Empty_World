@@ -7,6 +7,7 @@
 #define CP_GREEN_BLACK 3
 #define CP_BLACK_WHITE 4
 #define CP_DARK_GREY_BLACK 5
+#define CP_BLUE_BLACK 6
 
 //New Colors (Start at index 8)
 #define COLOR_GREY 8

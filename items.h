@@ -23,8 +23,11 @@
 #define CORPSE_SENTINEL 16
 #define CORPSE_PLANT  17
 #define CORPSE_EYE    18
+#define CORPSE_SPAWNER 20
+#define CORPSE_EQUUS 21
+#define CORPSE_GOLEM 22
 #define ITEM_IRON_SWORD 19
-#define ITEM_MAX 19
+#define ITEM_MAX 22
 
 //These are callbacks that will be inside of each item
 struct item_use_t; struct item_consume_t; struct item_zap_t;
@@ -38,7 +41,8 @@ typedef struct item_t{
   int int_bonus;int agl_bonus;int luc_bonus;int hth_bonus;
 
   int display;
-  char* exam_text;
+  char *name;
+  char *exam_text;
   int gold_value;
   int size;//how much space it takes up on an item stack, in a bag
   int material;
@@ -134,7 +138,7 @@ typedef struct item_map_t{
 void item_data_init();
 void item_map_init(struct item_map_t* items, int w, int h);
 
-bool add_item(struct map_t* map, int x, int y, struct item_t* i);
+bool add_item(struct map_t* map, int x, int y, struct item_t* i, bool reveal);
 item_t* remove_item(struct map_t* map, int x, int y, int index);
 int count_items(struct map_t* map,int x,int y);
 void destroy_item(item_t* item);

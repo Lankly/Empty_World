@@ -1,6 +1,7 @@
 #include <curses.h>
 #include <math.h>
 #include <stdlib.h>
+#include "colors.h"
 #include "creature.h"
 #include "map.h"
 #include "helpers.h"
@@ -12,10 +13,11 @@
 
 /* Initializes a given map. Expects the map to have already been allocated.
  */
-void map_init(struct map_t* map, int w, int h, int max_item_height){
+void map_init(struct map_t* map, int w, int h, int max_item_height, int dlevel){
   if(map == NULL){quit("Error: Cannot initialize NULL Map");}
   map->width = w;
   map->height= h;
+  map->dlevel = dlevel;
   map->max_item_height = max_item_height;
   map->tiles = (int*)Calloc(w * h,sizeof(int));
   map->creatures = (struct creature_list_t*)
@@ -24,16 +26,16 @@ void map_init(struct map_t* map, int w, int h, int max_item_height){
 
 /* This function adds a creature to a given map.
  */
-void map_add_creature(struct map_t* map, struct creature_t* creature){
+void map_add_creature(struct map_t *map, struct creature_t *creature){
   if(map == NULL){quit("Error: Cannot add Creature to NULL Map");}
   if(creature == NULL){quit("Error: Cannot add NULL Creature to Map");}
   if(map->creatures == NULL){
-    map->creatures = (struct creature_list_t*)
-      Calloc(1, sizeof(struct creature_list_t));
+    map->creatures =
+      (struct creature_list_t*)Calloc(1, sizeof(struct creature_list_t));
   }
 
-  struct creature_list_node_t* to_add = (struct creature_list_node_t*)
-    Calloc(1, sizeof(creature_list_node_t));
+  struct creature_list_node_t *to_add =
+    (struct creature_list_node_t*)Calloc(1, sizeof(creature_list_node_t));
   to_add->creature = creature;
   to_add->next = map->creatures->first;
   map->creatures->first = to_add;
@@ -41,23 +43,25 @@ void map_add_creature(struct map_t* map, struct creature_t* creature){
 
 /* This function removes a creature from a given map.
  */
-void map_remove_creature(struct map_t* map, struct creature_t* creature){
+void map_remove_creature(struct map_t *map, struct creature_t *creature){
   if(map == NULL || map->creatures == NULL 
      || map->creatures->first == NULL || creature == NULL){return;}
   
-  struct creature_list_node_t* cur = map->creatures->first;
+  struct creature_list_node_t *cur = map->creatures->first;
   //Need to check if the thing we're removing is first in the list
   if(cur->creature == creature){
     map->creatures->first = cur->next;
-    free(cur); return;
+    free(cur);
   }
-  
-  //Now we check everything else
-  for(; cur->next != NULL; cur = cur->next){
-    if(cur->next->creature == creature){
-      creature_list_node_t* temp = cur->next;
-      cur->next = temp->next;
-      free(temp);
+  else{
+    //Now we check everything else
+    for(; cur->next != NULL; cur = cur->next){
+      if(cur->next->creature == creature){
+	creature_list_node_t* temp = cur->next;
+	cur->next = temp->next;
+	free(temp);
+	return;
+      }
     }
   }
 }
@@ -89,9 +93,7 @@ int map_get_tile(struct map_t* map, int x, int y){
     exit(1);
   }
   else if(x<0 || y<0 || x>=map->width || y>=map->height){
-    endwin();
-    printf("Error: Index out of bounds (get %d,%d)\n",x,y);
-    exit(1);
+    return TILE_UNKNOWN;
   }
   return map->tiles[y*map->width+x];
 }
@@ -130,7 +132,7 @@ void map_draw_borders(struct map_t* map){
 	bool done=false;
 	
 	//Check right
-	if(chk_x<map->width 
+	if(chk_x<map->width
 	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
 	  map->tiles[j*map->width+i]=TILE_WALL;
 	  done=true;
@@ -143,15 +145,15 @@ void map_draw_borders(struct map_t* map){
 	  done=true;
 	}//Check down
 	chk_x--;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
+	if(!done && chk_x<map->width
+	   && chk_y<map->height
 	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
 	  map->tiles[j*map->width+i] = TILE_WALL;
 	  done=true;
 	}//Check down, left
 	chk_x--;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
+	if(!done && chk_x<map->width
+	   && chk_y<map->height
 	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
 	  map->tiles[j*map->width+i] = TILE_WALL;
 	  done=true;
@@ -340,7 +342,7 @@ void map_place_up_stair(struct map_t* map,
   }
   item_t* stair = item_create_from_data(ITEM_UP_STAIR);
   stair->go_to_map = go_to_map;
-  add_item(map, x, y, stair);
+  add_item(map, x, y, stair, false);
 }
 
 void map_place_down_stair_randomly(struct map_t* map){
@@ -372,25 +374,52 @@ void map_place_down_stair_randomly(struct map_t* map){
       }
       //If we're done, add the down stair to the map
       if(done){
-	add_item(map, x, y, item_create_from_data(ITEM_DOWN_STAIR));
+	add_item(map, x, y, item_create_from_data(ITEM_DOWN_STAIR), false);
       }
     }
   }
 }
 
-bool map_coord_is_door(struct map_t* map, int x, int y){
-  int tile = map_get_tile(map,x,y);
-  return (tile==TILE_DOOR_OPEN || tile==TILE_DOOR_CLOSE || tile==TILE_DOOR_BROKEN);
+void map_place_spawners(struct map_t* map){
+  if(map == NULL){
+    quit("Error: Cannot place spawners on NULL Map");}
+  
+  //We place one spawner for every ten levels, plus one
+  for(int i = 0; i < ((map->dlevel/10) + 1); i++){
+    struct creature_t *spawner = creature_create_from_data(CREATURE_SPAWNER);
+    spawner->dlevel = map->dlevel;
+
+    /* Must be placed on an unknown tile. This makes it possible for it to be 
+     * seen from a corridor, but that does not matter since it cannot be killed
+     * except with a pick. */
+    do{
+      spawner->x = rand() % map->width;
+      spawner->y = rand() % map->height;
+    }while(map_get_tile(map, spawner->x, spawner->y) != TILE_UNKNOWN);
+    map_add_creature(map, spawner);
+
+    //Each spawner is activated one hundred times when created (avg 5 creatures)
+    //for(int i = 0; i < 100; i++){
+    //  (*(spawner->takeTurn))(spawner, map);}
+  }
 }
 
 bool map_tile_is_door(int tile){
-  return (tile==TILE_DOOR_OPEN || tile==TILE_DOOR_CLOSE || tile==TILE_DOOR_BROKEN);
+  return (tile==TILE_DOOR_OPEN
+	  || tile==TILE_DOOR_CLOSE
+	  || tile==TILE_DOOR_BROKEN);
 }
+
+bool map_coord_is_door(struct map_t* map, int x, int y){
+  int tile = map_get_tile(map,x,y);
+  return map_tile_is_door(tile);
+}
+
 
 /* This function allows the player to get the description of a given tile. It 
  * first gives them a cursor to move around with and select what they want with
- * enter. Then, it checks that coordinate for a creature, then an item stack, then
- * the tile.
+ * enter. Then, it checks that coordinate for a creature, then an item stack, 
+ * then the tile.
  */
 void map_examine_tile(struct map_t* map){
   if(map == NULL){quit("Error: Cannot examine NULL Map");}
@@ -433,6 +462,10 @@ void map_examine_tile(struct map_t* map){
  * It has the monsters x and y*
  * coords as parameters       */
 bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
+  //Initial checks
+  if(map->dlevel != player->dlevel){return false;}
+  if(player->x == check_x && player->y == check_y){return true;}
+     
   int t, x, y, abs_delta_x, abs_delta_y, sign_x, sign_y, delta_x, delta_y;
   
   /* Delta x is the players x minus the monsters x    *
@@ -533,184 +566,225 @@ bool map_tile_stopme(struct map_t *map, int x, int y){
 /* This function uses a pair of coordinates and a radius to reveal the floor of
  * a given map.
  */
-void map_reveal(struct map_t* map, int x, int y, int rev_dist){
+void map_reveal(struct map_t *map, int rev_dist){
+  //Checks to make sure everything is OK
   if(map == NULL){quit("Error: Cannot reveal NULL Map");}
-  if(x < 0 || y <0 || x > TERMINAL_WIDTH-1 || y > TERMINAL_HEIGHT-1){
+  if(player->x < 0 || player->y <0
+     || player->x > TERMINAL_WIDTH-1 || player->y > TERMINAL_HEIGHT-1){
     return;
   }
 
   //If no map has been revealed yet, start revealing
   if(map->known_map == NULL){
     map->known_map = (struct map_t*)Calloc(1, sizeof(struct map_t));
-    map_init(map->known_map, map->width, map->height, map->max_item_height);
+    map_init(map->known_map,
+	     map->width,
+	     map->height,
+	     map->max_item_height,
+	     map->dlevel);
   }
+  struct item_map_t *cur = map->known_items;
 
   //For each point in the map,
   for(int j=0; j < map->height; j++){
-    for(int i=0; i < TERMINAL_WIDTH; i++){
+    for(int i=0; i < map->width; i++){
       //Check to see if it's in the possible radius to reveal a tile
-      int dist = sqrt(pow(( (double)(i-x) ), 2) + pow(( (double)(j-y) ), 2));
+      int dist = sqrt(pow(i - player->x, 2) + pow(j - player->y, 2));
       //If it is, also check whether or not something's in the way
-      if(rev_dist - dist >= 0
-	 && map_tile_is_visible(map, i, j)){
+      if(dist <= rev_dist && map_tile_is_visible(map, i, j)){
+	//Reveal the tile
 	map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
 	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
+	
+	  //Remove items already revealed
+	  for(struct item_map_t *items = map->known_items;
+	      items != NULL;
+	      items = items->next){
+	    if(items->y == j && items->x == i){
+	      while(items->first != NULL){
+		struct item_map_node_t *item = items->first;
+		for(;item->next != NULL; item = item->next);
+		free(item);
+	      }
+	      items->size = 0;
+	    }
+	  }
+
+	//Reveal the items (if they exist)
+	if(cur != NULL && cur->y == j && cur->x == i){
+	  //Add the new items
+	  for(struct item_map_node_t *item = cur->first;
+	      item != NULL;
+	      item = item->next){
+	    add_item(map, i, j, item->item, true);
+	  }
+	  cur = cur->next;
+	}
       }
     }
   }
 }
 
 void map_cleanup(struct map_t* map){
-  for(int y=1; y<map->height; y++){
-    for(int x=1; x<map->width; x++){
+  for(int y = 1; y < map->height; y++){
+    for(int x = 1; x < map->width; x++){
       //Delete all unnecessary corridors
-      int cur_tile=map_get_tile(map,x,y);
-      if(cur_tile==TILE_CORRIDOR){
-	int u=map_get_tile(map,x,y-1);
-	int d=map_get_tile(map,x,y+1);
-	int l=map_get_tile(map,x-1,y);
-	int r=map_get_tile(map,x+1,y);
-	int ul=map_get_tile(map,x-1,y-1);
-	int ur=map_get_tile(map,x+1,y-1);
-	int dl=map_get_tile(map,x-1,y+1);
-	int dr=map_get_tile(map,x+1,y+1);
+      int cur_tile = map_get_tile(map, x, y);
+      if(cur_tile == TILE_CORRIDOR){
+	int u = map_get_tile(map, x, y-1);
+	int d = map_get_tile(map, x, y+1);
+	int l = map_get_tile(map, x-1, y);
+	int r = map_get_tile(map, x+1, y);
+	int ul = map_get_tile(map, x-1, y-1);
+	int ur = map_get_tile(map, x+1, y-1);
+	int dl = map_get_tile(map, x-1, y+1);
+	int dr = map_get_tile(map, x+1, y+1);
 	//Catches corridors that replace sides of rooms - vertical sides
-	if(d==TILE_CORRIDOR 
-	   && ((r==TILE_FLOOR 
-		&& dr==TILE_FLOOR 
-		&& ur==TILE_FLOOR 
-		&& l!=TILE_CORRIDOR) 
-	       || (l==TILE_FLOOR 
-		   && dl==TILE_FLOOR 
-		   && ul==TILE_FLOOR 
-		   && r!=TILE_CORRIDOR))){
-	  if(r==TILE_FLOOR && l==TILE_FLOOR){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	if(d == TILE_CORRIDOR 
+	   && ((r == TILE_FLOOR 
+		&& dr == TILE_FLOOR 
+		&& ur == TILE_FLOOR 
+		&& l != TILE_CORRIDOR) 
+	       || (l == TILE_FLOOR 
+		   && dl == TILE_FLOOR 
+		   && ul == TILE_FLOOR 
+		   && r != TILE_CORRIDOR))){
+	  if(r == TILE_FLOOR && l == TILE_FLOOR){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
 	  else if(map_tile_is_door(l)){
-	    map_set_tile(map,x-1,y,TILE_FLOOR);
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	    map_set_tile(map, x-1, y, TILE_FLOOR);
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
 	  else {
-	    map_set_tile(map,x,y,TILE_WALL);
+	    map_set_tile(map, x, y, TILE_WALL);
 	  }
 	}//Catches corridors that replace sides of rooms - horizontal side
-	else if(r==TILE_CORRIDOR 
-		&& ((u==TILE_FLOOR 
-		     && ur==TILE_FLOOR 
-		     && ul==TILE_FLOOR 
-		     && d!=TILE_CORRIDOR) 
-		    || (d==TILE_FLOOR 
-			&& dr==TILE_FLOOR 
-			&& dl==TILE_FLOOR 
-			&& u!=TILE_CORRIDOR))){
-	  if(u==TILE_FLOOR && d==TILE_FLOOR){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	else if(r == TILE_CORRIDOR 
+		&& ((u == TILE_FLOOR && ur == TILE_FLOOR 
+		     && ul == TILE_FLOOR && d  != TILE_CORRIDOR) 
+		    || (d == TILE_FLOOR  && dr == TILE_FLOOR 
+			&& dl == TILE_FLOOR && u != TILE_CORRIDOR))){
+	  if(u == TILE_FLOOR && d == TILE_FLOOR){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
 	  else if(map_tile_is_door(u)){
-	    map_set_tile(map,x,y-1,TILE_FLOOR);
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	    map_set_tile(map, x, y-1,TILE_FLOOR);
+	    map_set_tile(map, x, y,TILE_FLOOR);
 	  }
-	  else if(d!=TILE_CORRIDOR){
-	    map_set_tile(map,x,y,TILE_WALL);
+	  else if(d != TILE_CORRIDOR){
+	    map_set_tile(map, x, y, TILE_WALL);
 	  }
 	}//Catches too many corridors in empty space
-	else if(u==TILE_CORRIDOR 
-		&& ur==TILE_CORRIDOR 
-		&& r==TILE_CORRIDOR 
-		&& d==TILE_UNKNOWN){
-	  map_set_tile(map,x,y,TILE_UNKNOWN);
+	else if(u == TILE_CORRIDOR 
+		&& ur == TILE_CORRIDOR 
+		&& r == TILE_CORRIDOR 
+		&& d == TILE_UNKNOWN){
+	  map_set_tile(map, x, y, TILE_UNKNOWN);
 	}
-	//Place a door here if possible (Possible=Adjacent Floor+Adjacent Corridor)
-	else if((u==TILE_FLOOR 
-		 || d==TILE_FLOOR 
-		 || l==TILE_FLOOR 
-		 || r==TILE_FLOOR) 
-		&& (u==TILE_CORRIDOR 
-		    || d==TILE_CORRIDOR 
-		    || r==TILE_CORRIDOR 
-		    || l==TILE_CORRIDOR)){
+	//Place a door here if possible
+	//(Possible=Adjacent Floor+Adjacent Corridor)
+	else if((u == TILE_FLOOR 
+		 || d == TILE_FLOOR 
+		 || l == TILE_FLOOR 
+		 || r == TILE_FLOOR) 
+		&& (u == TILE_CORRIDOR 
+		    || d == TILE_CORRIDOR 
+		    || r == TILE_CORRIDOR 
+		    || l == TILE_CORRIDOR)){
 	  //If two adjacent doors, replace with Floor
 	  if(map_tile_is_door(l)){
-	    if(u!=TILE_CORRIDOR){
-	      map_set_tile(map,x-1,y,TILE_FLOOR);
-	      map_set_tile(map,x,y,TILE_FLOOR);
+	    if(u != TILE_CORRIDOR){
+	      map_set_tile(map, x-1, y, TILE_FLOOR);
+	      map_set_tile(map, x, y, TILE_FLOOR);
 	    }
 	    else{
-	      map_set_tile(map,x-1,y,TILE_WALL);
-	      map_set_tile(map,x,y,TILE_DOOR_CLOSE);
+	      map_set_tile(map, x-1, y, TILE_WALL);
+	      map_set_tile(map, x, y, TILE_DOOR_CLOSE);
 	    }
 	  }
 	  else if(map_tile_is_door(u)){
-	    if(l!=TILE_CORRIDOR){
-	      map_set_tile(map,x,y-1,TILE_FLOOR);
-	      map_set_tile(map,x,y,TILE_FLOOR);
+	    if(l != TILE_CORRIDOR){
+	      map_set_tile(map, x, y-1, TILE_FLOOR);
+	      map_set_tile(map, x, y, TILE_FLOOR);
 	    }
 	    else{
-	      map_set_tile(map,x,y-1,TILE_WALL);
-	      map_set_tile(map,x,y,TILE_DOOR_CLOSE);
+	      map_set_tile(map, x, y-1, TILE_WALL);
+	      map_set_tile(map, x, y, TILE_DOOR_CLOSE);
 	    }
 	  }
-	  else if((l==TILE_FLOOR 
-		   && u==TILE_FLOOR) 
-		  || (u==TILE_FLOOR 
-		      && r==TILE_FLOOR) 
-		  || (r==TILE_FLOOR 
-		      && d==TILE_FLOOR) 
-		  || (d==TILE_FLOOR 
-		      && l==TILE_FLOOR)){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	  else if((l == TILE_FLOOR 
+		   && u == TILE_FLOOR) 
+		  || (u == TILE_FLOOR 
+		      && r == TILE_FLOOR) 
+		  || (r == TILE_FLOOR 
+		      && d == TILE_FLOOR) 
+		  || (d == TILE_FLOOR 
+		      && l == TILE_FLOOR)){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
-	  else if(rand()%3==0){
-	    map_set_tile(map,x,y,TILE_DOOR_OPEN);
+	  else if(rand()%3 == 0){
+	    map_set_tile(map, x, y, TILE_DOOR_OPEN);
 	  }
-	  else if(rand()%50==0){
-	    map_set_tile(map,x,y,TILE_DOOR_BROKEN);
+	  else if(rand()%50 == 0){
+	    map_set_tile(map, x, y, TILE_DOOR_BROKEN);
 	  }
-	  else{map_set_tile(map,x,y,TILE_DOOR_CLOSE);}
+	  else{map_set_tile(map, x, y, TILE_DOOR_CLOSE);}
 	}
 	//Replace double doors (Distinct from Two Adjacent Doors)
-	else if(map_tile_is_door(u) && d==TILE_FLOOR){
-	  if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
-	    map_set_tile(map,x,y-1,TILE_FLOOR);//Changed from WALL to FLOOR
+	else if(map_tile_is_door(u) && d == TILE_FLOOR){
+	  if(ur != TILE_CORRIDOR && ul != TILE_CORRIDOR){
+	    map_set_tile(map, x, y-1, TILE_FLOOR);//Changed from WALL to FLOOR
 	  }
-	  //if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
-	  map_set_tile(map,x,y,TILE_FLOOR);//Changed from WALL to FLOOR
+	  //if((ur==TILE_FLOOR && ul==TILE_CORRIDOR)
+	  //|| (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
+	  map_set_tile(map, x, y, TILE_FLOOR);//Changed from WALL to FLOOR
 	    //}
 	}
-	else if(map_tile_is_door(l) && r==TILE_FLOOR){
-	  if(ul!=TILE_CORRIDOR && dl!=TILE_CORRIDOR){
-	    map_set_tile(map,x-1,y,TILE_FLOOR);
+	else if(map_tile_is_door(l) && r == TILE_FLOOR){
+	  if(ul != TILE_CORRIDOR && dl != TILE_CORRIDOR){
+	    map_set_tile(map, x-1, y, TILE_FLOOR);
 	  }
-	  //if((ul==TILE_FLOOR && dl==TILE_CORRIDOR) || (ul==TILE_CORRIDOR && dl==TILE_FLOOR) || (ul==TILE_WALL && dl==TILE_WALL)){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	  //if((ul==TILE_FLOOR && dl==TILE_CORRIDOR)
+	  //|| (ul==TILE_CORRIDOR && dl==TILE_FLOOR)
+	  //|| (ul==TILE_WALL && dl==TILE_WALL)){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	    //}
 	}
 	//Fix corridor blobs
-	else if(r==TILE_CORRIDOR && d==TILE_CORRIDOR && dr==TILE_CORRIDOR){
-	  if(u==TILE_FLOOR || ur==TILE_FLOOR){
-	    map_set_tile(map,x,y,TILE_FLOOR);
-	    map_set_tile(map,x+1,y,TILE_FLOOR);
+	else if(r == TILE_CORRIDOR
+		&& d == TILE_CORRIDOR
+		&& dr == TILE_CORRIDOR){
+	  if(u == TILE_FLOOR || ur == TILE_FLOOR){
+	    map_set_tile(map, x, y, TILE_FLOOR);
+	    map_set_tile(map, x+1, y, TILE_FLOOR);
 	  }
-	  else if(u==TILE_UNKNOWN && ur==TILE_UNKNOWN){
-	    if(l!=TILE_CORRIDOR){map_set_tile(map,x,y,TILE_UNKNOWN);}
-	    if(map_get_tile(map,x+2,y)!=TILE_CORRIDOR){map_set_tile(map,x+1,y,TILE_UNKNOWN);}
+	  else if(u == TILE_UNKNOWN && ur == TILE_UNKNOWN){
+	    if(l != TILE_CORRIDOR){
+	      map_set_tile(map, x, y, TILE_UNKNOWN);}
+	    if(map_get_tile(map, x+2, y) != TILE_CORRIDOR){
+	      map_set_tile(map, x+1, y, TILE_UNKNOWN);}
 	  }
 	}
 	else if(d==TILE_CORRIDOR && l==TILE_CORRIDOR && dl==TILE_CORRIDOR){
 	   if(r==TILE_FLOOR){map_set_tile(map,x,y,TILE_WALL);}
 	}
 	//Fix abandoned corridors
-	else if(u!=TILE_CORRIDOR && d!=TILE_CORRIDOR && r!=TILE_CORRIDOR && l!=TILE_CORRIDOR){
-	  if((l==TILE_FLOOR && r==TILE_FLOOR) || (u==TILE_FLOOR && d==TILE_FLOOR)){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	else if(u != TILE_CORRIDOR
+		&& d != TILE_CORRIDOR
+		&& r != TILE_CORRIDOR
+		&& l != TILE_CORRIDOR){
+	  if((l == TILE_FLOOR && r == TILE_FLOOR)
+	     || (u == TILE_FLOOR && d == TILE_FLOOR)){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
 	  else if(map_tile_is_door(u)){
 	    if(ur!=TILE_CORRIDOR && ul!=TILE_CORRIDOR){
 	      map_set_tile(map,x,y-1,TILE_WALL);
 	    }
-	    if((ur==TILE_FLOOR && ul==TILE_CORRIDOR) || (ur==TILE_CORRIDOR && ul==TILE_FLOOR)){
-	      map_set_tile(map,x,y,TILE_WALL);
+	    if((ur == TILE_FLOOR && ul == TILE_CORRIDOR)
+	       || (ur == TILE_CORRIDOR && ul == TILE_FLOOR)){
+	      map_set_tile(map, x, y, TILE_WALL);
 	    }
 	  }
 	  else if(map_tile_is_door(r)){
@@ -731,7 +805,7 @@ void map_cleanup(struct map_t* map){
 	    if(ul!=TILE_CORRIDOR && dl!=TILE_CORRIDOR && map_get_tile(map,x-2,y)!=TILE_CORRIDOR){
 	      map_set_tile(map,x-1,y,TILE_WALL);
 	    }
-	    map_set_tile(map,x,y,TILE_WALL);    
+	    map_set_tile(map,x,y,TILE_WALL);
 	  }
 	  else{
 	    map_set_tile(map,x,y,TILE_WALL);
@@ -739,51 +813,67 @@ void map_cleanup(struct map_t* map){
 	}
       }
       //Fix improper doors
-      cur_tile=map_get_tile(map,x,y);
+      cur_tile = map_get_tile(map, x, y);
       if(map_tile_is_door(cur_tile)){
-	int u=map_get_tile(map,x,y-1);
-	int d=map_get_tile(map,x,y+1);
-	int l=map_get_tile(map,x-1,y);
-	int r=map_get_tile(map,x+1,y);
-	int ul=map_get_tile(map,x-1,y-1);
-	int ur=map_get_tile(map,x+1,y-1);
-	int dl=map_get_tile(map,x-1,y+1);
-	int dr=map_get_tile(map,x+1,y+1);
-	if(u!=TILE_CORRIDOR && d!=TILE_CORRIDOR && r!=TILE_CORRIDOR && l!=TILE_CORRIDOR){
-	  if((u==TILE_FLOOR && d==TILE_FLOOR) || (l==TILE_FLOOR && r==TILE_FLOOR)){
-	    map_set_tile(map,x,y,TILE_FLOOR);
+	int u = map_get_tile(map, x, y-1);
+	int d = map_get_tile(map, x, y+1);
+	int l = map_get_tile(map, x-1, y);
+	int r = map_get_tile(map, x+1, y);
+	int ul = map_get_tile(map, x-1, y-1);
+	int ur = map_get_tile(map, x+1, y-1);
+	int dl = map_get_tile(map, x-1, y+1);
+	int dr = map_get_tile(map, x+1, y+1);
+	if(u != TILE_CORRIDOR 
+	   && d != TILE_CORRIDOR 
+	   && r != TILE_CORRIDOR 
+	   && l != TILE_CORRIDOR){
+	  if((u == TILE_FLOOR && d == TILE_FLOOR) 
+	     || (l == TILE_FLOOR && r == TILE_FLOOR)){
+	    map_set_tile(map, x, y, TILE_FLOOR);
 	  }
 	  else{
-	    map_set_tile(map,x,y,TILE_WALL);
+	    map_set_tile(map, x, y, TILE_WALL);
 	  }
 	}
-	else if(u==TILE_CORRIDOR && r==TILE_CORRIDOR && ur==TILE_CORRIDOR){
-	  map_set_tile(map,x,y-1,TILE_WALL);
+	else if(u == TILE_CORRIDOR 
+		&& r == TILE_CORRIDOR 
+		&& ur == TILE_CORRIDOR){
+	  map_set_tile(map, x, y-1, TILE_WALL);
 	}
-	else if(r==TILE_CORRIDOR && d==TILE_CORRIDOR && dr==TILE_CORRIDOR){
-	  map_set_tile(map,x+1,y,TILE_WALL);
+	else if(r == TILE_CORRIDOR 
+		&& d == TILE_CORRIDOR 
+		&& dr == TILE_CORRIDOR){
+	  map_set_tile(map, x+1, y, TILE_WALL);
 	}
-	else if(d==TILE_CORRIDOR && l==TILE_CORRIDOR && dl==TILE_CORRIDOR){
-	  map_set_tile(map,x,y+1,TILE_WALL);
+	else if(d == TILE_CORRIDOR 
+		&& l == TILE_CORRIDOR 
+		&& dl == TILE_CORRIDOR){
+	  map_set_tile(map, x, y+1, TILE_WALL);
 	}
-	else if(l==TILE_CORRIDOR && u==TILE_CORRIDOR && ul==TILE_CORRIDOR){
-	  map_set_tile(map,x-1,y,TILE_WALL);
+	else if(l == TILE_CORRIDOR 
+		&& u == TILE_CORRIDOR 
+		&& ul == TILE_CORRIDOR){
+	  map_set_tile(map, x-1, y, TILE_WALL);
 	}
-	else if(map_tile_is_door(ul) && (l==TILE_CORRIDOR || u==TILE_CORRIDOR)){
-	  map_set_tile(map,x,y,TILE_WALL);
+	else if(map_tile_is_door(ul) 
+		&& (l == TILE_CORRIDOR || u == TILE_CORRIDOR)){
+	  map_set_tile(map, x, y, TILE_WALL);
 	}
-	else if(map_tile_is_door(ur) && (r==TILE_CORRIDOR || u==TILE_CORRIDOR)){
-	  map_set_tile(map,x,y,TILE_WALL);
+	else if(map_tile_is_door(ur) 
+		&& (r == TILE_CORRIDOR || u == TILE_CORRIDOR)){
+	  map_set_tile(map, x, y, TILE_WALL);
 	}
-	else if(map_tile_is_door(dl) && (l==TILE_CORRIDOR || d==TILE_CORRIDOR)){
-	  map_set_tile(map,x,y,TILE_WALL);
+	else if(map_tile_is_door(dl) 
+		&& (l == TILE_CORRIDOR || d == TILE_CORRIDOR)){
+	  map_set_tile(map, x, y, TILE_WALL);
 	}
-	else if(map_tile_is_door(dr) && (r==TILE_CORRIDOR || d==TILE_CORRIDOR)){
-	  map_set_tile(map,x,y,TILE_WALL);
+	else if(map_tile_is_door(dr) 
+		&& (r == TILE_CORRIDOR || d == TILE_CORRIDOR)){
+	  map_set_tile(map, x, y, TILE_WALL);
 	}
-	else if(u==TILE_CORRIDOR && ur==TILE_FLOOR){
-	  map_set_tile(map,x,y-1,cur_tile);
-	  map_set_tile(map,x,y,TILE_WALL);
+	else if(u == TILE_CORRIDOR && ur == TILE_FLOOR){
+	  map_set_tile(map, x, y-1, cur_tile);
+	  map_set_tile(map, x, y, TILE_WALL);
 	}
 	
       }
@@ -792,28 +882,102 @@ void map_cleanup(struct map_t* map){
   }
 }
 
+/* This function returns the proper ASCII value for a wall tile in a given
+ * location.
+ */
+int wall_correct(struct map_t *m, int i, int j){
+  int r = map_get_tile(m, i+1, j);
+  int l = map_get_tile(m, i-1, j);
+  int u = map_get_tile(m, i, j-1);
+  int d = map_get_tile(m, i, j+1);
+  
+  //All four sides
+  if(u == TILE_WALL && d == TILE_WALL
+     && r == TILE_WALL && l == TILE_WALL){
+    return ACS_PLUS;
+  }
+  //Three sides
+  if(u == TILE_WALL && d == TILE_WALL
+	  && l == TILE_WALL){
+    return ACS_RTEE;
+  }
+  if(u == TILE_WALL && d == TILE_WALL
+	  && r == TILE_WALL){
+    return ACS_LTEE;
+  }
+  if(u == TILE_WALL
+		  && r == TILE_WALL && l == TILE_WALL){
+    return ACS_BTEE;
+  }
+  if(d == TILE_WALL
+	  && r == TILE_WALL && l == TILE_WALL){
+    return ACS_TTEE;
+  }
+  //Two sides
+  if(u == TILE_WALL && l == TILE_WALL){
+    return ACS_LRCORNER;
+  }
+  if(u == TILE_WALL && r == TILE_WALL){
+    return ACS_LLCORNER;
+  }
+  if(d == TILE_WALL && l == TILE_WALL){
+    return ACS_URCORNER;
+  }
+  if(d == TILE_WALL && r == TILE_WALL){
+    return ACS_ULCORNER;
+  }
+  //One side
+  if(u == TILE_WALL || d == TILE_WALL){
+    return ACS_VLINE;
+  }
+  if(r == TILE_WALL || l == TILE_WALL){
+    return ACS_HLINE;
+  }
+  return ACS_PLUS;
+}
+
 void draw_map(struct map_t* map){
   if(map == NULL){quit("Error: Cannot draw NULL Map");}
   struct map_t* m = map->known_map ? map->known_map : map;
   item_map_t* items = map->items;
-
-  for(int j=0; j<m->height; j++){
-    move(j,0);
-    for(int i=0; i<m->width; i++){
-      //Draw top item on each item stack if there is one
-      if(items != NULL 
-	 && items->size != 0 
-	 && items->x == i 
-	 && items->y == j){
-	addch(get_top_item_sym_from_stack(items));
-	items=items->next;
+  
+  for(int j = 0; j < m->height; j++){
+    move(j, 0);
+    for(int i = 0; i< m->width; i++){
+      //If the tile is too far away to see, color it if it has no color
+      int display = tile_data[map_get_tile(m,i,j)].display;
+      
+      //Wall correct
+      if(display == ACS_PLUS){
+	display = wall_correct(m, i, j);
       }
-      else{addch(tile_data[map_get_tile(m,i,j)].display);}
-    }
+      
+      addch(display | (//Color check (0xF00 is where color is stored)
+		       ((display | 0xF00) ^ 0xF00) == display
+		       //distance check
+		       && (sqrt(pow((i - player->x), 2)
+				+ pow((j - player->y), 2))
+			   > creature_see_distance(player)
+			   //wall check
+			   || !map_tile_is_visible(map, i, j)
+			   ) ?
+		       (use_16_colors ? COLOR_PAIR(CP_BLUE_BLACK)
+			: COLOR_PAIR(CP_DARK_GREY_BLACK)) : 0));}
   }
+  //Now items
+  for(struct item_map_t* items = map->known_items; 
+      items != NULL; 
+      items = items->next);{
+    if(items != NULL && items->first != NULL){
+      mvaddch(items->y, items->x, items->first->item->display);}
+  }
+
+  //Now creatures
   for(struct creature_list_node_t* cur = map->creatures->first;
       cur != NULL;
       cur = cur->next){
-    mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);
+    //Show creature if it's visible to the player
+    if(creature_is_visible(cur->creature, player)){
+      mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);}
   }
 }

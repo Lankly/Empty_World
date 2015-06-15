@@ -24,7 +24,7 @@ void tile_data_init(){
     .hardness = 3};
   tile_data[TILE_WALL] = (tile_t){
     .id = TILE_WALL, 
-    .display = ACS_CKBOARD, 
+    .display = ACS_PLUS, 
     .exam_text = "It is a hard stone wall.\n",
     .hardness = 3};
   tile_data[TILE_DOOR_OPEN] = (tile_t){
