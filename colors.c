@@ -1,4 +1,5 @@
 #include "colors.h"
+#include "helpers.h"
 #include <curses.h>
 
 void color_init(){

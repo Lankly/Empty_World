@@ -9,9 +9,8 @@
 #define CP_DARK_GREY_BLACK 5
 #define CP_BLUE_BLACK 6
 
-//New Colors (Start at index 8)
-#define COLOR_GREY 8
-#define COLOR_DARK_GREY 9
+#define COLOR_GREY 7
+#define COLOR_DARK_GREY 8
 
 //Initialize colors
 void color_init();

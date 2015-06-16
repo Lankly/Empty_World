@@ -663,10 +663,7 @@ void analyze_cmd_extended(){
   else if(strcmp(ret, cmd_data_extended[EXT_16_COLORS])==0){
     use_16_colors = !use_16_colors;
 
-    //Replace all off-color tiles with new colors
-    tile_data[TILE_CORRIDOR].display = 
-      (ACS_CKBOARD | COLOR_PAIR(use_16_colors ? CP_YELLOW_BLACK : 
-				CP_DARK_GREY_BLACK));
+    msg_add("Game is 16-color compatible at this time. Yay!");
   }
 }
 

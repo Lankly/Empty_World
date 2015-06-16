@@ -893,47 +893,78 @@ int wall_correct(struct map_t *m, int i, int j){
   int l = map_get_tile(m, i-1, j);
   int u = map_get_tile(m, i, j-1);
   int d = map_get_tile(m, i, j+1);
+  int ur = map_get_tile(m, i+1, j-1);
+  int ul = map_get_tile(m, i-1, j-1);
+  int dr = map_get_tile(m, i+1, j+1);
+  int dl = map_get_tile(m, i-1, j+1);
   
-  //All four sides
-  if(u == TILE_WALL && d == TILE_WALL
-     && r == TILE_WALL && l == TILE_WALL){
-    return ACS_PLUS;
-  }
   //Three sides
-  if(u == TILE_WALL && d == TILE_WALL
-	  && l == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (d == TILE_WALL || map_tile_is_door(d))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_data[ul].passable && tile_data[dl].passable)
+	 || (tile_data[r].passable && tile_data[ul].passable)
+	 || (tile_data[r].passable && tile_data[dl].passable))){
     return ACS_RTEE;
   }
-  if(u == TILE_WALL && d == TILE_WALL
-	  && r == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((tile_data[ur].passable && tile_data[dr].passable)
+	 || (tile_data[l].passable && tile_data[ur].passable)
+	 || (tile_data[l].passable && tile_data[dr].passable))){
     return ACS_LTEE;
   }
-  if(u == TILE_WALL
-		  && r == TILE_WALL && l == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_data[ur].passable && tile_data[ul].passable)
+	 || (tile_data[d].passable && tile_data[ur].passable)
+	 || (tile_data[d].passable && tile_data[ul].passable))){
     return ACS_BTEE;
   }
-  if(d == TILE_WALL
-	  && r == TILE_WALL && l == TILE_WALL){
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_data[dr].passable && tile_data[dl].passable)
+	 || (tile_data[u].passable && tile_data[dr].passable)
+	 || (tile_data[u].passable && tile_data[dl].passable))){
     return ACS_TTEE;
   }
   //Two sides
-  if(u == TILE_WALL && l == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u)) 
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((d != TILE_WALL && r != TILE_WALL && dr != TILE_WALL)
+	 || tile_data[ul].passable)){
     return ACS_LRCORNER;
   }
-  if(u == TILE_WALL && r == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u)) 
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((d != TILE_WALL && l != TILE_WALL && dl != TILE_WALL)
+	 || tile_data[ur].passable)){
     return ACS_LLCORNER;
   }
-  if(d == TILE_WALL && l == TILE_WALL){
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((u != TILE_WALL && r != TILE_WALL && ur != TILE_WALL)
+	 || tile_data[dl].passable)){
     return ACS_URCORNER;
   }
-  if(d == TILE_WALL && r == TILE_WALL){
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((u != TILE_WALL && l != TILE_WALL && ul != TILE_WALL)
+	 || tile_data[dr].passable)){
     return ACS_ULCORNER;
   }
   //One side
-  if(u == TILE_WALL || d == TILE_WALL){
+  if((u == TILE_WALL || map_tile_is_door(u)
+      || d == TILE_WALL || map_tile_is_door(d))
+     && (tile_data[r].passable || tile_data[l].passable)){
     return ACS_VLINE;
   }
-  if(r == TILE_WALL || l == TILE_WALL){
+  if((r == TILE_WALL || map_tile_is_door(r) 
+      || l == TILE_WALL || map_tile_is_door(l))
+     && (tile_data[u].passable || tile_data[d].passable)){
     return ACS_HLINE;
   }
   return ACS_PLUS;
@@ -960,9 +991,7 @@ void draw_map(struct map_t* map){
 		       && (!in_range(i, j)
 			   //wall check
 			   || !map_tile_is_visible(map, i, j)
-			   ) ?
-		       (use_16_colors ? COLOR_PAIR(CP_BLUE_BLACK)
-			: COLOR_PAIR(CP_DARK_GREY_BLACK)) : 0));}
+			   ) ? COLOR_PAIR(CP_DARK_GREY_BLACK) : 0));}
   }
   //Now items
   for(struct item_map_t *known = map->known_items;
