@@ -136,6 +136,7 @@ void cmd_init(){
   cmd_data[CMD_DESCEND] = '>';
   cmd_data[CMD_MANUAL] = '?';
 
+  cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
   cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
   cmd_data_extended[EXT_QUIT] = "quit";
@@ -663,8 +664,6 @@ void analyze_cmd_extended(){
     use_16_colors = !use_16_colors;
 
     //Replace all off-color tiles with new colors
-
-    //Begin changing colors here
     tile_data[TILE_CORRIDOR].display = 
       (ACS_CKBOARD | COLOR_PAIR(use_16_colors ? CP_YELLOW_BLACK : 
 				CP_DARK_GREY_BLACK));

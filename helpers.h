@@ -33,12 +33,13 @@
 #define CMD_MANUAL 19
 #define CMD_MAX 19
 
-//Please keep this sorted alphabetically
-#define EXT_16_COLORS 0
-#define EXT_NUM_LOCK 1
-#define EXT_TOGGLE_NUMPAD 2
-#define EXT_QUIT 3
-#define EXT_MAX 3
+//Please keep this sorted alphabetically (after unknown)
+#define EXT_UNKNOWN 0
+#define EXT_16_COLORS 1
+#define EXT_NUM_LOCK 2
+#define EXT_TOGGLE_NUMPAD 3
+#define EXT_QUIT 4
+#define EXT_MAX 4
 
 int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
