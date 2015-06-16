@@ -21,7 +21,7 @@ Menus and Commands
     z   Zap an item (Wands only)
 
   The following is a list of Extended Commands. Extended Commands are commands that are written out in the Extended Commands Console, which is opened with '#'.
-    16-colors       Uses a more limited color-palette
-    num-lock        Uses numbers for num-pad movement instead of directions
+    8-colors        Toggles a more limited color palette
+    num-lock        Toggles numbers for numpad movement
     toggle-numpad   Swaps numpad movement with hjklyubn movement
     quit            Quits the game

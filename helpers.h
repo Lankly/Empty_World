@@ -35,7 +35,7 @@
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0
-#define EXT_16_COLORS 1
+#define EXT_8_COLORS 1
 #define EXT_NUM_LOCK 2
 #define EXT_TOGGLE_NUMPAD 3
 #define EXT_QUIT 4
@@ -45,7 +45,7 @@ int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
 
 bool qckmv;
-bool use_16_colors;
+bool use_8_colors;
 bool use_num_lock;
 bool use_numpad;
 char *term;

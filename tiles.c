@@ -58,7 +58,7 @@ void tile_data_init(){
     .id = TILE_CORRIDOR,
     .passable = true,
     .transparent = true,
-    .display = ACS_CKBOARD |  COLOR_PAIR(use_16_colors ? CP_YELLOW_BLACK : CP_DARK_GREY_BLACK),
+    .display = ACS_CKBOARD |  COLOR_PAIR(use_8_colors ? CP_YELLOW_BLACK : CP_DARK_GREY_BLACK),
     .exam_text = 
     "It is a hard stone corridor.\n",
     .hardness = 3,

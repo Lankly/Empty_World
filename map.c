@@ -991,7 +991,8 @@ void draw_map(struct map_t* map){
 		       && (!in_range(i, j)
 			   //wall check
 			   || !map_tile_is_visible(map, i, j)
-			   ) ? COLOR_PAIR(CP_DARK_GREY_BLACK) : 0));}
+			   ) ? COLOR_PAIR(use_8_colors ? CP_BLUE_BLACK 
+					  : CP_DARK_GREY_BLACK) : 0));}
   }
   //Now items
   for(struct item_map_t *known = map->known_items;

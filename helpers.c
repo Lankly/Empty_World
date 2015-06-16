@@ -140,7 +140,7 @@ void cmd_init(){
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
   cmd_data_extended[EXT_TOGGLE_NUMPAD] = "toggle-numpad";
   cmd_data_extended[EXT_QUIT] = "quit";
-  cmd_data_extended[EXT_16_COLORS] = "16-colors";
+  cmd_data_extended[EXT_8_COLORS] = "8-colors";
 }
 
 /* This function will remap a given CMD to a new key, assuming that the input
@@ -598,7 +598,7 @@ void analyze_cmd_extended(){
 	  if(j == strlen(ret)-1){
 	    move(MSG_ROW, strlen(ret)+1);
 	    for(int k=j+1; k < strlen(cmd_data_extended[i]); k++){
-	      addch(cmd_data_extended[i][k] | (use_16_colors ?
+	      addch(cmd_data_extended[i][k] | (use_8_colors ?
 					       COLOR_PAIR(CP_YELLOW_BLACK)
 					       : COLOR_PAIR(CP_GREY_BLACK)));
 	    }
@@ -660,10 +660,8 @@ void analyze_cmd_extended(){
     endwin();
     exit(0);
   }
-  else if(strcmp(ret, cmd_data_extended[EXT_16_COLORS])==0){
-    use_16_colors = !use_16_colors;
-
-    msg_add("Game is 16-color compatible at this time. Yay!");
+  else if(strcmp(ret, cmd_data_extended[EXT_8_COLORS])==0){
+    use_8_colors = !use_8_colors;
   }
 }
 
@@ -841,7 +839,7 @@ void game_init(int seed){
   term = getenv("TERM");
   qckmv_cmd = 0;
   qckmv = false;
-  use_16_colors = term != NULL && !strstr(term, "xterm");
+  use_8_colors = term != NULL && !strstr(term, "xterm");
   use_num_lock = false;
   use_numpad = true;
 
