@@ -9,6 +9,7 @@
 #include "tiles.h"
 #include <ctype.h>
 #include <curses.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -498,22 +499,22 @@ void manual(){
     mvaddch(TERMINAL_HEIGHT-1,0, '+');
     mvaddch(TERMINAL_HEIGHT-1, TERMINAL_WIDTH-1, '+');
     //Add top and bottom border
-    mvaddch(1,0, '|');
-    mvaddch(TERMINAL_HEIGHT-2,0, '|');
-    mvaddch(1, TERMINAL_WIDTH-1, '|');
-    mvaddch(TERMINAL_HEIGHT-3,0, '|');
-    mvaddch(TERMINAL_HEIGHT-3, TERMINAL_WIDTH-1, '|');
-    mvaddch(TERMINAL_HEIGHT-2, TERMINAL_WIDTH-1, '|');
+    mvaddch(1,0, ACS_VLINE);
+    mvaddch(TERMINAL_HEIGHT-2,0, ACS_VLINE);
+    mvaddch(1, TERMINAL_WIDTH-1, ACS_VLINE);
+    mvaddch(TERMINAL_HEIGHT-3,0, ACS_VLINE);
+    mvaddch(TERMINAL_HEIGHT-3, TERMINAL_WIDTH-1, ACS_VLINE);
+    mvaddch(TERMINAL_HEIGHT-2, TERMINAL_WIDTH-1, ACS_VLINE);
     for(int i=1; i < TERMINAL_WIDTH-1; i++){
-      mvaddch(0,i, '-');
-      mvaddch(TERMINAL_HEIGHT-1, i, '-');
+      mvaddch(0,i, ACS_HLINE);
+      mvaddch(TERMINAL_HEIGHT-1, i, ACS_HLINE);
     }
 
     for(int j=2;  j < TERMINAL_HEIGHT-3; j++){
-      mvaddch(j,0, '|');
+      mvaddch(j,0, ACS_VLINE);
       if(page*(TERMINAL_HEIGHT-5)+j-2 < ar_pos){
 	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-5)+j-2]);}
-      mvaddch(j, TERMINAL_WIDTH-1, '|');
+      mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
       
     } //for
 
@@ -659,18 +660,14 @@ void analyze_cmd_extended(){
     exit(0);
   }
   else if(strcmp(ret, cmd_data_extended[EXT_16_COLORS])==0){
-    use_16_colors = true;
+    use_16_colors = !use_16_colors;
 
     //Replace all off-color tiles with new colors
-    for(int i = 0; i <= TILE_MAX; i++){
-      int color = tile_data[i].display;
-      int cp = COLOR_PAIR(CP_DARK_GREY_BLACK);
-      int sym = color ^ cp;
-      //GREY/BLACK -> YELLOW/BLACK
-      if((color & cp) == cp){
-	tile_data[i].display = (sym | COLOR_PAIR(CP_YELLOW_BLACK));
-      }
-    }
+
+    //Begin changing colors here
+    tile_data[TILE_CORRIDOR].display = 
+      (ACS_CKBOARD | COLOR_PAIR(use_16_colors ? CP_YELLOW_BLACK : 
+				CP_DARK_GREY_BLACK));
   }
 }
 
@@ -732,6 +729,14 @@ void analyze_cmd(int cmd, int* x, int* y){
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
+}
+
+/* This function takes in a coordinate and determines if that tile is in the 
+ * range of the player's vision. Returns true if it is, false otherwise.
+ */
+bool in_range(int target_x, int target_y){
+  return sqrt(pow((target_x - player->x), 2) + pow((target_y - player->y), 2))
+	      <= creature_see_distance(player);
 }
 
 bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
@@ -836,6 +841,14 @@ void game_init(int seed){
   initscr(); color_init(); cbreak(); noecho();
   keypad(stdscr, true); curs_set(0);  
 
+  //Set flags
+  term = getenv("TERM");
+  qckmv_cmd = 0;
+  qckmv = false;
+  use_16_colors = term != NULL && !strstr(term, "xterm");
+  use_num_lock = false;
+  use_numpad = true;
+
   //Initialize game data
   tile_data_init();
   item_data_init();
@@ -859,11 +872,6 @@ void game_init(int seed){
   map_add_creature(cur_map, player);
   map_place_down_stair_randomly(cur_map);
   map_place_spawners(cur_map);  
-
-  //Set flags
-  qckmv_cmd = 0;
-  qckmv = false;
-  use_16_colors = false;
 }
 
 void game_over(){

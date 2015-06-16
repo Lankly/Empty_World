@@ -45,6 +45,9 @@ char* cmd_data_extended[EXT_MAX+1];
 
 bool qckmv;
 bool use_16_colors;
+bool use_num_lock;
+bool use_numpad;
+char *term;
 int qckmv_cmd;
 
 void* Calloc(int items, int size);
@@ -69,6 +72,7 @@ typedef struct{
 
 int display(display_list_t* list,int width,int height);
 
+bool in_range(int target_x, int target_y);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
 
 void game_init();

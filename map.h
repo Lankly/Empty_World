@@ -14,9 +14,9 @@ typedef struct map_t{
   int max_item_height;
   int *tiles;
   struct item_map_t *items;
-  struct item_map_t *known_items;
   struct creature_list_t *creatures;
   struct map_t *known_map;
+  struct item_map_t *known_items;
 } map_t;
 
 map_t *cur_map;

@@ -122,16 +122,16 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item, bool reveal)
   else{
     item_map_t* last;
     for(item_map_t* i = reveal ? map->known_items : map->items;
-	i!=NULL;
-	i=i->next){
+	i != NULL;
+	i = i->next){
       last = i;
       //If we've gone too far, create a new spot for our data
-      if(i->y > y || (i->y==y && i->x > x)){
+      if(i->y > y || (i->y == y && i->x > x)){
 	item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
 	item_map_init(items, x, y);
 
 	//Need to make sure this isn't first element
-	if(i->prev!=NULL){
+	if(i->prev != NULL){
 	  i->prev->next=items;}
 	else if(reveal){
 	  map->known_items = items;}
@@ -150,7 +150,7 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item, bool reveal)
       }
     }
     //Case where it is inserted last
-    if(cur==NULL){
+    if(cur == NULL){
       item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
       item_map_init(items, x, y);
       last->next = items;

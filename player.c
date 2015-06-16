@@ -35,7 +35,8 @@ void playerTakeTurnCallback(struct creature_t* creature,
   }
   else{qckmv = false;}
   
-  if(qckmv){qckmv=qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
+  if(qckmv){
+    qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
 }
 
 void player_init(char* name){

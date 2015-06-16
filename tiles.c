@@ -1,7 +1,9 @@
-#include "tiles.h"
-#include <stdbool.h>
-#include <curses.h>
 #include "colors.h"
+#include "helpers.h"
+#include "tiles.h"
+#include <curses.h>
+#include <stdbool.h>
+#include <string.h>
 
 //Quick Reminder on Hardness:
 //1 - Dirt
@@ -11,55 +13,55 @@
 void tile_data_init(){
   tile_data[TILE_UNKNOWN] = (tile_t){
     .id = TILE_UNKNOWN,
-    .passable = false, 
-    .display = ' ', 
+    .passable = false,
+    .display = ' ',
     .exam_text = "You do not know what this is",
     .hardness = 10}; 
   tile_data[TILE_FLOOR] = (tile_t){
-    .id = TILE_FLOOR, 
-    .passable = true, 
-    .display = '.', 
+    .id = TILE_FLOOR,
+    .passable = true,
+    .display = term != NULL && strstr(term, "xterm") ? ACS_BULLET : '.',
     .transparent = true,
     .exam_text = "It is a hard stone floor.\n",
     .hardness = 3};
   tile_data[TILE_WALL] = (tile_t){
-    .id = TILE_WALL, 
-    .display = ACS_PLUS, 
+    .id = TILE_WALL,
+    .display = ACS_PLUS,
     .exam_text = "It is a hard stone wall.\n",
     .hardness = 3};
   tile_data[TILE_DOOR_OPEN] = (tile_t){
-    .id = TILE_DOOR_OPEN, 
-    .passable = true, 
-    .display = '-', 
+    .id = TILE_DOOR_OPEN,
+    .passable = true,
+    .display = '-' | COLOR_PAIR(CP_GREEN_BLACK),
     .exam_text = "It is an open wooden door.\n",
-    .hardness = 2, 
+    .hardness = 2,
     .transparent = true,
-    .stopme = true, 
+    .stopme = true,
     .openable = true};
   tile_data[TILE_DOOR_CLOSE] = (tile_t){
-    .id = TILE_DOOR_CLOSE, 
-    .display = '+', 
+    .id = TILE_DOOR_CLOSE,
+    .display = '+' | COLOR_PAIR(CP_GREEN_BLACK),
     .exam_text = "It is a closed wooden door.\n",
-    .hardness = 2, 
+    .hardness = 2,
     .stopme = true,
     .openable = true};
   tile_data[TILE_DOOR_BROKEN] = (tile_t){
     .id = TILE_DOOR_BROKEN,
-    .passable = true, 
-    .display = '|', 
+    .passable = true,
+    .display = '|' | COLOR_PAIR(CP_GREEN_BLACK),
     .exam_text = "It is a broken wooden door.\n",
-    .hardness = 2, 
+    .hardness = 2,
     .transparent = true,
-    .stopme = true, 
+    .stopme = true,
     .openable = true};
   tile_data[TILE_CORRIDOR] = (tile_t){
-    .id = TILE_CORRIDOR, 
-    .passable = true, 
+    .id = TILE_CORRIDOR,
+    .passable = true,
     .transparent = true,
-    .display = ACS_CKBOARD | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .display = ACS_CKBOARD |  COLOR_PAIR(use_16_colors ? CP_YELLOW_BLACK : CP_DARK_GREY_BLACK),
     .exam_text = 
-    "It is a hard stone corridor.\n", 
-    .hardness = 3, 
+    "It is a hard stone corridor.\n",
+    .hardness = 3,
     .stopme = true};
 }
 

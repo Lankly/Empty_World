@@ -356,8 +356,6 @@ void map_place_down_stair_randomly(struct map_t* map){
     int x = rand()%map->width;
     int y = rand()%map->height;
 
-    if(c == 10000){endwin();}
-
     if(map_get_tile(map, x, y) == TILE_FLOOR){
       done = true;
       //Check for nearby stairs
@@ -365,7 +363,8 @@ void map_place_down_stair_randomly(struct map_t* map){
 	for(int j = -18; j < 15; j++){
 	  int check_x = x + i;
 	  int check_y = y + j;
-	  if(check_x >= 0 && check_x < map->width
+	  if(c < 1000 
+	     && check_x >= 0 && check_x < map->width
 	     && check_y >= 0 && check_y < map->height
 	     && tile_has_stair(map, check_x, check_y)){
 	    done = false;
@@ -432,21 +431,20 @@ void map_examine_tile(struct map_t* map){
     for(struct creature_list_node_t* cur = map->creatures->first;
 	cur != NULL;
 	cur = cur->next){
-      if(cur->creature->x == x && cur->creature->y == y){
+      if(cur->creature->x == x && cur->creature->y == y 
+	 && in_range(cur->creature->x, cur->creature->y)){
 	msg_addf("%s", cur->creature->exam_text);
 	return;
       }
     }
   }
   //Now check items
-  if(map->items != NULL){
-    for(struct item_map_t* cur = map->items;
-	cur != NULL && cur->y <= y;
-	cur = cur->next){
-      if(cur->x == x && cur->y == y){
-	msg_addf("%s", cur->first->item->exam_text);
-	return;
-      }
+  for(struct item_map_t* cur = map->known_items;
+      cur != NULL && cur->y <= y;
+      cur = cur->next){
+    if(cur->x == x && cur->y == y){
+      msg_addf("%s", cur->first->item->exam_text);
+      return;
     }
   }
   //Now the tile itself
@@ -556,9 +554,10 @@ bool map_tile_stopme(struct map_t *map, int x, int y){
   if(i == NULL || i->x != x || i->y != y){return false;}
 
   //If any item on the stack stops the player, return
-  item_map_node_t *cur = i->first;
-  while(cur != NULL){
-    if(cur->item->stopme){return true;}
+  
+  for(item_map_node_t *cur = i->first; cur != NULL; cur = cur->next){
+    if(cur->item->stopme){
+      return true;}
   }
   return false;
 }
@@ -583,7 +582,7 @@ void map_reveal(struct map_t *map, int rev_dist){
 	     map->max_item_height,
 	     map->dlevel);
   }
-  struct item_map_t *cur = map->known_items;
+  struct item_map_t *items = map->items;
 
   //For each point in the map,
   for(int j=0; j < map->height; j++){
@@ -596,30 +595,34 @@ void map_reveal(struct map_t *map, int rev_dist){
 	map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
 	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
 	
-	  //Remove items already revealed
-	  for(struct item_map_t *items = map->known_items;
-	      items != NULL;
-	      items = items->next){
-	    if(items->y == j && items->x == i){
-	      while(items->first != NULL){
-		struct item_map_node_t *item = items->first;
-		for(;item->next != NULL; item = item->next);
-		free(item);
-	      }
-	      items->size = 0;
+	//Remove items already revealed
+	for(struct item_map_t *k_items = map->known_items;
+	    k_items != NULL;
+	    k_items = k_items->next){
+	  if(k_items->y == j && k_items->x == i){
+	    struct item_map_node_t *prev;
+	    while(k_items->first != NULL){
+	      prev = k_items->first;
+	      k_items->first = k_items->first->next;
+	      free(prev);
 	    }
+	    k_items->size = 0;
 	  }
-
+	}
+	
 	//Reveal the items (if they exist)
-	if(cur != NULL && cur->y == j && cur->x == i){
+	if(items != NULL && items->y == j && items->x == i){
 	  //Add the new items
-	  for(struct item_map_node_t *item = cur->first;
+	  for(struct item_map_node_t *item = items->first;
 	      item != NULL;
 	      item = item->next){
 	    add_item(map, i, j, item->item, true);
 	  }
-	  cur = cur->next;
+	  items = items->next;
 	}
+      }
+      else if(items != NULL && items->y == j && items->x == i){
+	items = items->next;
       }
     }
   }
@@ -939,7 +942,6 @@ int wall_correct(struct map_t *m, int i, int j){
 void draw_map(struct map_t* map){
   if(map == NULL){quit("Error: Cannot draw NULL Map");}
   struct map_t* m = map->known_map ? map->known_map : map;
-  item_map_t* items = map->items;
   
   for(int j = 0; j < m->height; j++){
     move(j, 0);
@@ -955,9 +957,7 @@ void draw_map(struct map_t* map){
       addch(display | (//Color check (0xF00 is where color is stored)
 		       ((display | 0xF00) ^ 0xF00) == display
 		       //distance check
-		       && (sqrt(pow((i - player->x), 2)
-				+ pow((j - player->y), 2))
-			   > creature_see_distance(player)
+		       && (!in_range(i, j)
 			   //wall check
 			   || !map_tile_is_visible(map, i, j)
 			   ) ?
@@ -965,11 +965,11 @@ void draw_map(struct map_t* map){
 			: COLOR_PAIR(CP_DARK_GREY_BLACK)) : 0));}
   }
   //Now items
-  for(struct item_map_t* items = map->known_items; 
-      items != NULL; 
-      items = items->next);{
-    if(items != NULL && items->first != NULL){
-      mvaddch(items->y, items->x, items->first->item->display);}
+  for(struct item_map_t *known = map->known_items;
+      known != NULL; 
+      known = known->next){
+    if(known != NULL && known->first != NULL){
+      mvaddch(known->y, known->x, known->first->item->display);}
   }
 
   //Now creatures
