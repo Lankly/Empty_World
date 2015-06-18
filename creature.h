@@ -189,10 +189,10 @@ struct creature_t{
   char *name;
   char *exam_text;
   
-  bool is_awake;
-  bool can_move;
+  bool is_asleep;
+  bool is_immobile;
   bool can_fly;
-  bool can_see;
+  bool is_blind;
 
   breathe_list_t *breathables;
   consume_list_t *consumables;
@@ -229,8 +229,8 @@ bool creature_is_visible(struct creature_t *target, struct creature_t *seer);
 bool creature_can_move_to(struct creature_t *creature, int x, int y, int cmd);
 int creature_get_damage(struct creature_t *creature);
 
-void set_vision(struct creature_t *c, bool b);
-void set_conscious(struct creature_t *c, bool b);
+void set_blindness(struct creature_t *c, bool b);
+void set_unconscious(struct creature_t *c, bool b);
 void set_level(struct creature_t *c, int l);
 void set_dlevel(struct creature_t *c, int d);
 void set_name(struct creature_t *c, char *n);

@@ -18,12 +18,12 @@ void defaultPathfindCallback(struct creature_t* creature,
     return;
   }
 
-  //If it can see the player, go towards it
+  //If it can see the player, try to attack
   if(creature_is_visible(player, creature)){
-    int x_diff = player->x-creature->x;
-    int y_diff = player->y-creature->y;
+    int x_diff = player->x - creature->x;
+    int y_diff = player->y - creature->y;
     //Next, check if the player is adjacent
-    if(x_diff>=-1 && x_diff<=1 && y_diff>=-1 && y_diff<=-1){
+    if(x_diff >= -1 && x_diff <= 1 && y_diff >= -1 && y_diff <= 1){
       damage_creature(player, creature->name, creature_get_damage(creature));
     }
     //If not, move towards it

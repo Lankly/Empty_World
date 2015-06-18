@@ -51,8 +51,6 @@ void player_init(char* name){
     player->name = "Lan";}
 
   player->corpse_type = CORPSE_HUMAN;
-  set_vision(player, true);
-  set_conscious(player, true);
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);

@@ -432,7 +432,7 @@ void map_examine_tile(struct map_t* map){
 	cur != NULL;
 	cur = cur->next){
       if(cur->creature->x == x && cur->creature->y == y 
-	 && in_range(cur->creature->x, cur->creature->y)){
+	 && in_range(cur->creature, player)){
 	msg_addf("%s", cur->creature->exam_text);
 	return;
       }
@@ -988,7 +988,7 @@ void draw_map(struct map_t* map){
       addch(display | (//Color check (0xF00 is where color is stored)
 		       ((display | 0xF00) ^ 0xF00) == display
 		       //distance check
-		       && (!in_range(i, j)
+		       && (!coord_in_range(i, j, player)
 			   //wall check
 			   || !map_tile_is_visible(map, i, j)
 			   ) ? COLOR_PAIR(use_8_colors ? CP_BLUE_BLACK 

@@ -725,12 +725,21 @@ void analyze_cmd(int cmd, int* x, int* y){
   }
 }
 
-/* This function takes in a coordinate and determines if that tile is in the 
- * range of the player's vision. Returns true if it is, false otherwise.
+
+/* This function takes in a target creature's coordinates and determines if that
+ * tile is in the range of the seer creature. Returns true if it is, false
+ * otherwise.
  */
-bool in_range(int target_x, int target_y){
-  return sqrt(pow((target_x - player->x), 2) + pow((target_y - player->y), 2))
-	      <= creature_see_distance(player);
+bool coord_in_range(int target_x, int target_y, struct creature_t *seer){
+  return sqrt(pow((target_x - seer->x), 2) + pow((target_y - seer->y), 2))
+	      <= creature_see_distance(seer);
+}
+
+/* This function takes in a target creature and determines if that tile is 
+ * in the range of the seer creature. Returns true if it is, false otherwise.
+ */
+bool in_range(struct creature_t *target, struct creature_t *seer){
+  return coord_in_range(target->x, target->y, seer);
 }
 
 bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
@@ -851,6 +860,7 @@ void game_init(int seed){
   inventory_init(player);
   status_init();
   cmd_init();
+  num_turns = 0;
 
   //Setup floor
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
@@ -866,17 +876,41 @@ void game_init(int seed){
   map_add_creature(cur_map, player);
   map_place_down_stair_randomly(cur_map);
   map_place_spawners(cur_map);  
+
+  //Place character randomly
+  while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
+    player->x=rand() % cur_map->width;
+    player->y=rand() % cur_map->height;
+  }
 }
 
+/* This function is called whenever the player is killed. It will prompt the 
+ * player if they would like to continue. If they choose not to, it will free
+ * everything and exit the game. If they choose to continue, it will free 
+ * everything and restart the game.
+ */
 void game_over(){
-  char res = msg_promptchar("Game Over! Restart? (y/N)");
-  if(res == 'y' || res == 'Y'){
-    endwin();
-    printf("You died!");
-    exit(0);
-  }
-  else{
-    sleep(1000);
+    bool done = false;
+    while(!done){
+      char res = msg_promptchar("Game Over! Restart? (Y/n)");
+      if(res == 'n' || res =='N'){
+	res = msg_promptchar("Are you sure you want to quit? (y/N)");
+	if(res == 'y' || res == 'Y'){
+
+	  //TODO: Free everything.
+
+	  endwin();
+	  printf("You died!");
+	  exit(0);
+	}
+      }
+      else{
+	done = true;}
+    }
+
+    //TODO: Free everything.
+    free(player);
+
+    sleep(1);
     game_init(0);
-  }
 }

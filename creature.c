@@ -24,8 +24,9 @@ void creature_data_init(){
     .creature_id = CREATURE_SPAWNER,
     .display = '%' | COLOR_PAIR(CP_GREEN_BLACK),
     .exam_text = "???",
+    .is_immobile = true,
+    .is_blind = true,
     .health = 100,
-    .is_awake = true,
     .takeTurn = &spawnerTakeTurnCallback
   };
   creature_data[CREATURE_HUMAN_WARRIOR] = (struct creature_t){
@@ -34,9 +35,6 @@ void creature_data_init(){
     .name = "Human Warrior",
     .exam_text = "This is a human warrior.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 2,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -46,9 +44,6 @@ void creature_data_init(){
     .name = "Human Bowman.",
     .exam_text = "This is a human bowman.",
     .health = 20,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -58,9 +53,6 @@ void creature_data_init(){
     .name = "Human Pikeman",
     .exam_text = "This is a human pikeman.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -70,9 +62,6 @@ void creature_data_init(){
     .name = "Human Monk",
     .exam_text = "This is a human monk.",
     .health = 25,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -82,9 +71,6 @@ void creature_data_init(){
     .name = "Human Wizard",
     .exam_text = "This is a human wizard.",
     .health = 20,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .takeTurn = &defaultTakeTurnCallback
   };
   creature_data[CREATURE_WERECREATURE] = (struct creature_t){
@@ -93,9 +79,6 @@ void creature_data_init(){
     .name = "Werecreature",
     .exam_text = "This is a were-something.",
     .health = 50,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 5,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -105,9 +88,6 @@ void creature_data_init(){
     .name = "Goblin Warrior",
     .exam_text = "This is a goblin warrior.",
     .health = 35,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -117,9 +97,6 @@ void creature_data_init(){
     .name = "Goblin Bowman",
     .exam_text = "This is a goblin bowman.",
     .health = 25,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 2,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -129,9 +106,6 @@ void creature_data_init(){
     .name = "Goblin Pikeman",
     .exam_text = "This is a goblin pikeman.",
     .health = 35,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -141,9 +115,6 @@ void creature_data_init(){
     .name = "Goblin Wizard",
     .exam_text = "This is a goblin wizard.",
     .health = 25,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -153,9 +124,6 @@ void creature_data_init(){
     .name = "Orc Warrior",
     .exam_text = "This is an orc warrior.",
     .health = 40,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 4,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -165,9 +133,6 @@ void creature_data_init(){
     .name = "Orc Bowman",
     .exam_text = "This is an orc bowman.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -177,9 +142,6 @@ void creature_data_init(){
     .name = "Orc Pikeman",
     .exam_text = "This is an orc pikeman.",
     .health = 40,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 4,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -189,9 +151,6 @@ void creature_data_init(){
     .name = "Orc Wizard",
     .exam_text = "This is an orc wizard.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -200,9 +159,8 @@ void creature_data_init(){
     .display = 'M',
     .name = "Mindflayer",
     .exam_text = "This is a mindflayer.",
+    .can_fly = true,
     .health = 120,
-    .is_awake = true,
-    .can_move = true,
     .strength = 15,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -212,8 +170,6 @@ void creature_data_init(){
     .name = "Skeleton Warrior",
     .exam_text = "This is a skeleton Warrior.",
     .health = 10,
-    .is_awake = true,
-    .can_move = true,
     .strength = 2,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -223,8 +179,6 @@ void creature_data_init(){
     .name = "Skeleton Bowman",
     .exam_text = "This is a skeleton bowman.",
     .health = 10,
-    .is_awake = true,
-    .can_move = true,
     .strength = 2,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -234,8 +188,6 @@ void creature_data_init(){
     .name = "Skeleton Pikeman",
     .exam_text = "This is a skeleton pikeman.",
     .health = 10,
-    .is_awake = true,
-    .can_move = true,
     .strength = 2,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -245,9 +197,6 @@ void creature_data_init(){
     .name = "Puppy",
     .exam_text = "This is a cute little puppy!",
     .health = 12,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -257,9 +206,6 @@ void creature_data_init(){
     .name = "Dog",
     .exam_text = "This is a dog.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 4,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -269,9 +215,6 @@ void creature_data_init(){
     .name = "Wardog",
     .exam_text = "This is a trained wardog.",
     .health = 100,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 10,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -281,9 +224,6 @@ void creature_data_init(){
     .name = "Kitten",
     .exam_text = "This is a cute little kitten!",
     .health = 5,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -293,9 +233,6 @@ void creature_data_init(){
     .name = "Housecat",
     .exam_text = "This is a housecat.",
     .health = 9,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -305,9 +242,6 @@ void creature_data_init(){
     .name = "Warcat",
     .exam_text = "This is a trained warcat.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 8,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -317,9 +251,6 @@ void creature_data_init(){
     .name = "Lion",
     .exam_text = "This is a ferocious lion.",
     .health = 50,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 5,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -329,9 +260,6 @@ void creature_data_init(){
     .name = "Puma",
     .exam_text = "This is a deadly puma.",
     .health = 60,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 6,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -341,9 +269,6 @@ void creature_data_init(){
     .name = "Wolf",
     .exam_text = "This is a wild wolf.",
     .health = 10,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 7,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -353,9 +278,6 @@ void creature_data_init(){
     .name = "Horse",
     .exam_text = "This is a horse. How did it get in a cave?",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 8,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -365,9 +287,6 @@ void creature_data_init(){
     .name = "Unicorn",
     .exam_text = "This is a unicorn.",
     .health = 80,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 9,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -377,9 +296,6 @@ void creature_data_init(){
     .name = "Unicorn",
     .exam_text = "This is a unicorn.",
     .health = 70,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 8,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -389,9 +305,6 @@ void creature_data_init(){
     .name = "Unicorn",
     .exam_text = "This is a unicorn.",
     .health = 90,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 10,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -401,9 +314,6 @@ void creature_data_init(){
     .name = "Paper Golem",
     .exam_text = "This is a golem made of paper.",
     .health = 30,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -413,9 +323,6 @@ void creature_data_init(){
     .name = "Rock Golem",
     .exam_text = "This is a golem made of rock.",
     .health = 50,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 4,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -425,9 +332,6 @@ void creature_data_init(){
     .name = "Silver Golem",
     .exam_text = "This is a golem made of silver.",
     .health = 80,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 5,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -437,9 +341,6 @@ void creature_data_init(){
     .name = "Gold Golem",
     .exam_text = "This is a golem made of gold.",
     .health = 70,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 6,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -449,9 +350,6 @@ void creature_data_init(){
     .name = "Iron Golem",
     .exam_text = "This is a golem made of iron.",
     .health = 100,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 7,
     .takeTurn = &defaultTakeTurnCallback
   };
@@ -460,16 +358,14 @@ void creature_data_init(){
     .display = 'E',
     .name = "Floating Eye",
     .exam_text = "This is an eyball floating over the floor.",
+    .can_fly = true,
     .health = 120,
-    .is_awake = true,
-    .can_move = true,
-    .can_see  = true,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
 }
 
-struct creature_t* creature_create_from_data(int index){
+struct creature_t *creature_create_from_data(int index){
   //Error checking
   if(index < 0 || index > CREATURE_MAX){
     quit("Error: Cannot create creature with unknown id");}
@@ -482,14 +378,15 @@ struct creature_t* creature_create_from_data(int index){
   return to_return;
 }
 
-void creature_spawn(int creature_id, struct map_t* map){
+void creature_spawn(int creature_id, struct map_t *map){
   if(map == NULL){
     quit("Error: Cannot spawn creature on NULL Map");}
   if(creature_id < 0 || creature_id > CREATURE_MAX){
     quit("Error: Cannot spawn creature with unknown id");}
 
-  struct creature_t* c = creature_create_from_data(creature_id);
+  struct creature_t *c = creature_create_from_data(creature_id);
   c->dlevel = map->dlevel;
+  c->level = map->dlevel;
   creature_place_on_map(c, map);
   map_add_creature(map, c);
 }
@@ -516,16 +413,17 @@ void creature_kill(struct creature_t* creature){
   msg_addf("%s is slain!", creature->name);
   map_remove_creature(cur_map, creature);
 
-  bool was_player = creature == player;
-  if(was_player){
+  //Is this game over?
+  if(creature == player){
     draw_map(cur_map);
-    draw_status(cur_map);}
+    draw_status(cur_map);
+    game_over();
+  }
+  else{
+    free(creature->name);
+    free(creature);
+  }
 
-  free(creature->name);
-  free(creature);
-
-  if(was_player){
-    game_over();}
 }
 
 /* This method handles how a creature takes damage.
@@ -544,6 +442,10 @@ void damage_creature(struct creature_t *target, char *source, int dmg){
     msg_addf("%s is hit!", target->name);}
   else{
     msg_addf("%s is hit by %s!", target->name, source);}
+
+  //If the target is the player, stop quickmove
+  if(target == player){
+    qckmv = false;}
 }
 
 /* This method places the given creature on the given map
@@ -576,8 +478,8 @@ int creature_see_distance(struct creature_t* creature){
     quit("Error: Cannot get see-distance of NULL creature");}
   
   // Now we can calculate the correct value
-  int to_return = (player->can_see
-		   * player->is_awake
+  int to_return = (!player->is_blind
+		   * !player->is_asleep
 		   * (creature->intelligence
 		      + creature->luck
 		      + creature->level)
@@ -598,8 +500,8 @@ bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
   if(target->dlevel != seer->dlevel){
     return false;}
 
-  if(sqrt(pow(target->x - seer->x, 2) + pow(target->y - seer->y, 2))
-     > creature_see_distance(seer)){
+  //Check if the target is in the seer's visible range
+  if(!in_range(target, seer)){
     return false;}
 
   //If the seer is the player, do a wall-check. Return true otherwise.
@@ -724,14 +626,14 @@ void set_name(struct creature_t* c, char* n){
   c->name=n;
 }
 
-void set_vision(struct creature_t* c, bool b){
+void set_blindness(struct creature_t* c, bool b){
   if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
-  c->can_see = b;
+  c->is_blind = b;
 }
 
-void set_conscious(struct creature_t* c, bool b){
+void set_unconscious(struct creature_t* c, bool b){
   if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
-  c->is_awake = b;
+  c->is_asleep = b;
 }
 
 void set_strength(struct creature_t* c, int s){

@@ -50,6 +50,7 @@ bool use_num_lock;
 bool use_numpad;
 char *term;
 int qckmv_cmd;
+int num_turns;
 
 void* Calloc(int items, int size);
 char* str_lowercase(char* str);
@@ -73,7 +74,8 @@ typedef struct{
 
 int display(display_list_t* list,int width,int height);
 
-bool in_range(int target_x, int target_y);
+bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
+bool in_range(struct creature_t *target, struct creature_t *seer);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
 
 void game_init();

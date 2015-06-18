@@ -6,8 +6,8 @@ void color_init(){
   start_color();
 
   //Create colors
-  init_color(COLOR_GREY,745,745,745);
-  init_color(COLOR_DARK_GREY,519,519,519);
+  //init_color(COLOR_GREY,745,745,745);
+  //init_color(COLOR_DARK_GREY,519,519,519);
 
   //Create pairs
   init_pair(CP_YELLOW_BLACK, COLOR_YELLOW, COLOR_BLACK);

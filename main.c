@@ -27,12 +27,6 @@ int main(int argc, char** argv){
   //1427689757
   game_init(seed);
   
-  //Place character randomly
-  while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
-    player->x=rand() % cur_map->width;
-    player->y=rand() % cur_map->height;
-  }
-
   //Main Game Loop
   while(true){
 
@@ -43,6 +37,7 @@ int main(int argc, char** argv){
 	cur != NULL; cur = cur->next){
       cur->creature->takeTurn(cur->creature, cur_map);
     }
+    num_turns++;
   }
 
   endwin();
