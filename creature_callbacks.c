@@ -63,7 +63,7 @@ void defaultTakeTurnCallback(struct creature_t* creature,
   
   int x_diff = player->x-creature->x;
   int y_diff = player->y-creature->y;
-  if(x_diff>=-1 && x_diff<=1 && y_diff>=-1 && y_diff<=-1){
+  if(x_diff >= -1 && x_diff <= 1 && y_diff >= -1 && y_diff <= 1){
     damage_creature(player, creature->name, creature_get_damage(creature));
   }
 }

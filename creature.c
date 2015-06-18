@@ -682,6 +682,12 @@ void set_health(struct creature_t* c, int h){
   c->health=h;
 }
 
+void set_max_health(struct creature_t *c, int mh){
+  if(c == NULL){
+    quit("Error: Cannot set values of NULL Creature.");}
+  c->max_health = mh;
+}
+
 void set_max_hunger(struct creature_t* c, int m){
   if(c == NULL){quit("Error: Cannot set values of NULL Creature.");}
   c->max_hunger=m;
@@ -699,6 +705,12 @@ char* get_name(struct creature_t* c){
 int get_health(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
   return c-> health;
+}
+
+int get_max_health(struct creature_t* c){
+  if(c == NULL){
+    quit("Error: Canonot get values of NULL Creature.");}
+  return c->max_health;
 }
 
 int get_level(struct creature_t* c){

@@ -6,8 +6,10 @@
 #define CP_GREY_BLACK 2
 #define CP_GREEN_BLACK 3
 #define CP_BLACK_WHITE 4
-#define CP_DARK_GREY_BLACK 5
-#define CP_BLUE_BLACK 6
+#define CP_BLACK_YELLOW 5
+#define CP_BLACK_RED 6
+#define CP_DARK_GREY_BLACK 7
+#define CP_BLUE_BLACK 8
 
 #define COLOR_GREY 7
 #define COLOR_DARK_GREY 8

@@ -911,6 +911,5 @@ void game_over(){
     //TODO: Free everything.
     free(player);
 
-    sleep(1);
     game_init(0);
 }

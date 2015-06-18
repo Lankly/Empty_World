@@ -58,6 +58,7 @@ void player_init(char* name){
   set_intelligence(player, 1);
   set_luck(player, 1);
   set_health(player, 10);
+  set_max_health(player, get_health(player));
   set_max_hunger(player, 200);
   set_hunger(player, player->max_hunger);
   set_gold(player, 5);

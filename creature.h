@@ -170,6 +170,7 @@ struct creature_t{
   int charisma;  int intelligence;  int agility;
   int luck;      int health;        int hunger;
   int gold;      int level;         int max_hunger;
+  int max_health;
   
   /* This is how hunger works:
    * You have a max_hunger. This represents how much food can be in your stomach
@@ -245,6 +246,7 @@ void set_agility(struct creature_t *c, int a);
 void set_luck(struct creature_t *c, int l);
 
 void set_health(struct creature_t *c, int h);
+void set_max_health(struct creature_t *c, int mh);
 void set_max_hunger(struct creature_t *c, int m);
 void set_hunger(struct creature_t *c, int h);
 
@@ -255,6 +257,7 @@ int get_weight(struct creature_t *c);
 int get_gold(struct creature_t *c);
 
 int get_health(struct creature_t *c);
+int get_max_health(struct creature_t *c);
 int get_max_hunger(struct creature_t *c);
 int get_hunger(struct creature_t *c);
 

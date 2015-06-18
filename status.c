@@ -53,15 +53,23 @@ void draw_status(map_t* map){
   }
 
   //Line two of info
-  sprintf(output,"  HP:%-3d  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d  Trn:%-6d%*s",
-	  player->health,
+  move(23,0);
+  addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
+  addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
+  sprintf(output,"HP:%-3d", player->health);
+  for(int i = 0; i < 6; i++){
+    addch(output[i] | COLOR_PAIR(player->health < (player->max_health / 2) ? 
+				 player->health < (player->max_health / 5) ? 
+				 CP_BLACK_RED : CP_BLACK_YELLOW : CP_BLACK_WHITE
+				 ));}
+    
+  sprintf(output,"  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d Trn:%-6d%*s",
 	  player->inventory != NULL ? player->inventory->cur_weight : 0,
 	  player->level,
 	  map->dlevel,
 	  num_turns,
 	  80-2-3-3-2-4-3-2-4-3-2-5-2-4-6,"");
-  move(23,0);
-  for(int i=0; i<80; i++){
+  for(int i=0; i<80-2-3-3; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
   }
   free(output);
