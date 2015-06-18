@@ -35,6 +35,7 @@ void item_data_init(){
     .gold_value = -1,
     .size = 5,
     .stopme = true,
+    .immovable = true,
     .material = MAT_STONE,
     .weight = 1000,
     .use = &downStairUseCallback,
@@ -48,6 +49,7 @@ void item_data_init(){
     .gold_value = -1,
     .size = 5,
     .stopme = true,
+    .immovable = true,
     .material = MAT_STONE,
     .weight = 1000,
     .use = &upStairUseCallback,
@@ -73,21 +75,25 @@ void item_data_init(){
   //    ¡À£¤¥Þ¦ª¨©ß«Ñ×ÅÒÔÙÕÉÏÐûýüÁÓÄÆÇÈÊËÌº¢ÚØÃÖÂÎÍ¼¾¿
 }
 
-void item_map_init(struct item_map_t* items, int x, int y){
+void item_map_init(struct item_map_t *items, int x, int y){
   items->x=x;
   items->y=y;
 }
 
-int count_items(struct map_t* map, int x, int y){
-  if(x<0 || y<0 || get_coord(x,y,map->width)>map->width*map->height){
-    quit("Error: Items Index Out of Bounds");
+int count_items(struct map_t *map, int x, int y){
+  if(x < 0 || y < 0 || get_coord(x, y, map->width) > map->width*map->height){
+    quit("Error: count_items Index Out of Bounds");
   }
-  //We will loop through this item stack until found
-  for(item_map_t* i=map->items; i!=NULL; i=i->next){
-    //y first to be compatible with the draw_map loop
-    if(i->y>y || (i->y==y && i->x>x)){break;}
-    if(i->y==y && i->x==x){
-      return i->size;
+
+  //We will loop through the list of items stacks until we find the one we want
+  for(item_map_t *i = map->items; i != NULL; i = i->next){
+    if(i->y == y && i->x == x){
+      int to_return = 0;
+
+      //Once found, we loop through that stack and count it
+      for(struct item_map_node_t *cur = i->first; cur != NULL; cur = cur->next){
+	to_return += !cur->item->immovable;}
+      return to_return;
     }
   }
   return 0;
@@ -167,7 +173,10 @@ bool add_item(struct map_t* map, int x, int y, struct item_t* item, bool reveal)
   insert->item = item;
   insert->next = cur->first;
   cur->first = insert;
-  cur->size += item->size;
+  
+  //If the item can't be moved, don't bother adding it to the stack size
+  if(!item->immovable){
+    cur->size += item->size;}
   return true;
 }
 
@@ -202,7 +211,12 @@ item_t* remove_item(struct map_t* map,int x,int y,int index){
   else{
     last->next=cur_node->next;
   }
-  cur->size-=to_return->size;
+
+  /* If item is immovable, it couldn't have been picked up, so we don't have to
+   * worry about it here.
+   */
+  cur->size -= to_return->size;
+
   free(cur_node);
   return to_return;
 }

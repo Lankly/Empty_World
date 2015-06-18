@@ -24,14 +24,32 @@ void playerTakeTurnCallback(struct creature_t* creature,
   else{cmd = getch();}
   
   analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
-  
-  
+    
   /* Ensure that the player is light enough to pass through corners,
        that they are not behind a closed door.
   */
   if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
-    player->x=plr_mv_to_x;
-    player->y=plr_mv_to_y;
+    //Now we check to see if they're moving into a creature
+    struct creature_t *creature_in_way = NULL;
+    for(struct creature_list_node_t *cur = cur_map->creatures->first; 
+	cur != NULL && creature_in_way == NULL;
+	cur = cur->next){
+      if(cur->creature->x == plr_mv_to_x && cur->creature->y == plr_mv_to_y
+	 && cur->creature != player){
+	creature_in_way = cur->creature;}
+    }
+
+    //And attacking if so
+    if(creature_in_way){
+      damage_creature(creature_in_way, 
+		      player->name, 
+		      creature_get_damage(player));
+    }
+    else{
+      //If no creature in way, just move there.
+      player->x=plr_mv_to_x;
+      player->y=plr_mv_to_y;
+    }
   }
   else{qckmv = false;}
   

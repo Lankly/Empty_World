@@ -231,15 +231,16 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
   /* This is the case where the player has tried to pick up an item,
    * but there is nothing on the ground  beneath them.
    */
-  if(count==0){
-    msg_add("No items to pick up!");
+  if(count == 0){
+    if(creature == player){
+      msg_add("No items to pick up!");}
     return;
   }
   
   /* This is the case where the there is only one item on the ground
    * beneath the player.
    */
-  else if(count==1){
+  else if(count == 1){
     to_add = remove_item(map, creature->x, creature->y, 0);
   }
 
@@ -247,11 +248,17 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
    * beneath the player. It will take the user to a screen where they
    * can select which item it is that they're trying to pick up.
    */
+  else if(creature == player){
+    to_add = remove_item(map,
+			 creature->x,
+			 creature->y,
+			 items_display(map, creature->x, creature->y));
+  }
+
+  /* TODO: Nonplayer creature picking up from many items.
+   */
   else{
-    to_add=remove_item(map,
-		       creature->x,
-		       creature->y,
-		       items_display(map, creature->x, creature->y));
+    return;
   }
   inventory_add(creature, to_add);
 }
@@ -356,6 +363,8 @@ void debug(){
 	}
       }
     }
+  }else if(!strcmp(debug_cmd_lower,"toomuchhealth")){
+    set_health(player, 10000);
   }
 }
 

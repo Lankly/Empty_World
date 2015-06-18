@@ -41,7 +41,7 @@ void creature_data_init(){
   creature_data[CREATURE_HUMAN_BOWMAN] = (struct creature_t){
     .corpse_type = CORPSE_HUMAN,
     .display = '@',
-    .name = "Human Bowman.",
+    .name = "Human Bowman",
     .exam_text = "This is a human bowman.",
     .health = 20,
     .strength = 1,
@@ -406,7 +406,8 @@ void creature_kill(struct creature_t* creature){
       }
       inventory_node_t* to_remove = creature->inventory->first;
       creature->inventory->first = to_remove->next;
-      free(to_remove);
+      if(to_remove != NULL){
+	free(to_remove);}
     }
     free(creature->inventory);
   }
@@ -420,8 +421,10 @@ void creature_kill(struct creature_t* creature){
     game_over();
   }
   else{
-    free(creature->name);
-    free(creature);
+    //Was getting free invalid pointer, so this is commented for now
+    //TODO: Find problem
+    //free(creature->name);
+    //free(creature);
   }
 
 }
@@ -531,19 +534,6 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
   tile_t r = tile_data[cur_map->tiles[y * cur_map->width + x+1]];
   tile_t l = tile_data[cur_map->tiles[y * cur_map->width + x-1]];
 
-  /* For the creature to be able to pass, if they're trying to pass through a
-   * corner, they cannot be caryying too much.
-   */
-  if(creature->inventory->cur_weight > PASS_WEIGHT 
-     && ((cmd==KEY_HOME && !d.passable && !r.passable) 
-	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
-	 || (cmd==KEY_END && !u.passable && !r.passable) 
-	 || (cmd==KEY_NPAGE && !u.passable && !l.passable))){
-    //If we were trying to move the player, print out a quick alert
-    if(creature == player){
-      msg_add("You are too heavy to pass through.");}
-    return false;
-  }
   // Also cannot pass through closed door.
   if((cmd==cmd_data[CMD_UP_LEFT] && ((map_tile_is_door(d.id)
 				      && !d.passable
@@ -574,6 +564,19 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
     }
   return true;
 
+  /* For the creature to be able to pass, if they're trying to pass through a
+   * corner, they cannot be caryying too much.
+   */
+  if(creature->inventory->cur_weight > PASS_WEIGHT 
+     && ((cmd==KEY_HOME && !d.passable && !r.passable) 
+	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
+	 || (cmd==KEY_END && !u.passable && !r.passable) 
+	 || (cmd==KEY_NPAGE && !u.passable && !l.passable))){
+    //If we were trying to move the player, print out a quick alert
+    if(creature == player){
+      msg_add("You are too heavy to pass through.");}
+    return false;
+  }
 }
 
 /* This method calculates how much damage a creature will do. It takes into

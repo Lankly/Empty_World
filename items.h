@@ -50,6 +50,7 @@ typedef struct item_t{
   int damage;
   bool legendary;//if true, only one may exist  
   bool stopme;
+  bool immovable;
   int wearable;
   bool ranged;
   bool is_static;
