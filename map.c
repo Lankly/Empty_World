@@ -385,7 +385,8 @@ void map_place_spawners(struct map_t* map){
   
   //We place one spawner for every ten levels, plus one
   for(int i = 0; i < ((map->dlevel/10) + 1); i++){
-    struct creature_t *spawner = creature_create_from_data(CREATURE_SPAWNER);
+    struct creature_t *spawner = 
+      creature_create_from_data(CREATURE_TYPE_SPAWNER);
     spawner->dlevel = map->dlevel;
 
     /* Must be placed on an unknown tile. This makes it possible for it to be 
@@ -1007,7 +1008,7 @@ void draw_map(struct map_t* map){
       cur != NULL;
       cur = cur->next){
     //Show creature if it's visible to the player
-    if(creature_is_visible(cur->creature, player)){
+    if(is_telepathic(player) || (creature_is_visible(cur->creature, player))){
       mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);}
   }
 }

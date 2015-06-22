@@ -36,6 +36,9 @@ void downStairUseCallback(struct item_use_t* data){
 		       player->y,
 		       cur_map);
     map_place_down_stair_randomly(data->item->go_to_map);
+    
+    //Spawners
+    map_place_spawners(data->item->go_to_map);
   }
   else{  //Just move player if the map exists
     map_remove_creature(cur_map, player);

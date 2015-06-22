@@ -8,8 +8,7 @@
 void defaultTakeTurnCallback(struct creature_t* creature,
 			     struct map_t* map);
 void defaultPathfindCallback(struct creature_t* creature,
-			     struct map_t* map,
-			     struct item_map_t* items);
+			     struct map_t* map);
 
 void spawnerTakeTurnCallback(struct creature_t* creature,
 			     struct map_t* map);

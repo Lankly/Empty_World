@@ -1,4 +1,5 @@
 #include "player.h"
+#include "classes.h"
 #include "colors.h"
 #include "creature.h"
 #include "map.h"
@@ -69,6 +70,7 @@ void player_init(char* name){
     player->name = "Lan";}
 
   player->corpse_type = CORPSE_HUMAN;
+  player->class = CLASS_NEWB;
   set_strength(player, 1);
   set_perception(player, 1);
   set_endurance(player, 1);

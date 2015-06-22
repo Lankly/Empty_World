@@ -1,6 +1,9 @@
+#include "colors.h"
 #include "inventory.h"
 #include "helpers.h"
 #include "player.h"
+#include "status.h"
+#include <string.h>
 
 /* Initializes the player's inventory equip slots
  */
@@ -537,20 +540,92 @@ bool unequip_by_id(struct creature_t* creature, int inventory_id){
   return found;
 }
 
+/* Displays to the player the list of all items in their inventory. Since items
+ * cannot have names longer than 16 characters, the layout for this menu will be
+ * slightly different.
+ */
 void display_inventory(){
-  if(player->inventory == NULL || player->inventory->first == NULL){return;}
-  //Convert player->inventory_t to diplay_list_t
-  inventory_node_t* cur_node = player->inventory->first;
-  display_list_t* items = Calloc(1,sizeof(display_list_t));
-  display_list_node_t* disp=Calloc(1,sizeof(display_list_node_t));
-  disp->data=cur_node->item->exam_text;
-  items->first=disp;
-  cur_node=cur_node->next;
-  while(cur_node != NULL){
-    disp->next=Calloc(1,sizeof(display_list_node_t));
-    disp->data=cur_node->item->exam_text;
-    disp=disp->next;
-    cur_node=cur_node->next;
+  //Check to see if the player has any items in their inventory
+  if(player->inventory == NULL || player->inventory->first == NULL){
+    msg_add("Your inventory is empty.");
+    return;
   }
-  display(items,80,24);
+
+  clear();
+  //Create the borders
+  //Top
+  mvaddch(0,0,'+');
+  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
+    addch(ACS_HLINE);}
+  addch('+');
+
+  //Bottom
+  mvaddch(TERMINAL_HEIGHT-1, 0, '+');
+  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
+    addch(ACS_HLINE);}
+  addch('+');
+
+  //Sides
+  for(int j = 1; j < TERMINAL_HEIGHT-1; j++){
+    mvaddch(j, 0, ACS_VLINE); 
+    mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
+  }
+
+  //Info at bottom
+  char *output = (char*)Calloc(TERMINAL_WIDTH+1, sizeof(char));
+  move(TERMINAL_HEIGHT-2, 2);
+  strncpy(output,"< > To navigate, a-Z to use, ESC to quit", TERMINAL_WIDTH);
+  for(int i = 0; i < TERMINAL_WIDTH-3; i++){
+    addch(i < strlen(output) ? output[i] : ' ');}
+
+  //Now we look for user input and display items
+  bool done = false;
+  int item_max_name_size = 21 > (TERMINAL_WIDTH-4) ? TERMINAL_WIDTH-4 : 21;
+  int col_width = item_max_name_size + 4;
+  int max_items_per_col = TERMINAL_HEIGHT - 5;
+  int max_items_per_row = (TERMINAL_WIDTH - 3) / col_width;
+  int max_items_per_page = max_items_per_row * max_items_per_col;
+  int page = 0;
+  while(!done){
+
+    //Display items
+    int id = 0;
+    for(struct inventory_node_t *cur = player->inventory->first; 
+	id <= ((page+1) * max_items_per_page) && cur != NULL;
+	cur = cur->next)
+      {
+	if(id < (max_items_per_page * (page + 1))){
+	  //Position where to put the next item
+	  int prev_num = (page * max_items_per_page);
+	  move(2 + (id - prev_num) % max_items_per_col,
+	       3 + (((id - prev_num) / max_items_per_col) 
+		    * col_width));
+	  addch((((int)'a') + id) | COLOR_PAIR(CP_GREEN_BLACK));
+	  addstr(" - ");
+	  strncpy(output, cur->item->name, item_max_name_size);
+	  addstr(output);
+	}
+	id++;
+	if(cur == player->inventory->last){
+	  break;}
+    }
+    
+
+    ESCDELAY = 25;
+    timeout(1);
+    char ch = getch();
+
+    //If user pressed ESC, we're done here
+    if(ch == 27 && getch() == ERR){
+      done = true;}
+    timeout(-1);
+    if(!done){
+      if(ch == '<'){
+	page -= page != 0 ? 1 : 0;
+      }
+      else if(ch == '>'){
+	page += id % max_items_per_page == 0 ? 1 : 0;
+      }
+    }
+  }
 }

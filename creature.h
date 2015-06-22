@@ -19,57 +19,15 @@
 #define CREATURE_TYPE_ORC      9
 #define CREATURE_TYPE_MINDFLAYER 10
 #define CREATURE_TYPE_DEMON    11
-#define CREATURE_TYPE_SKELTON  12
+#define CREATURE_TYPE_SKELETON 12
 #define CREATURE_TYPE_SENTINEL 13
 #define CREATURE_TYPE_GRIFFON  14
 #define CREATURE_TYPE_FOG      15
 #define CREATURE_TYPE_PLANT    16
 #define CREATURE_TYPE_EQUINE   17
-#define CREATURE_GOLEM         18
-#define CREATURE_EYE           19
+#define CREATURE_TYPE_GOLEM    18
+#define CREATURE_TYPE_EYE      19
 #define CREATURE_TYPE_MAX      19
-
-//DEFINE CREATURE IDS
-#define CREATURE_UNKNOWN       0
-#define CREATURE_SPAWNER       1
-#define CREATURE_HUMAN_WARRIOR 2
-#define CREATURE_HUMAN_BOWMAN  3
-#define CREATURE_HUMAN_PIKEMAN 4
-#define CREATURE_HUMAN_MONK    5
-#define CREATURE_HUMAN_WIZARD  6
-#define CREATURE_WERECREATURE 7
-#define CREATURE_GOBLIN_WARRIOR 8
-#define CREATURE_GOBLIN_BOWMAN  9
-#define CREATURE_GOBLIN_PIKEMAN 10
-#define CREATURE_GOBLIN_WIZARD  11
-#define CREATURE_ORC_WARRIOR 12
-#define CREATURE_ORC_BOWMAN  13
-#define CREATURE_ORC_PIKEMAN 14
-#define CREATURE_ORC_WIZARD  15
-#define CREATURE_MINDFLAYER  16
-#define CREATURE_SKELETON_WARRIOR 17
-#define CREATURE_SKELETON_BOWMAN  18
-#define CREATURE_SKELETON_PIKEMAN 19
-#define CREATURE_PUPPY  20
-#define CREATURE_DOG    21
-#define CREATURE_WARDOG 22
-#define CREATURE_KITTEN   23
-#define CREATURE_HOUSECAT 24
-#define CREATURE_WARCAT   25
-#define CREATURE_LION 26
-#define CREATURE_PUMA 27
-#define CREATURE_WOLF 28
-#define CREATURE_HORSE 29
-#define CREATURE_UNICORN 30
-#define CREATURE_UNICORN_GOOD 31
-#define CREATURE_UNICORN_EVIL 32
-#define CREATURE_PAPER_GOLEM  33
-#define CREATURE_ROCK_GOLEM   34
-#define CREATURE_SILVER_GOLEM 35
-#define CREATURE_GOLD_GOLEM   36
-#define CREATURE_IRON_GOLEM   37
-#define CREATURE_FLOATING_EYE 38
-#define CREATURE_MAX          39
 
 //DAMAGE TYPES LIST
 #define DMG_UNKNOWN 0
@@ -163,6 +121,8 @@ typedef struct{
 struct creature_t; struct map_t; struct item_map_t;
 typedef void (*creatureTakeTurnCallback)(struct creature_t *creature,
 					 struct map_t *map);
+typedef void (*creaturePathfindCallback)(struct creature_t *creature,
+					 struct map_t *map);
 
 #include "inventory.h"
 struct creature_t{
@@ -181,6 +141,7 @@ struct creature_t{
    */
 
   int corpse_type;
+  int class;
   int creature_id;
   int display;
   int dlevel;
@@ -194,6 +155,7 @@ struct creature_t{
   bool is_immobile;
   bool can_fly;
   bool is_blind;
+  bool is_telepathic;
 
   breathe_list_t *breathables;
   consume_list_t *consumables;
@@ -202,6 +164,7 @@ struct creature_t{
 
   inventory_t *inventory;
   creatureTakeTurnCallback takeTurn;
+  creaturePathfindCallback pathfind;
 };
 
 #include "creature_callbacks.h"
@@ -216,12 +179,11 @@ struct creature_list_t{
 };
 
 //This is all the default kinds of creatures that can be created
-struct creature_t creature_data[CREATURE_MAX+1];
-int creature_types_data[CREATURE_TYPE_MAX+1];
+struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 
 void creature_data_init();
 struct creature_t *creature_create_from_data(int index);
-void creature_spawn(int creature_id, struct map_t *map);
+struct creature_t *creature_spawn(int creature_id, struct map_t *map);
 void creature_kill(struct creature_t *creature);
 void damage_creature(struct creature_t *target, char *source, int dmg);
 void creature_place_on_map(struct creature_t *creature, map_t *map);
@@ -232,9 +194,13 @@ int creature_get_damage(struct creature_t *creature);
 
 void set_blindness(struct creature_t *c, bool b);
 void set_unconscious(struct creature_t *c, bool b);
+void set_immobile(struct creature_t *c, bool b);
+void set_telepathic(struct creature_t *c, bool b);
 void set_level(struct creature_t *c, int l);
 void set_dlevel(struct creature_t *c, int d);
 void set_name(struct creature_t *c, char *n);
+void set_exam_text(struct creature_t *c, char *e);
+void set_class(struct creature_t *c, int class);
 void set_gold(struct creature_t *c, int g);
 
 void set_strength(struct creature_t *c, int s);
@@ -251,6 +217,7 @@ void set_max_hunger(struct creature_t *c, int m);
 void set_hunger(struct creature_t *c, int h);
 
 char *get_name(struct creature_t *c);
+int get_class(struct creature_t *c);
 int get_level(struct creature_t *c);
 int get_dlevel(struct creature_t *c);
 int get_weight(struct creature_t *c);
@@ -258,8 +225,13 @@ int get_gold(struct creature_t *c);
 
 int get_health(struct creature_t *c);
 int get_max_health(struct creature_t *c);
-int get_max_hunger(struct creature_t *c);
 int get_hunger(struct creature_t *c);
+int get_max_hunger(struct creature_t *c);
+
+bool is_blind(struct creature_t *c);
+bool is_unconscious(struct creature_t *c);
+bool is_immobile(struct creature_t *c);
+bool is_telepathic(struct creature_t *c);
 
 int get_strength(struct creature_t *c);
 int get_perception(struct creature_t *c);

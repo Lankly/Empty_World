@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "classes.h"
 #include "colors.h"
 #include "helpers.h"
 #include "map.h"
@@ -15,7 +16,7 @@ static int num_msgs;
 static msg_t *cur_msg, *first_msg, *last_msg;
 
 void draw_status(map_t* map){
-  char* output = (char*) Calloc(81,sizeof(char));
+  char* output = (char*)Calloc(81,sizeof(char));
 
   //Status bar
   if(newmsg){
@@ -28,23 +29,24 @@ void draw_status(map_t* map){
   }
   else{
     sprintf(output,"%80s", "");
-  }  //now color the output white printf-ing
+  }  //now color the output while printf-ing
   move(MSG_ROW,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
   }
 
   //Line one of info
-  sprintf(output,"  %-*s      STR:%-2d  PER:%-2d  END:%-2d  CHA:%-2d  INT:%-2d  AGL:%-2d  LCK:%-2d      ",
-	  MAX_NAME_LEN,
-	  player->name,
-	  player->strength,
-	  player->perception, 
-	  player->endurance, 
-	  player->charisma, 
-	  player->intelligence, 
-	  player->agility, 
-	  player->luck);
+  sprintf(output,"  %s, %-*s STR:%-2d PER:%-2d END:%-2d CHA:%-2d INT:%-2d AGL:%-2d LCK:%-2d  ",
+	  get_name(player),
+	  (int)(80-2-strlen(get_name(player))-2-5-2-5-2-5-2-5-2-5-2-5-2-5-2-2),
+	  class_data[player->class].name,
+	  get_strength(player),
+	  get_perception(player),
+	  get_endurance(player),
+	  get_charisma(player),
+	  get_intelligence(player),
+	  get_agility(player),
+	  get_luck(player));
   move(22,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
@@ -56,10 +58,10 @@ void draw_status(map_t* map){
   move(23,0);
   addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
   addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
-  sprintf(output,"HP:%-3d", player->health);
+  sprintf(output,"HP:%-3d", get_health(player));
   for(int i = 0; i < 6; i++){
-    addch(output[i] | COLOR_PAIR(player->health < (player->max_health / 2) ? 
-				 player->health < (player->max_health / 5) ? 
+    addch(output[i] | COLOR_PAIR(get_health(player) <(get_max_health(player)/2)? 
+				 get_health(player) <(get_max_health(player)/5)? 
 				 CP_BLACK_RED : CP_BLACK_YELLOW : CP_BLACK_WHITE
 				 ));}
     
@@ -73,7 +75,6 @@ void draw_status(map_t* map){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
   }
   free(output);
-  output=0;
 }
 
 void msg_add(char* new_msg){

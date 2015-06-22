@@ -1,8 +1,9 @@
 #include "helpers.h"
+#include "classes.h"
 #include "colors.h"
 #include "creature.h"
-#include "items.h"
 #include "inventory.h"
+#include "items.h"
 #include "map.h"
 #include "player.h"
 #include "status.h"
@@ -92,24 +93,6 @@ void* Calloc(int items, int size)
     quit("Error: out of memory\n");
   }
   return ret;
-}
-
-int display(display_list_t* list,int width,int height){
-  //One padded row
-  move(0,0);
-  display_list_node_t* next =list->first; 
-  for(int i=0;i<width;i++){addch(' ');}
-  //Now for each element in the list
-  for(int i=0;i<height && i<list->size;i++){
-    move(i,0);addch(' ');addch('a'+i);addch(' ');
-    char* str = next->data;
-    for(int j=0;j<width;j++){
-      if(j<strlen(str)){addch(str[j]);}
-      else{addch(' ');}
-    }
-    next=next->next;
-  }
-  return getch()-'a';
 }
 
 /* This command will give all the initial definitions to the keys for the game.
@@ -365,6 +348,8 @@ void debug(){
     }
   }else if(!strcmp(debug_cmd_lower,"toomuchhealth")){
     set_health(player, 10000);
+  }else if(!strcmp(debug_cmd_lower,"maketelepathic")){
+    set_telepathic(player, true);
   }
 }
 
@@ -793,7 +778,10 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 	 || tile_data[ur].stopme
 	 || map_tile_stopme(map, x-1, y-1)
 	 || map_tile_stopme(map, x, y-1)
-	 || map_tile_stopme(map, x+1, y-1))){
+	 || map_tile_stopme(map, x+1, y-1)
+	 || (cur_tile == TILE_FLOOR 
+	     && (r != ur || l != ul))
+	 )){
     return false;
   }
   if(qckmv_cmd==cmd_data[CMD_DOWN]
@@ -802,7 +790,10 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 	 || tile_data[dr].stopme
 	 || map_tile_stopme(map, x-1, y+1)
 	 || map_tile_stopme(map, x, y+1)
-	 || map_tile_stopme(map, x+1, y+1))){
+	 || map_tile_stopme(map, x+1, y+1)
+	 || (cur_tile == TILE_FLOOR 
+	     && (r != dr || l != dl))
+	 )){
     return false;
   }
   if(qckmv_cmd==cmd_data[CMD_LEFT]
@@ -811,7 +802,10 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 	 || tile_data[ul].stopme
 	 || map_tile_stopme(map, x-1, y-1)
 	 || map_tile_stopme(map, x-1, y)
-	 || map_tile_stopme(map, x-1, y+1))){
+	 || map_tile_stopme(map, x-1, y+1)
+	 || (cur_tile == TILE_FLOOR 
+	     && (u != ul || d != dl))
+	 )){
     return false;
   }
   if(qckmv_cmd==cmd_data[CMD_RIGHT]
@@ -820,7 +814,10 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 	 || tile_data[ur].stopme
 	 || map_tile_stopme(map, x+1, y-1)
 	 || map_tile_stopme(map, x+1, y)
-	 || map_tile_stopme(map, x+1, y+1))){
+	 || map_tile_stopme(map, x+1, y+1)
+	 || (cur_tile == TILE_FLOOR
+	     && (u != ur || d != dr))
+	 )){
     return false;
   }
   if((qckmv_cmd==cmd_data[CMD_UP_LEFT] 
@@ -850,7 +847,10 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 
 void game_init(int seed){
   if(seed == 0){seed = time(NULL);}
-  initscr(); color_init(); cbreak(); noecho();
+
+  WIN = initscr(); 
+
+  color_init(); cbreak(); noecho();
   keypad(stdscr, true); curs_set(0);  
 
   //Set flags
@@ -864,6 +864,7 @@ void game_init(int seed){
   //Initialize game data
   tile_data_init();
   item_data_init();
+  classes_data_init();
   creature_data_init();
   player_init();
   inventory_init(player);
@@ -909,7 +910,7 @@ void game_over(){
 	  //TODO: Free everything.
 
 	  endwin();
-	  printf("You died!");
+	  printf("You died!\n");
 	  exit(0);
 	}
       }

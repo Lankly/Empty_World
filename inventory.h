@@ -43,6 +43,7 @@ typedef struct inventory_node_t{
   
   struct inventory_node_t* next;
 }inventory_node_t;
+
 typedef struct{
   equipment_head_t* head;
   equipment_chest_t* chest;

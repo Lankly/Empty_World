@@ -44,6 +44,8 @@
 int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
 
+WINDOW *WIN;
+
 bool qckmv;
 bool use_8_colors;
 bool use_num_lock;
@@ -61,18 +63,6 @@ void quit(const char* error_msg);
 void cmd_init();
 void cmd_remap();
 void analyze_cmd(int cmd, int* x, int* y);
-
-typedef struct display_list_node_t{
-  char* data;
-  struct display_list_node_t* next;
-}display_list_node_t;
-
-typedef struct{
-  display_list_node_t* first;
-  int size;
-}display_list_t; 
-
-int display(display_list_t* list,int width,int height);
 
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);

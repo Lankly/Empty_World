@@ -19,15 +19,6 @@ void item_data_init(){
     .consume = &defaultConsumeCallback,
     .zap = &defaultZapCallback
   };
-  item_data[CORPSE_HUMAN] = (item_t){
-    .id = CORPSE_HUMAN,
-    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
-    .exam_text = "It is the corpse of a human.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
   item_data[ITEM_DOWN_STAIR] = (item_t){
     .id = ITEM_DOWN_STAIR,
     .display = '>',
@@ -65,6 +56,26 @@ void item_data_init(){
     .material = MAT_IRON,
     .weight = 10,
     .use = &ironSwordUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_HUMAN] = (item_t){
+    .id = CORPSE_HUMAN,
+    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
+    .name = "Human Corpse",
+    .exam_text = "It is the corpse of a human.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_ORC] = (item_t){
+    .id = CORPSE_ORC,
+    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
+    .name = "Human Corpse",
+    .exam_text = "It is the corpse of a human.",
+    .size = 1,
+    .use = &defaultUseCallback,
     .consume = &defaultConsumeCallback,
     .zap = &defaultZapCallback
   };
@@ -295,32 +306,8 @@ item_t* item_create_from_data(int index){
  * that item on the item-stack will be returned.
  */
 int items_display(struct map_t* map,int x,int y){
-  if(map==NULL){quit("Error: Null map");}
-  if(map->items==NULL){quit("Error: Invalid items map");}
-  if(get_coord(x,y,map->width)>map->width*map->height){
-    quit("Error: Items Index Out of Bounds");
-  }
 
-  //Navigate to the correct item stack on the map
-  item_map_t* cur=NULL;
-  for(item_map_t* i=map->items;i!=NULL;i=i->next){
-    if(i->y>y || (i->y==y && i->x>x)){break;}
-    cur=i;
-    if(i->y==y && i->x==x){break;}
-  }
-  if(cur==NULL){return -1;}
+  //TODO
 
-  item_map_node_t* cur_node = cur->first;
-  display_list_t* items = Calloc(1,sizeof(display_list_t));
-  display_list_node_t* to_add=Calloc(1,sizeof(display_list_node_t));
-  to_add->data=cur_node->item->exam_text;
-  items->first=to_add;
-  cur_node=cur_node->next;
-  while(cur_node!=NULL){
-    to_add->next=Calloc(1,sizeof(display_list_node_t));
-    to_add->data=cur_node->item->exam_text;
-    to_add=to_add->next;
-    cur_node=cur_node->next;
-  }
-  return display(items,map->width,map->height);
+  return 0;
 }
