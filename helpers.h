@@ -31,7 +31,8 @@
 #define CMD_ASCEND 17
 #define CMD_DESCEND 18
 #define CMD_MANUAL 19
-#define CMD_MAX 19
+#define CMD_WAIT 20
+#define CMD_MAX 20
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0
@@ -62,7 +63,6 @@ void get_coord_via_cursor(int* y, int* x);
 void quit(const char* error_msg);
 void cmd_init();
 void cmd_remap();
-void analyze_cmd(int cmd, int* x, int* y);
 
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);
@@ -79,6 +79,6 @@ void debug();
 void manual();
 void xscend();
 void analyze_cmd_extended();
-void analyze_cmd(int cmd, int* x, int* y);
+bool analyze_cmd(int cmd, int* x, int* y);
 
 #endif

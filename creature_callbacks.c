@@ -21,43 +21,43 @@ void defaultPathfindCallback(struct creature_t* creature,
 
   //If it can see the player
   if(creature_is_visible(player, creature)){
-    int x_diff = player->x - creature->x;
-    int y_diff = player->y - creature->y;
-    //Next, check if the player is adjacent and attack if so
-    if((x_diff < -1 || x_diff > 1) && (y_diff < -1 || y_diff > 1)){
-      int move_x=0, move_y=0;
-      //If the creature is to the right of the player
-      if(creature->x > player->x){
-	move_x--;}
-      //If the creature is to the left of the player
-      else if(creature->x < player->x){
-	move_x++;}
-      //If the creature is below the player
-      if(creature->y > player->x){
-	move_y--;}
-      //If the creature is above the player
-      else if(creature->y < player->x){
-	move_y++;}
-      
-      creature->x += move_x;
-      creature->y += move_y;
-    }
+    int move_x=0, move_y=0;
+    //If the creature is to the right of the player
+    if(creature->x > player->x
+       && tile_data[map_get_tile(map, creature->x -1,
+				 creature->y)].passable){
+      move_x--;}
+    //If the creature is to the left of the player
+    else if(creature->x < player->x
+	    && tile_data[map_get_tile(map, creature->x + 1,
+				      creature->y)].passable){
+      move_x++;}
+    //If the creature is below the player
+    if(creature->y > player->y
+       && tile_data[map_get_tile(map, creature->x + move_x,
+				 creature->y - 1)].passable){
+      move_y--;}
+    //If the creature is above the player
+    else if(creature->y < player->y
+	    && tile_data[map_get_tile(map, creature->x + move_x,
+				      creature->y + 1)].passable){
+      move_y++;}
+    
+    creature->x += move_x;
+    creature->y += move_y;
   }
   //Else wander randomly
   else{
     //It is perfectly okay for it to not move at all for its turn
-    int move_x = rand() % 2 * rand() % 2 ? -1 : 1;
-    int move_y = rand() % 2 * rand() % 2 ? -1 : 1;
-    int tries = 0;
-    while(!tile_data[map_get_tile(map,
-				  creature->x+move_x,
-				  creature->y+move_y)].passable
-	  && tries < 30){
-      move_x = rand()%2 * rand() % 2 ? -1 : 1;
-      move_y = rand()%2 * rand() % 2 ? -1 : 1;
-      tries ++;
-    }
-    if(tries != 30){
+    int move_x = 0, move_y = 0, tries = 0;
+    do{
+      move_x = (rand()%2) * ((rand() % 2) ? -1 : 1);
+      move_y = (rand()%2) * ((rand() % 2) ? -1 : 1);
+    }while(!tile_data[map_get_tile(map,
+				   creature->x+move_x,
+				   creature->y+move_y)].passable
+	   && tries < 30);
+    if(tries < 30){
       creature->x = creature->x + move_x;
       creature->y = creature->y + move_y;}
   }

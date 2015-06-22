@@ -16,15 +16,16 @@ void playerTakeTurnCallback(struct creature_t* creature,
   int plr_mv_to_x = player->x,
     plr_mv_to_y = player->y;
   
-  /* If the player is quickmoving, keep doing that. 
-   * Else, look for keyboard input.
-   */
-  if(qckmv){
-    cmd = qckmv_cmd;
-  }
-  else{cmd = getch();}
-  
-  analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y);
+  do{
+    /* If the player is quickmoving, keep doing that. 
+     * Else, look for keyboard input.
+     */
+    if(qckmv){
+      cmd = qckmv_cmd;
+    }
+    else{cmd = getch();}
+    
+  }while(!analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y));
     
   /* Ensure that the player is light enough to pass through corners,
        that they are not behind a closed door.

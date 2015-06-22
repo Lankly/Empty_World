@@ -29,7 +29,7 @@ void draw_status(map_t* map){
   }
   else{
     sprintf(output,"%80s", "");
-  }  //now color the output while printf-ing
+  }  //now color the output while addch-ing
   move(MSG_ROW,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
@@ -60,15 +60,15 @@ void draw_status(map_t* map){
   addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
   sprintf(output,"HP:%-3d", get_health(player));
   for(int i = 0; i < 6; i++){
-    addch(output[i] | COLOR_PAIR(get_health(player) <(get_max_health(player)/2)? 
-				 get_health(player) <(get_max_health(player)/5)? 
+    addch(output[i] | COLOR_PAIR(get_health(player) <(get_max_health(player)/2)?
+				 get_health(player) <(get_max_health(player)/5)?
 				 CP_BLACK_RED : CP_BLACK_YELLOW : CP_BLACK_WHITE
 				 ));}
     
   sprintf(output,"  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d Trn:%-6d%*s",
 	  player->inventory != NULL ? player->inventory->cur_weight : 0,
 	  player->level,
-	  map->dlevel,
+	  player->dlevel,
 	  num_turns,
 	  80-2-3-3-2-4-3-2-4-3-2-5-2-4-6,"");
   for(int i=0; i<80-2-3-3; i++){

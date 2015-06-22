@@ -118,6 +118,7 @@ void cmd_init(){
   cmd_data[CMD_ASCEND] = '<';
   cmd_data[CMD_DESCEND] = '>';
   cmd_data[CMD_MANUAL] = '?';
+  cmd_data[CMD_WAIT] = '.';
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -161,7 +162,7 @@ void cmd_remap(){
   cmd_data[CMD] = new;
 }
 
-void analyze_cmd(int cmd, int*x, int* y);
+bool analyze_cmd(int cmd, int*x, int* y);
 /* This function handles what to do when the open action is executed. It will
  * attempt to turn a closed door into an open door at this time. 
  * TODO: Include the ability to open items on the floor like chests.
@@ -661,7 +662,8 @@ void analyze_cmd_extended(){
 
 /* This function will process user input and make the game respond to that.
  */
-void analyze_cmd(int cmd, int* x, int* y){
+bool analyze_cmd(int cmd, int* x, int* y){
+  bool to_return = true;
   if(cmd == cmd_data[CMD_QCKMV]){
     qckmv_cmd = getch();
     if(qckmv_cmd == cmd_data[CMD_UP]
@@ -675,7 +677,7 @@ void analyze_cmd(int cmd, int* x, int* y){
       qckmv = true;
       cmd = qckmv_cmd;
     }
-    else{return;}
+    else{return false;}
   }
   if(cmd == cmd_data[CMD_UP]){*y-=1;}
   else if(cmd == cmd_data[CMD_DOWN]){*y+=1;}
@@ -702,21 +704,32 @@ void analyze_cmd(int cmd, int* x, int* y){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
     display_inventory();
+    to_return = false;
   }else if(cmd == cmd_data[CMD_REMAP]){
     cmd_remap();
+    to_return = false;
   }else if(cmd == cmd_data[CMD_EXTENDED]){
     analyze_cmd_extended();
+    to_return = false;
+    draw_status();
   }else if(cmd == cmd_data[CMD_EXAMINE]){
     map_examine_tile(cur_map);
+    to_return = false;
+    draw_status();
   }else if(cmd == cmd_data[CMD_ASCEND]){
     xscend(ITEM_UP_STAIR);
   }else if(cmd == cmd_data[CMD_DESCEND]){
     xscend(ITEM_DOWN_STAIR);
   }else if(cmd == cmd_data[CMD_MANUAL]){
     manual();
+    to_return = false;
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
+  else{
+    to_return = (cmd == cmd_data[CMD_WAIT]);}
+
+  return to_return;
 }
 
 

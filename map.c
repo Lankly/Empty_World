@@ -433,7 +433,8 @@ void map_examine_tile(struct map_t* map){
 	cur != NULL;
 	cur = cur->next){
       if(cur->creature->x == x && cur->creature->y == y 
-	 && in_range(cur->creature, player)){
+	 && (in_range(cur->creature, player)
+	     || is_telepathic(player))){
 	msg_addf("%s", cur->creature->exam_text);
 	return;
       }
