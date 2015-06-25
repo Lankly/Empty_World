@@ -59,9 +59,10 @@ void item_data_init(){
     .consume = &defaultConsumeCallback,
     .zap = &defaultZapCallback
   };
+
   item_data[CORPSE_HUMAN] = (item_t){
     .id = CORPSE_HUMAN,
-    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
+    .display = '@' | COLOR_PAIR(CP_DARK_GREY_BLACK),
     .name = "Human Corpse",
     .exam_text = "It is the corpse of a human.",
     .size = 1,
@@ -71,9 +72,159 @@ void item_data_init(){
   };
   item_data[CORPSE_ORC] = (item_t){
     .id = CORPSE_ORC,
-    .display = '@' | COLOR_PAIR(CP_GREY_BLACK),
-    .name = "Human Corpse",
-    .exam_text = "It is the corpse of a human.",
+    .display = 'R' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Orc Corpse",
+    .exam_text = "It is the corpse of an orc.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_GOBLIN] = (item_t){
+    .id = CORPSE_GOBLIN,
+    .display = 'G' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Goblin Corpse",
+    .exam_text = "It is the corpse of a goblin.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_SKELETON] = (item_t){
+    .id = CORPSE_SKELETON,
+    .display = 'S' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Skeleton",
+    .exam_text = "It a skeleton (Thankfully inanimate).",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_CANINE] = (item_t){
+    .id = CORPSE_CANINE,
+    .display = 'd' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Canine Corpse",
+    .exam_text = "It is the corpse of a canine.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_FELINE] = (item_t){
+    .id = CORPSE_FELINE,
+    .display = 'c' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Feline Corpse",
+    .exam_text = "It is the corpse of a feline.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_INSECT] = (item_t){
+    .id = CORPSE_INSECT,
+    .display = 'h' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Hornet Corpse",
+    .exam_text = "It is the corpse of a hornet. Yay!",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_RODENT] = (item_t){
+    .id = CORPSE_RODENT,
+    .display = 'r' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Rodent Corpse",
+    .exam_text = "It is the corpse of a rodent.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_AVIAN] = (item_t){
+    .id = CORPSE_AVIAN,
+    .display = 'o' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Owl Corpse",
+    .exam_text = "It is the corpse of an owl.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_DEMON] = (item_t){
+    .id = CORPSE_DEMON,
+    .display = 'E' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Demon Corpse",
+    .exam_text = "It is the corpse of a demon.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_MINDFLAYER] = (item_t){
+    .id = CORPSE_MINDFLAYER,
+    .display = 'M' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Mindflayer Corpse",
+    .exam_text = "It is the corpse of a mindflayer. Something about it unnerves you.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_GRIFFON] = (item_t){
+    .id = CORPSE_GRIFFON,
+    .display = 'G' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Griffon Corpse",
+    .exam_text = "It is the corpse of a griffon.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_SENTINEL] = (item_t){
+    .id = CORPSE_SENTINEL,
+    .display = 'T' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Sentinel Corpse",
+    .exam_text = "It is the corpse of a sentinel.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_PLANT] = (item_t){
+    .id = CORPSE_PLANT,
+    .display = 'f' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Fungus Corpse",
+    .exam_text = "It is a pile of moss.",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_EYE] = (item_t){
+    .id = CORPSE_EYE,
+    .display = 'e' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Eyeball",
+    .exam_text = "It is an eyeball. Sure does look tasty... What?",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_SPAWNER] = (item_t){
+    .id = CORPSE_SPAWNER,
+    .display = '%' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "??? Corpse",
+    .exam_text = "It is the corpse of a...",
+    .size = 1,
+    .use = &defaultUseCallback,
+    .consume = &defaultConsumeCallback,
+    .zap = &defaultZapCallback
+  };
+  item_data[CORPSE_EQUUS] = (item_t){
+    .id = CORPSE_EQUUS,
+    .display = 'H' | COLOR_PAIR(CP_DARK_GREY_BLACK),
+    .name = "Horse Corpse",
+    .exam_text = "It is the corpse of a horpse.",
     .size = 1,
     .use = &defaultUseCallback,
     .consume = &defaultConsumeCallback,

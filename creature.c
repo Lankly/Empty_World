@@ -128,7 +128,7 @@ void creature_data_init(){
   creature_data[CREATURE_TYPE_CANINE] = (struct creature_t){
     .corpse_type = CORPSE_CANINE,
     .creature_id = CREATURE_TYPE_CANINE,
-    .display = 'D',
+    .display = 'd',
     .name = "Dog",
     .exam_text = "This is a dog.",
     .max_health = 10,
@@ -141,7 +141,7 @@ void creature_data_init(){
   creature_data[CREATURE_TYPE_FELINE] = (struct creature_t){
     .corpse_type = CORPSE_FELINE,
     .creature_id = CREATURE_TYPE_FELINE,
-    .display = 'C',
+    .display = 'c',
     .name = "Cat",
     .exam_text = "This is a cat.",
     .max_health = 9,
@@ -161,7 +161,6 @@ void creature_data_init(){
     .takeTurn = &defaultTakeTurnCallback
   };
   creature_data[CREATURE_TYPE_GOLEM] = (struct creature_t){
-    .corpse_type = CORPSE_GOLEM,
     .creature_id = CREATURE_TYPE_GOLEM,
     .display = 'O',
     .name = "Golem",
@@ -174,7 +173,7 @@ void creature_data_init(){
   creature_data[CREATURE_TYPE_EYE] = (struct creature_t){
     .corpse_type = CORPSE_EYE,
     .creature_id = CREATURE_TYPE_EYE,
-    .display = 'E',
+    .display = 'e',
     .name = "Floating Eye",
     .exam_text = "This is an eyball floating over the floor.",
     .can_fly = true,

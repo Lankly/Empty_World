@@ -23,11 +23,10 @@
 #define CORPSE_SENTINEL 16
 #define CORPSE_PLANT  17
 #define CORPSE_EYE    18
-#define CORPSE_SPAWNER 20
-#define CORPSE_EQUUS 21
-#define CORPSE_GOLEM 22
-#define ITEM_IRON_SWORD 19
-#define ITEM_MAX 22
+#define CORPSE_SPAWNER 19
+#define CORPSE_EQUUS 20
+#define ITEM_IRON_SWORD 21
+#define ITEM_MAX 21
 
 //These are callbacks that will be inside of each item
 struct item_use_t; struct item_consume_t; struct item_zap_t;

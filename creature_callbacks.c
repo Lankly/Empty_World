@@ -158,7 +158,8 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 
     //Figure out if already moving along the wall
     if(u == TILE_WALL || d == TILE_WALL || r == TILE_WALL || l == TILE_WALL
-       || dr == TILE_WALL || dl == TILE_WALL || ur==TILE_WALL || ul==TILE_WALL){
+       || dr == TILE_WALL || dl == TILE_WALL || ur==TILE_WALL || ul==TILE_WALL
+       || map_get_tile(map, creature->x, creature->y) == TILE_CORRIDOR){
 
       bool can_go_up = u == TILE_CORRIDOR, can_go_down = d == TILE_CORRIDOR, 
 	can_go_left = l == TILE_CORRIDOR, can_go_right = r == TILE_CORRIDOR, 
