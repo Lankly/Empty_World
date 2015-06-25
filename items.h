@@ -48,13 +48,16 @@ typedef struct item_t{
   int material;
   int weight;
   int damage;
-  bool legendary;//if true, only one may exist  
-  bool stopme;
-  bool immovable;
   int wearable;
+
   bool ranged;
   bool is_static;
   bool is_two_handed;
+  bool legendary;//if true, only one may exist  
+  bool stopme;
+  bool immovable;
+  bool edible;
+
   int extrinsic;
   int curse_lvl;//0=uncursed,1=blessed,2=cursed
   int water_breathing_lvl;//0=normal,1=shallow,2=deep

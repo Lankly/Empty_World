@@ -28,6 +28,10 @@ int get_coord(int x,int y,int width){
   return y*width+x;
 }
 
+int get_distance(int x_0, int y_0, int x_1, int y_1){
+  return sqrt(pow(x_0 - x_1, 2) + pow(y_0 - y_1, 2));
+}
+
 /* This function gives the player a cursor to move around on-scren with. When
  * they hit enter, the pointers we were given will be updated with that location
  */
@@ -711,11 +715,9 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }else if(cmd == cmd_data[CMD_EXTENDED]){
     analyze_cmd_extended();
     to_return = false;
-    draw_status();
   }else if(cmd == cmd_data[CMD_EXAMINE]){
     map_examine_tile(cur_map);
     to_return = false;
-    draw_status();
   }else if(cmd == cmd_data[CMD_ASCEND]){
     xscend(ITEM_UP_STAIR);
   }else if(cmd == cmd_data[CMD_DESCEND]){
@@ -728,6 +730,9 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }
   else{
     to_return = (cmd == cmd_data[CMD_WAIT]);}
+
+  if(to_return == false){
+    draw_status(); draw_map(cur_map);}
 
   return to_return;
 }

@@ -147,6 +147,7 @@ struct creature_t{
   int dlevel;
   int type;
   int x; int y;
+  int last_position; //As in keys on a numpad
 
   char *name;
   char *exam_text;

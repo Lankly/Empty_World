@@ -461,21 +461,22 @@ void map_examine_tile(struct map_t* map){
  *                            *
  * It has the monsters x and y*
  * coords as parameters       */
-bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
+bool map_tile_is_visible(struct map_t* map, int check_x, int check_y, 
+			 struct creature_t *c){
   //Initial checks
-  if(map->dlevel != player->dlevel){return false;}
-  if(player->x == check_x && player->y == check_y){return true;}
+  if(map->dlevel != c->dlevel){return false;}
+  if(c->x == check_x && c->y == check_y){return true;}
      
   int t, x, y, abs_delta_x, abs_delta_y, sign_x, sign_y, delta_x, delta_y;
   
-  /* Delta x is the players x minus the monsters x    *
-   * d is my dungeon structure and px is the players  *
-   * x position. monster_x is the monsters x position passed *
+  /* Delta x is the creature's x minus the check_x
+   * d is my dungeon structure and px is the creature's
+   * x position. check_x is the target x position passed *
    * to the function.                                 */
-  delta_x = player->x - check_x;
+  delta_x = c->x - check_x;
   
   /* delta_y is the same as delta_x using the y coordinates */
-  delta_y = player->y - check_y;
+  delta_y = c->y - check_y;
   
   /* abs_delta_x & abs_delta_y: these are the absolute values of delta_x & delta_y */
   abs_delta_x = abs(delta_x);
@@ -509,9 +510,9 @@ bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
       x += sign_x;
       t += abs_delta_y * 2;
       
-      /* check to see if we are at the player's position */
-      if(x == player->x && y == player->y){
-	/* return that the monster can see the player */
+      /* check to see if we are at the creature's position */
+      if(x == c->x && y == c->y){
+	/* return that the monster can see the creature */
 	return true;
       }
       /* keep looping until the monster's sight is blocked *
@@ -533,7 +534,7 @@ bool map_tile_is_visible(struct map_t* map, int check_x, int check_y){
 	}
 	y += sign_y;
 	t += abs_delta_x * 2;
-	if(x == player->x && y == player->y){
+	if(x == c->x && y == c->y){
 	  return true;
 	}
       }while(tile_data[map_get_tile(map, x, y)].transparent);
@@ -590,9 +591,9 @@ void map_reveal(struct map_t *map, int rev_dist){
   for(int j=0; j < map->height; j++){
     for(int i=0; i < map->width; i++){
       //Check to see if it's in the possible radius to reveal a tile
-      int dist = sqrt(pow(i - player->x, 2) + pow(j - player->y, 2));
+      int dist = get_distance(i, j, player->x, player->y);
       //If it is, also check whether or not something's in the way
-      if(dist <= rev_dist && map_tile_is_visible(map, i, j)){
+      if(dist <= rev_dist && map_tile_is_visible(map, i, j, player)){
 	//Reveal the tile
 	map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
 	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
@@ -992,7 +993,7 @@ void draw_map(struct map_t* map){
 		       //distance check
 		       && (!coord_in_range(i, j, player)
 			   //wall check
-			   || !map_tile_is_visible(map, i, j)
+			   || !map_tile_is_visible(map, i, j, player)
 			   ) ? COLOR_PAIR(use_8_colors ? CP_BLUE_BLACK 
 					  : CP_DARK_GREY_BLACK) : 0));}
   }

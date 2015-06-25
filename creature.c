@@ -83,6 +83,7 @@ void creature_data_init(){
     .perception = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
+
   creature_data[CREATURE_TYPE_RODENT] = (struct creature_t){
     .corpse_type = CORPSE_RODENT,
     .creature_id = CREATURE_TYPE_RODENT,
@@ -91,10 +92,11 @@ void creature_data_init(){
     .exam_text = "This is a rat.",
     .max_health = '5',
     .strength = 1,
-    .perception = 1,
+    .perception = 2,
     .intelligence = 1,
     .luck = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .pathfind = &ratPathfindCallback
   };
   creature_data[CREATURE_TYPE_AVIAN] = (struct creature_t){
     .corpse_type = CORPSE_AVIAN,
@@ -118,8 +120,9 @@ void creature_data_init(){
     .max_health = 5,
     .can_fly = true,
     .strength = 2,
-    .perception = 1,
+    .perception = 2,
     .charisma = -1,
+    .luck = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
   creature_data[CREATURE_TYPE_CANINE] = (struct creature_t){
@@ -167,6 +170,7 @@ void creature_data_init(){
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback
   };
+
   creature_data[CREATURE_TYPE_EYE] = (struct creature_t){
     .corpse_type = CORPSE_EYE,
     .creature_id = CREATURE_TYPE_EYE,
@@ -228,6 +232,8 @@ void creature_data_init(){
     .exam_text = "This is a magic fungus with legs.",
     .max_health = 8,
     .strength = 3,
+    .perception = 1,
+    .luck = 1,
     .takeTurn = &defaultTakeTurnCallback
   };
 }
@@ -385,7 +391,8 @@ bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
     return false;}
 
   //If the seer is the player, do a wall-check. Return true otherwise.
-  return seer == player ? map_tile_is_visible(cur_map, target->x, target->y)
+  return seer == player ? map_tile_is_visible(cur_map, target->x, target->y,
+					      player)
     : true;
 }
 
@@ -463,18 +470,13 @@ int creature_get_damage(struct creature_t* creature){
   if(creature == NULL){
     quit("ERROR: Cannot get damage of NULL creature.");
   }
-
-  //If no inventory, just use stranth
-  if(creature->inventory == NULL){
-    return creature->strength;}
-  
   double to_return = 0;
-  if(creature->inventory->weild != NULL){
+  if(creature->inventory != NULL && creature->inventory->weild != NULL){
     /* Base weapon damage is a function of strength, health, and weapon damage
      */
     to_return += creature->inventory->weild->damage * 
-      creature->strength > 2 ? 1 : .5 *
-      creature->health > 10 ? 1 : .8;
+      (creature->strength / 2) *
+      ((double)creature->health/(double)get_max_health(creature) < .5) ? 1 : .8;
     /* If the weapon is ranged, intelligence is taken into account.
      */
     if(creature->inventory->weild->ranged){

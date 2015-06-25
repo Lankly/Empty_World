@@ -602,6 +602,8 @@ void display_inventory(){
 		    * col_width));
 	  addch((((int)'a') + id) | COLOR_PAIR(CP_GREEN_BLACK));
 	  addstr(" - ");
+	  if(cur->item->name == NULL){
+	    cur->item->name = "Null";}
 	  strncpy(output, cur->item->name, item_max_name_size);
 	  addstr(output);
 	}
