@@ -475,7 +475,8 @@ int creature_get_damage(struct creature_t* creature){
      */
     to_return += creature->inventory->weild->damage * 
       (creature->strength / 2) *
-      ((double)creature->health/(double)get_max_health(creature) < .5) ? 1 : .8;
+      (((double)creature->health
+	/ (double)get_max_health(creature) < .5) ? 1 : .8);
     /* If the weapon is ranged, intelligence is taken into account.
      */
     if(creature->inventory->weild->ranged){
