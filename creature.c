@@ -90,13 +90,13 @@ void creature_data_init(){
     .display = 'r',
     .name = "Rat",
     .exam_text = "This is a rat.",
-    .max_health = '5',
+    .max_health = 5,
     .strength = 1,
     .perception = 2,
     .intelligence = 1,
     .luck = 1,
     .takeTurn = &defaultTakeTurnCallback,
-    .pathfind = &ratPathfindCallback
+    .pathfind = &ratPathfindCallback,
   };
   creature_data[CREATURE_TYPE_AVIAN] = (struct creature_t){
     .corpse_type = CORPSE_AVIAN,
@@ -109,7 +109,7 @@ void creature_data_init(){
     .perception = 2,
     .intelligence = 1,
     .luck = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
   };
   creature_data[CREATURE_TYPE_INSECT] = (struct creature_t){
     .corpse_type = CORPSE_INSECT, 
@@ -136,7 +136,7 @@ void creature_data_init(){
     .perception = 3,
     .intelligence = 2,
     .luck = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
   };
   creature_data[CREATURE_TYPE_FELINE] = (struct creature_t){
     .corpse_type = CORPSE_FELINE,
@@ -148,7 +148,7 @@ void creature_data_init(){
     .strength = 2,
     .perception = 2,
     .intelligence = 3,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
   };
   creature_data[CREATURE_TYPE_EQUINE] = (struct creature_t){
     .corpse_type = CORPSE_EQUUS,
@@ -158,7 +158,7 @@ void creature_data_init(){
     .exam_text = "This is a horse. How did it get here?",
     .max_health = 30,
     .strength = 8,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
   };
   creature_data[CREATURE_TYPE_GOLEM] = (struct creature_t){
     .creature_id = CREATURE_TYPE_GOLEM,
@@ -167,7 +167,7 @@ void creature_data_init(){
     .exam_text = "This is a golem.",
     .max_health = 30,
     .strength = 3,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
   };
 
   creature_data[CREATURE_TYPE_EYE] = (struct creature_t){
@@ -269,48 +269,6 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
   return c;
 }
 
-/* This method will kill the creature and place its corpse and items
- */
-void creature_kill(struct creature_t* creature){
-  if(creature==NULL){quit("ERROR: Cannot kill NULL Creature");}
-  
-  //Place corpse
-  if(creature->corpse_type != ITEM_UNKNOWN){
-    item_t* corpse = item_create_from_data(creature->corpse_type);
-    add_item(cur_map, creature->x, creature->y, corpse, false);
-  }
-
-  if(creature->inventory!=NULL){
-    while(creature->inventory->first!=NULL){
-      item_t* next = creature->inventory->first->item;
-      if(next!=NULL && rand()%2){
-	add_item(cur_map, creature->x, creature->y, next, false);
-      }
-      inventory_node_t* to_remove = creature->inventory->first;
-      creature->inventory->first = to_remove->next;
-      if(to_remove != NULL){
-	free(to_remove);}
-    }
-    free(creature->inventory);
-  }
-  msg_addf("%s is slain!", creature->name);
-  map_remove_creature(cur_map, creature);
-
-  //Is this game over?
-  if(creature == player){
-    draw_map(cur_map);
-    draw_status(cur_map);
-    game_over();
-  }
-  else{
-    //Was getting free invalid pointer, so this is commented for now
-    //TODO: Find problem
-    //free(creature->name);
-    //free(creature);
-  }
-
-}
-
 /* This method handles how a creature takes damage.
  */
 void damage_creature(struct creature_t *target, char *source, int dmg){
@@ -318,7 +276,11 @@ void damage_creature(struct creature_t *target, char *source, int dmg){
   
   target->health -= dmg;
   if(target->health <= 0){
-    creature_kill(target);}
+    if(target->kill == NULL){
+      defaultKillCallback(target, cur_map);}
+    else{
+      (target->kill)(target, cur_map);}
+  }
 
   //Damage message
   if(dmg == 0){

@@ -150,6 +150,8 @@ int get_item_sym(struct map_t* map,int x,int y, int index);
 int get_top_item_sym(struct map_t* map,int x,int y);
 int get_top_item_sym_from_stack(struct item_map_t* items);
 
-item_t* item_create_from_data(int index);
+item_t *item_create_from_data(int index);
+item_t *create_corpse(char *name, int type,
+		      int display, int class);
 int items_display(struct map_t* map,int x,int y);
 #endif

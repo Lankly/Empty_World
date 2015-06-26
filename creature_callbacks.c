@@ -1,3 +1,4 @@
+#include "colors.h"
 #include "classes.h"
 #include "creature_callbacks.h"
 #include "creature.h"
@@ -7,6 +8,7 @@
 #include "status.h"
 #include "tiles.h"
 #include <limits.h>
+#include <string.h>
 
 /* Move to the player, if visible.
  * Wander around randomly otherwise.
@@ -83,6 +85,21 @@ void defaultTakeTurnCallback(struct creature_t* creature,
     else{
       creature->pathfind(creature, map);}
   }
+}
+
+/* Callback used for killing a creature by default
+ */
+void defaultKillCallback(struct creature_t *a, struct map_t *map){
+  if(a == NULL){quit("Error: Cannot kill NULL Animal.");}
+  if(map == NULL){quit("Error: Cannot kill Animal on NULL Map.");}
+
+  struct item_t *corpse = create_corpse(a->name, a->creature_id,
+					a->display, a->class);
+
+  add_item(map, a->x, a->y, corpse, false);
+
+  map_remove_creature(map, a);
+  free(a);
 }
 
 /* Pathfinding for rats.
@@ -558,14 +575,14 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
     case 8:
       c = creature_spawn(CREATURE_TYPE_HUMAN, map);
       set_class(c, CLASS_WARRIOR);
-      set_name(c, "Human Warrior");
+      set_name(c, "Human");
       set_exam_text(c, "This is a human warrior.");
       set_level(c, 3);
       break;
     case 9:
       c = creature_spawn(CREATURE_TYPE_HUMAN, map);
       set_class(c, CLASS_PIKEMAN);
-      set_name(c, "Human Pikeman");
+      set_name(c, "Human");
       set_exam_text(c, "This is a human pikeman.");
       break;
     case 10:

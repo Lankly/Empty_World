@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include "classes.h"
 #include "colors.h"
 #include "items.h"
 #include "item_callbacks.h"
@@ -125,16 +126,6 @@ void item_data_init(){
     .display = 'h' | COLOR_PAIR(CP_DARK_GREY_BLACK),
     .name = "Hornet Corpse",
     .exam_text = "It is the corpse of a hornet. Yay!",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_RODENT] = (item_t){
-    .id = CORPSE_RODENT,
-    .display = 'r' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Rodent Corpse",
-    .exam_text = "It is the corpse of a rodent.",
     .size = 1,
     .use = &defaultUseCallback,
     .consume = &defaultConsumeCallback,
@@ -450,6 +441,46 @@ item_t* item_create_from_data(int index){
   memcpy(ret,&item_data[index],sizeof(item_t));
 
   return ret;
+}
+
+item_t *create_corpse(char *name, int type, 
+			     int display, int class){
+  //Create basic  corpse
+  struct item_t *corpse = item_create_from_data(ITEM_UNKNOWN);
+  corpse->display = display | COLOR_PAIR(CP_DARK_GREY_BLACK);
+  corpse->name = Calloc(MAX_NAME_LEN + 1, sizeof(char));
+  corpse->exam_text = Calloc(MAX_MSG_LEN + 1, sizeof(char));
+  corpse->size = 1;
+  
+  /* Customize corpse name, exam text */
+
+  strcat(corpse->name, name);
+
+  strcat(corpse->exam_text, "It is the corpse of a");
+  //a -> an where necessary
+  if(corpse->name[0]  ==  'a'  || corpse->name[0] == 'A'
+     || corpse->name[0] == 'e' || corpse->name[0] == 'E'
+     || corpse->name[0] == 'i' || corpse->name[0] == 'I'
+     || corpse->name[0] == 'o' || corpse->name[0] == 'O'
+     || corpse->name[0] == 'u' || corpse->name[0] == 'U'){
+    strcat(corpse->exam_text, "n");}
+  strcat(corpse->exam_text, " ");
+  strcat(corpse->exam_text, corpse->name);
+
+  if(class != CLASS_UNKNOWN){
+    strcat(corpse->name, " ");
+    strcat(corpse->name, class_data[class].name);}
+
+
+  strcat(corpse->exam_text, ".");
+
+  //If  is same type as player, add frowny face
+  strcat(corpse->name, " Corpse");
+  if(player->creature_id == type
+     || player->were_type == type){
+    strcat(corpse->exam_text, " :(");}
+
+  return corpse;
 }
 
 /* This will display all the items on a given tile of the map to the player.

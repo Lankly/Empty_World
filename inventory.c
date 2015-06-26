@@ -575,12 +575,13 @@ void display_inventory(){
   char *output = (char*)Calloc(TERMINAL_WIDTH+1, sizeof(char));
   move(TERMINAL_HEIGHT-2, 2);
   strncpy(output,"< > To navigate, a-Z to use, ESC to quit", TERMINAL_WIDTH);
-  for(int i = 0; i < TERMINAL_WIDTH-3; i++){
-    addch(i < strlen(output) ? output[i] : ' ');}
+  addstr(output);
+  for(int i = 0; i < TERMINAL_WIDTH; i++){
+    output[i] = '\0';}
 
   //Now we look for user input and display items
   bool done = false;
-  int item_max_name_size = 21 > (TERMINAL_WIDTH-4) ? TERMINAL_WIDTH-4 : 21;
+  int item_max_name_size = MAX_NAME_LEN;
   int col_width = item_max_name_size + 4;
   int max_items_per_col = TERMINAL_HEIGHT - 5;
   int max_items_per_row = (TERMINAL_WIDTH - 3) / col_width;

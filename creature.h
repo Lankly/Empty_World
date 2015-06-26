@@ -123,6 +123,8 @@ typedef void (*creatureTakeTurnCallback)(struct creature_t *creature,
 					 struct map_t *map);
 typedef void (*creaturePathfindCallback)(struct creature_t *creature,
 					 struct map_t *map);
+typedef void (*creatureKillCallback)(struct creature_t *creature,
+				     struct map_t *map);
 
 #include "inventory.h"
 struct creature_t{
@@ -141,6 +143,7 @@ struct creature_t{
    */
 
   int corpse_type;
+  int were_type;
   int class;
   int creature_id;
   int display;
@@ -166,6 +169,7 @@ struct creature_t{
   inventory_t *inventory;
   creatureTakeTurnCallback takeTurn;
   creaturePathfindCallback pathfind;
+  creatureKillCallback kill;
 };
 
 #include "creature_callbacks.h"
@@ -185,7 +189,6 @@ struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 void creature_data_init();
 struct creature_t *creature_create_from_data(int index);
 struct creature_t *creature_spawn(int creature_id, struct map_t *map);
-void creature_kill(struct creature_t *creature);
 void damage_creature(struct creature_t *target, char *source, int dmg);
 void creature_place_on_map(struct creature_t *creature, map_t *map);
 int creature_see_distance(struct creature_t *creature);
