@@ -358,6 +358,45 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	  move_y = !move_x ? (rand() % 2) ? 1 : -1 : 0;
 	  break;
 	}
+
+	if(move_x == INT_MIN){
+	  switch(can_go_ul + can_go_ur + can_go_dl + can_go_dr){
+	  case 0: break;
+	  case 1:
+	    move_x = can_go_ul || can_go_dl ? -1 : 1;
+	    move_y = can_go_ul || can_go_ur ? -1 : 1;
+	    break;
+	  case 2:
+	    if(can_go_ul){
+	      if(creature->last_position != 7){
+		move_x = -1; move_y = -1;}
+	      else{
+		if(can_go_ur){
+		  move_x = 1; move_y = -1;
+		}
+		else if(can_go_dl){
+		  move_x = -1; move_y = 1;}
+		else{
+		  move_x = 1; move_y = 1;}
+	      }
+	    }
+	    else if(can_go_ur){
+	      if(creature->last_position != 9){
+		move_x = 1; move_y = -1;}
+	      else if(can_go_dl){
+		move_x = -1; move_y = 1;}
+	      else{
+		move_x = 1; move_y = 1;}
+	    }
+	    else if(can_go_dl){
+	      if(creature->last_position != 1){
+		move_x = -1; move_y = 1;}
+	      else{
+		move_x = 1; move_y = 1;}
+	    }
+	    break;
+	  }
+	}
       }
     }
   }

@@ -591,7 +591,7 @@ void display_inventory(){
 
     //Display items
     int id = 0;
-    for(struct inventory_node_t *cur = player->inventory->first; 
+    for(struct inventory_node_t *cur = player->inventory->first;
 	id <= ((page+1) * max_items_per_page) && cur != NULL;
 	cur = cur->next)
       {
@@ -599,7 +599,7 @@ void display_inventory(){
 	  //Position where to put the next item
 	  int prev_num = (page * max_items_per_page);
 	  move(2 + (id - prev_num) % max_items_per_col,
-	       3 + (((id - prev_num) / max_items_per_col) 
+	       3 + (((id - prev_num) / max_items_per_col)
 		    * col_width));
 	  addch((((int)'a') + id) | COLOR_PAIR(CP_GREEN_BLACK));
 	  addstr(" - ");
