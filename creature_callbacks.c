@@ -177,9 +177,10 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
     if(u == TILE_WALL || d == TILE_WALL || r == TILE_WALL || l == TILE_WALL
        || dr == TILE_WALL || dl == TILE_WALL || ur==TILE_WALL || ul==TILE_WALL
        || map_get_tile(map, creature->x, creature->y) == TILE_CORRIDOR){
-
-      bool can_go_up = u == TILE_CORRIDOR, can_go_down = d == TILE_CORRIDOR, 
-	can_go_left = l == TILE_CORRIDOR, can_go_right = r == TILE_CORRIDOR, 
+      bool can_go_up = u == TILE_CORRIDOR || r == TILE_WALL || l == TILE_WALL,
+	can_go_down = d == TILE_CORRIDOR || r == TILE_WALL || l == TILE_WALL, 
+	can_go_left = l == TILE_CORRIDOR || u == TILE_WALL || d == TILE_WALL,
+	can_go_right = r == TILE_CORRIDOR || u == TILE_WALL || d == TILE_WALL, 
 	can_go_ur = ur == TILE_CORRIDOR, can_go_dr = dr == TILE_CORRIDOR,
 	can_go_dl = dl == TILE_CORRIDOR, can_go_ul = ul == TILE_CORRIDOR;
       if(ur == TILE_WALL || map_tile_is_door(ur)){
@@ -202,15 +203,12 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
       can_go_ur = tile_data[ur].passable 
 	&& (u == TILE_WALL || map_tile_is_door(u) || r == TILE_WALL
 	    || map_tile_is_door(r));
-
       can_go_ul = tile_data[ul].passable 
 	&& (u == TILE_WALL || map_tile_is_door(u) || l == TILE_WALL
 	    || map_tile_is_door(l));
-
       can_go_dr = tile_data[dr].passable 
 	&& (d == TILE_WALL || map_tile_is_door(d) || r == TILE_WALL
 	    || map_tile_is_door(r));
-
       can_go_dl = tile_data[dl].passable 
 	&& (d == TILE_WALL || map_tile_is_door(d) || l == TILE_WALL
 	    || map_tile_is_door(l));
@@ -230,7 +228,6 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	}
 	else{move_x = 0; move_y = 1;}
       }
-
       //right
       else if(creature->last_position == 4){
 	if(can_go_right && !can_go_ur && !can_go_dr){
@@ -245,7 +242,6 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	}
 	else{move_x = -1; move_y = 0;}
       }
-
       //down
       else if(creature->last_position == 8){
 	if(can_go_down && !can_go_dl && !can_go_dr){
@@ -260,7 +256,6 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	}
 	else{move_x = 0; move_y = -1;}
       }
-
       //left
       else if(creature->last_position == 6){
 	if(can_go_left && !can_go_ul && !can_go_dl){
@@ -416,12 +411,10 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	if((map_get_tile(map, i, j) == TILE_WALL
 	   || map_tile_is_door(map_get_tile(map, i, j)))
 	   && get_distance(i, j, creature->x, creature->y) < dist){
-
 	  dist = get_distance(i, j, creature->x, creature->y);
 	  move_x = 0;
 	  if(j < 0){move_x = -1;}
-	  else if(j > 0){move_x = 1;}
-	  
+	  else if(j > 0){move_x = 1;}	  
 	  move_y = 0;
 	  if(i < 0){move_y = -1;}
 	  else if(i > 0){move_y = 1;}
@@ -583,8 +576,6 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
     case 3:
       c = creature_spawn(CREATURE_TYPE_INSECT, map);
       set_strength(c, get_strength(c) + 1);
-      if(get_perception(player) > 2){
-	set_exam_text(c, "This is a slightly larger hornet.");}
       break;
     case 4:
       c = creature_spawn(CREATURE_TYPE_PLANT, map);
@@ -631,6 +622,81 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
     break;
 
   case 4 ://DLEVEL 4 ---- SOME WEAK_ANIMALS + ANIMALS + HUMANS
+    if(rand() % 20 == 0){
+      switch(rand() % 3){
+      case 0:
+	c = creature_spawn(CREATURE_TYPE_AVIAN, map);
+	set_perception(c, 3 + !(rand() % 3));
+	set_intelligence(c, 2 + (rand() % 2));
+	set_agility(c, 3);
+	set_luck(c, 2 + (rand() % 2));
+	set_level(c, 3 + (rand() % 2));
+	break;
+      case 1:
+	c = creature_spawn(CREATURE_TYPE_INSECT, map);
+	set_strength(c, get_strength(c) + 1);
+	break;
+      case 2:
+	c = creature_spawn(CREATURE_TYPE_PLANT, map);
+	set_name(c, "Venus Human Trap");
+	set_exam_text(c, "This plant will eat you alive!");
+	set_strength(c, 3 + (rand() % 2));
+	set_perception(c, 1);
+	set_intelligence(c, 0);
+	set_immobile(c, true);
+	c->display = 'v';
+	break;
+      }
+    }
+    else{
+      switch(rand() % 8){
+      case 0:
+	c = creature_spawn(CREATURE_TYPE_RODENT, map);
+	set_perception(c, 3);
+	set_intelligence(c, 2 + !(rand() % 3));
+	set_agility(c, 2);
+	set_luck(c, 2 + !(rand() % 3));
+	set_level(c, 2);
+	if(rand() % 2){
+	  set_name(c, "Giant Rat");
+	  set_exam_text(c, "This is a very large rat.");
+	  set_strength(c, 3);
+	  set_level(c, 3 + (rand() % 2));
+	}
+	break;
+      case 1:
+	c = creature_spawn(CREATURE_TYPE_FELINE, map);
+	set_perception(c, get_perception(c) + (rand() % 2));
+	set_level(c, 3);
+	break;
+      case 6:
+	c = creature_spawn(CREATURE_TYPE_CANINE, map);
+	set_strength(c, get_strength(c) + (rand() % 2));
+	set_perception(c, get_perception(c) + (rand() % 2));
+	set_level(c, 3);
+      break;
+      case 7:
+	c = creature_spawn(CREATURE_TYPE_HUMAN, map);
+	set_level(c, 3);
+	break;
+      case 8:
+	c = creature_spawn(CREATURE_TYPE_HUMAN, map);
+	set_class(c, CLASS_WARRIOR);
+	set_name(c, "Human");
+	set_exam_text(c, "This is a human warrior.");
+	set_level(c, 3);
+	break;
+      case 9:
+	c = creature_spawn(CREATURE_TYPE_HUMAN, map);
+	set_class(c, CLASS_PIKEMAN);
+	set_name(c, "Human");
+	set_exam_text(c, "This is a human pikeman.");
+	break;
+      case 10:
+	c = creature_spawn(CREATURE_TYPE_SKELETON, map);
+	break;
+      }
+    }
     break;
   case 5 ://DLEVEL 5 ---- ANIMALS + HUMANS + SOME GOBLINS
     break;
