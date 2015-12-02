@@ -111,15 +111,92 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
     quit("Error: ratPathfindCallback() passed NULL Map.");}
 
   /* Rats run along walls looking for food. If they have been attacked, and 
-   * their health is above 20%, they will attempt to fight back. If their
-   * health is below 20%, they will run away from whatever creature is closest
-   * to them.
+   * their health is above 20%, they will attempt to fight back. If they have
+   * not been attacked, or their health is below 20%, they will flee from 
+   * non-rats.
    */
 
   int move_x = INT_MIN, move_y = INT_MIN;
+  
+  /* Check to see if we're running away from something first */
+  int closest_distance = INT_MAX;
+  struct creature_t *closest_creature = NULL;
+  for(struct creature_list_node_t *cur = map->creatures->first; cur != NULL;
+      cur = cur->next){
+    int dist = get_distance(creature->x, creature->y,
+			    cur->creature->x, cur->creature->y);
+    //Compare distances, make sure we're not comparing with the same type
+    if(dist < closest_distance &&
+       cur->creature->creature_id != creature->creature_id ){
+      closest_distance = dist;
+      closest_creature = cur->creature;
+    }
+  }
+  //If we found something to run from
+  if(closest_creature != NULL &&
+     creature_is_visible(closest_creature, creature)){
+    //Move away on the x-axis
+    if(creature->x < closest_creature->x &&
+       tile_data[map_get_tile(map,creature->x - 1, creature->y)].passable){
+      move_x = -1;
+    }
+    else if(creature->x > closest_creature->x &&
+	    tile_data[map_get_tile(map,creature->x + 1, creature->y)].passable){
+      move_x = 1;
+    }
+    else{
+      move_x = 0;
+    }
+
+    //Move away on the y-axis
+    if(creature->y < closest_creature->y){
+      //check if it can move diagonally, or if it's the only way to go
+      if(tile_data[map_get_tile(map,
+				creature->x + move_x,
+				creature->y-1)].passable){
+	move_y = -1;
+      }
+      //if it can't go diagonally, but it can go on both the x and the y-axis,
+      //randomly pick x or y
+      else if(move_x != 0 &&
+	      tile_data[map_get_tile(map, creature->x, creature->y-1)].passable
+	      && rand()%2){
+	move_x = 0; move_y = -1;
+      }
+      else{
+	move_y = 0;
+      }
+    }
+    else if(creature->y > closest_creature->y){
+      if(tile_data[map_get_tile(map,
+				creature->x + move_x,
+				creature->y+1)].passable){
+	move_y = 1;
+      }
+      //if it can't go diagonally, but it can go on both the x and the y-axis,
+      //randomly pick x or y
+      else if(move_x != 0 &&
+	      tile_data[map_get_tile(map, creature->x, creature->y+1)].passable
+	      && rand()%2){
+	move_x = 0; move_y = -1;
+      }
+      else{
+	move_y = 0;
+      }
+    }
+    else{
+      move_y = 0;
+    }
+  }
+  //If the creature didn't move, do something else
+  if(move_x == 0 && move_y == 0){
+    move_x = INT_MIN; move_y = INT_MIN;
+  }
+     
   int dist = 1000;
-  //If hungry, check for food
-  if(((double)get_hunger(creature)) / ((double)get_max_hunger(creature)) < .8){
+  //If we didn't move previously, and we're hungry, check for food
+  if(move_x == INT_MIN &&
+     ((double)get_hunger(creature)) / ((double)get_max_hunger(creature)) < .8){
     struct item_map_t *cur = map->items;
     for(int j = -creature_see_distance(creature); 
 	j < creature_see_distance(creature);
