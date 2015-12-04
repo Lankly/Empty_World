@@ -103,17 +103,17 @@ void* Calloc(int items, int size)
  */
 void cmd_init(){
   cmd_data[CMD_DEBUG] = '~';
-  cmd_data[CMD_UP] = KEY_UP;
-  cmd_data[CMD_DOWN] = KEY_DOWN;
-  cmd_data[CMD_LEFT] = KEY_LEFT;
-  cmd_data[CMD_RIGHT] = KEY_RIGHT;
-  cmd_data[CMD_UP_RIGHT] = KEY_PPAGE; //Upper Right of keypad
-  cmd_data[CMD_UP_LEFT] = KEY_HOME; //Upper Left of keypad
-  cmd_data[CMD_DOWN_RIGHT] = KEY_NPAGE; //Lower Right of keypad
-  cmd_data[CMD_DOWN_LEFT] = KEY_END; //Lower Left of keypad
+  cmd_data[CMD_UP] = '8';
+  cmd_data[CMD_DOWN] = '2';
+  cmd_data[CMD_LEFT] = '4';
+  cmd_data[CMD_RIGHT] = '6';
+  cmd_data[CMD_UP_RIGHT] = '9'; //Upper Right of keypad
+  cmd_data[CMD_UP_LEFT] = '7'; //Upper Left of keypad
+  cmd_data[CMD_DOWN_RIGHT] = '3'; //Lower Right of keypad
+  cmd_data[CMD_DOWN_LEFT] = '1'; //Lower Left of keypad
   cmd_data[CMD_OPEN] = 'o';
   cmd_data[CMD_CLOSE] = 'C';
-  cmd_data[CMD_QCKMV] = KEY_B2; //5 on keypad
+  cmd_data[CMD_QCKMV] = '5';
   cmd_data[CMD_PICKUP] = ',';
   cmd_data[CMD_INVENTORY] = 'i';
   cmd_data[CMD_REMAP] = '=';
@@ -634,25 +634,25 @@ void analyze_cmd_extended(){
     toggle_numpad();
   }
   else if(strcmp(ret, cmd_data_extended[EXT_NUM_LOCK])==0){
-    for(int i=0; i < CMD_MAX; i++){
-      if(cmd_data[i] == KEY_UP){
-	cmd_data[i] = '8';}
-      else if(cmd_data[i] == KEY_DOWN){
-	cmd_data[i] = '2';}
-      else if(cmd_data[i] == KEY_LEFT){
-	cmd_data[i] = '4';}
-      else if(cmd_data[i] == KEY_RIGHT){
-	cmd_data[i] = '6';}
-      else if(cmd_data[i] == KEY_PPAGE){
-	cmd_data[i] = '9';}
-      else if(cmd_data[i] == KEY_NPAGE){
-	cmd_data[i] = '3';}
-      else if(cmd_data[i] == KEY_HOME){
-	cmd_data[i] = '7';}
-      else if(cmd_data[i] == KEY_END){
-	cmd_data[i] = '1';}
-      else if(cmd_data[i] == KEY_B2){
-	cmd_data[i] = '5';}
+    //up, down, left, and right always work with arrow keys
+    use_num_lock = !use_num_lock;
+    if(use_num_lock){
+      cmd_data[CMD_UP] = '8';
+      cmd_data[CMD_DOWN] = '2';
+      cmd_data[CMD_LEFT] = '4';
+      cmd_data[CMD_RIGHT] = '6';
+      cmd_data[CMD_UP_RIGHT] = '9';
+      cmd_data[CMD_UP_LEFT] = '7';
+      cmd_data[CMD_DOWN_RIGHT] = '3';
+      cmd_data[CMD_DOWN_LEFT] = '1';
+      cmd_data[CMD_QCKMV] = '5';
+    }
+    else{
+      cmd_data[CMD_UP_RIGHT] = KEY_PPAGE;
+      cmd_data[CMD_UP_LEFT] = KEY_HOME;
+      cmd_data[CMD_DOWN_RIGHT] = KEY_NPAGE;
+      cmd_data[CMD_DOWN_LEFT] = KEY_END;
+      cmd_data[CMD_QCKMV] = KEY_B2;
     }
   }
   else if(strcmp(ret, cmd_data_extended[EXT_QUIT])==0){
@@ -670,10 +670,10 @@ bool analyze_cmd(int cmd, int* x, int* y){
   bool to_return = true;
   if(cmd == cmd_data[CMD_QCKMV]){
     qckmv_cmd = getch();
-    if(qckmv_cmd == cmd_data[CMD_UP]
-       || qckmv_cmd == cmd_data[CMD_DOWN] 
-       || qckmv_cmd == cmd_data[CMD_LEFT]
-       || qckmv_cmd == cmd_data[CMD_RIGHT]
+    if(qckmv_cmd == cmd_data[CMD_UP] || qckmv_cmd == KEY_UP
+       || qckmv_cmd == cmd_data[CMD_DOWN] || qckmv_cmd == KEY_DOWN
+       || qckmv_cmd == cmd_data[CMD_LEFT] || qckmv_cmd == KEY_LEFT
+       || qckmv_cmd == cmd_data[CMD_RIGHT] || qckmv_cmd == KEY_RIGHT
        || qckmv_cmd == cmd_data[CMD_UP_RIGHT]
        || qckmv_cmd == cmd_data[CMD_UP_LEFT]
        || qckmv_cmd == cmd_data[CMD_DOWN_RIGHT]
@@ -683,10 +683,10 @@ bool analyze_cmd(int cmd, int* x, int* y){
     }
     else{return false;}
   }
-  if(cmd == cmd_data[CMD_UP]){*y-=1;}
-  else if(cmd == cmd_data[CMD_DOWN]){*y+=1;}
-  else if(cmd == cmd_data[CMD_LEFT]){*x-=1;}
-  else if(cmd == cmd_data[CMD_RIGHT]){*x+=1;}
+  if(cmd == cmd_data[CMD_UP] || cmd == KEY_UP){*y-=1;}
+  else if(cmd == cmd_data[CMD_DOWN] || cmd == KEY_DOWN){*y+=1;}
+  else if(cmd == cmd_data[CMD_LEFT] || cmd == KEY_LEFT){*x-=1;}
+  else if(cmd == cmd_data[CMD_RIGHT] || cmd == KEY_RIGHT){*x+=1;}
   else if(cmd == cmd_data[CMD_UP_LEFT]){ 
     *x-=1;*y-=1;
   }
@@ -876,7 +876,7 @@ void game_init(int seed){
   qckmv_cmd = 0;
   qckmv = false;
   use_8_colors = term != NULL && !strstr(term, "xterm");
-  use_num_lock = false;
+  use_num_lock = true;
   use_numpad = true;
 
   //Initialize game data

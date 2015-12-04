@@ -12,10 +12,10 @@
 
 //Define the keys in the game
 #define CMD_DEBUG 0
-#define CMD_UP 1
-#define CMD_DOWN 2
-#define CMD_LEFT 3
-#define CMD_RIGHT 4
+#define CMD_UP 1    //KEY_UP will always work for this
+#define CMD_DOWN 2  //KEY_DOWN will always work for this
+#define CMD_LEFT 3  //KEY_LEFT will always work for this
+#define CMD_RIGHT 4 //KEY_RIGHT will always work for this
 #define CMD_UP_RIGHT 5
 #define CMD_UP_LEFT 6
 #define CMD_DOWN_RIGHT 7

@@ -7,7 +7,7 @@ Menus and Commands
     <   ascends a staircase (represented by same symbol)
     >   descends a staircase (represented by same symbol)
     #   open Extended Commands
-    =   reassign a command
+    =   reassign a command (cannot reassign arrow keys)
     ,   pickup an item on the ground (if multiple, opens item menu)
     .   do nothing for the turn
     e   Eat an item
@@ -22,6 +22,9 @@ Menus and Commands
 
   The following is a list of Extended Commands. Extended Commands are commands that are written out in the Extended Commands Console, which is opened with '#'.
     8-colors        Toggles a more limited color palette
-    num-lock        Toggles numbers for numpad movement
+    num-lock        Switches movement keys to numpad and toggles the need
+                    for numlock to be on or off
+		    Beware: Will not reassign keys that you have assigned
+		            to numbers or page directions
     toggle-numpad   Swaps numpad movement with hjklyubn movement
     quit            Quits the game
