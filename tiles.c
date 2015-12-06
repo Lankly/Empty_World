@@ -32,7 +32,9 @@ void tile_data_init(){
   tile_data[TILE_DOOR_OPEN] = (tile_t){
     .id = TILE_DOOR_OPEN,
     .passable = true,
-    .display = '-' | COLOR_PAIR(CP_GREEN_BLACK),
+    .display = '-',
+    .display_color = CP_GREEN_BLACK,
+    .display_color_alt = CP_GREEN_BLACK,
     .exam_text = "It is an open wooden door.\n",
     .hardness = 2,
     .transparent = true,
@@ -40,7 +42,9 @@ void tile_data_init(){
     .openable = true};
   tile_data[TILE_DOOR_CLOSE] = (tile_t){
     .id = TILE_DOOR_CLOSE,
-    .display = '+' | COLOR_PAIR(CP_GREEN_BLACK),
+    .display = '+',
+    .display_color = CP_GREEN_BLACK,
+    .display_color_alt = CP_GREEN_BLACK,
     .exam_text = "It is a closed wooden door.\n",
     .hardness = 2,
     .stopme = true,
@@ -48,7 +52,9 @@ void tile_data_init(){
   tile_data[TILE_DOOR_BROKEN] = (tile_t){
     .id = TILE_DOOR_BROKEN,
     .passable = true,
-    .display = '|' | COLOR_PAIR(CP_GREEN_BLACK),
+    .display = '|',
+    .display_color = CP_GREEN_BLACK,
+    .display_color_alt = CP_GREEN_BLACK,
     .exam_text = "It is a broken wooden door.\n",
     .hardness = 2,
     .transparent = true,
@@ -58,7 +64,9 @@ void tile_data_init(){
     .id = TILE_CORRIDOR,
     .passable = true,
     .transparent = true,
-    .display = ACS_CKBOARD |  COLOR_PAIR(use_8_colors ? CP_YELLOW_BLACK : CP_DARK_GREY_BLACK),
+    .display = ACS_CKBOARD,
+    .display_color = CP_DARK_GREY_BLACK,
+    .display_color_alt = CP_YELLOW_BLACK,
     .exam_text = 
     "It is a hard stone corridor.\n",
     .hardness = 3,

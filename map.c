@@ -981,23 +981,28 @@ void draw_map(struct map_t* map){
   
   for(int j = 0; j < m->height; j++){
     move(j, 0);
-    for(int i = 0; i< m->width; i++){
-      //If the tile is too far away to see, color it if it has no color
-      int display = tile_data[map_get_tile(m,i,j)].display;
+    for(int i = 0; i < m->width; i++){
+      int tile = map_get_tile(m,i,j);
+      int display = tile_data[tile].display;
       
       //Wall correct
       if(display == ACS_PLUS){
 	display = wall_correct(m, i, j);
       }
+
+      //Color correct
+      int color = 0;
+      if(!use_8_colors && tile_data[tile].display_color != 0){
+	color = tile_data[tile].display_color;
+      }
+      else if(use_8_colors && tile_data[tile].display_color_alt != 0){
+	color = tile_data[tile].display_color_alt;
+      }
       
-      addch(display | (//Color check (0xF00 is where color is stored)
-		       ((display | 0xF00) ^ 0xF00) == display
-		       //distance check
-		       && (!coord_in_range(i, j, player)
-			   //wall check
-			   || !map_tile_is_visible(map, i, j, player)
-			   ) ? COLOR_PAIR(use_8_colors ? CP_BLUE_BLACK 
-					  : CP_DARK_GREY_BLACK) : 0));}
+      addch(display | COLOR_PAIR(map_tile_is_visible(map, i, j, player) ? color
+		       : use_8_colors ? CP_BLUE_BLACK 
+				 : CP_DARK_GREY_BLACK));
+    }
   }
   //Now items
   for(struct item_map_t *known = map->known_items;

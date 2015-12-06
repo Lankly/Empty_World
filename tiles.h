@@ -16,6 +16,8 @@
 typedef struct {
   int id;
   int display;
+  int display_color;
+  int display_color_alt;
   int hardness;  //0=mush, 1=dirt, 2=wood, 3=stone, 4=unbreakable  
   bool deep;
   bool passable;
