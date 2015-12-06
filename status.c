@@ -196,41 +196,56 @@ void display_stats(struct creature_t *creature){
   int num_stats = 14;
   int possible_nonnumbered_stats = 5;
   int max_stat_length = 24;
-  char **output = (char**)Calloc(num_stats, sizeof(char*));
+  int **output = (int **)Calloc(num_stats, sizeof(int*));
   for(int i = 0; i < num_stats; i++){
-    output[i] = (char*)Calloc(max_stat_length, sizeof(char));
+    output[i] = (int *)Calloc(max_stat_length, sizeof(int));
   }
+  char *format = Calloc(max_stat_length, sizeof(char));
   //start formatting the stats
-  sprintf(output[0],"Remaining HP - %d", get_health(creature));
-  sprintf(output[1],"Strength     - %d", get_strength(creature));
-  sprintf(output[2],"Perception   - %d", get_perception(creature));
-  sprintf(output[3],"Endurance    - %d", get_endurance(creature));
-  sprintf(output[4],"Charisma     - %d", get_charisma(creature));
-  sprintf(output[5],"Intelligence - %d", get_intelligence(creature));
-  sprintf(output[6],"Agility      - %d", get_agility(creature));
-  sprintf(output[7],"Level        - %d", get_level(creature));
-  sprintf(output[8],"Max HP       - %d", get_max_health(creature));
+  sprintf(format,"Remaining HP - %d", get_health(creature));
+  output[0] = strToInts(format);
+  sprintf(format,"Strength     - %d", get_strength(creature));
+  output[1] = strToInts(format);
+  sprintf(format,"Perception   - %d", get_perception(creature));
+  output[2] = strToInts(format);
+  sprintf(format,"Endurance    - %d", get_endurance(creature));
+  output[3] = strToInts(format);
+  sprintf(format,"Charisma     - %d", get_charisma(creature));
+  output[4] = strToInts(format);
+  sprintf(format,"Intelligence - %d", get_intelligence(creature));
+  output[5] = strToInts(format);
+  sprintf(format,"Agility      - %d", get_agility(creature));
+  output[6] = strToInts(format);
+  sprintf(format,"Level        - %d", get_level(creature));
+  output[7] = strToInts(format);
+  sprintf(format,"Max HP       - %d", get_max_health(creature));
+  output[8] = strToInts(format);
 
   //Non-numbered stats
   int cur = num_stats - possible_nonnumbered_stats;
   if(creature->is_asleep){
-    sprintf(output[cur], "Is asleep");
+    sprintf(format, "Is asleep");
+    output[cur] = strToInts(format);
     cur++;
   }
   if(creature->is_immobile){
-    sprintf(output[cur], "Is immobile");
+    sprintf(format, "Is immobile");
+    output[cur] = strToInts(format);
     cur++;
   }
   if(creature->can_fly){
-    sprintf(output[cur],"Is flying");
+    sprintf(format,"Is flying");
+    output[cur] = strToInts(format);
     cur++;
   }
   if(creature->is_blind){
-    sprintf(output[cur], "Is blind");
+    sprintf(format, "Is blind");
+    output[cur] = strToInts(format);
     cur++;
   }
   if(creature->is_telepathic){
-    sprintf(output[cur], "Sees with their mind");
+    sprintf(format, "Sees with their mind");
+    output[cur] = strToInts(format);
     cur++;
   }
 
@@ -242,6 +257,7 @@ void display_stats(struct creature_t *creature){
   display_list(instr, output, num_stats, max_stat_length);
 
   free(instr);
+  free(format);
   for(int i = 0; i < num_stats; i++){
     free(output[i]);
   }

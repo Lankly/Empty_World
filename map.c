@@ -196,7 +196,7 @@ void map_draw_borders(struct map_t* map){
  */
 void map_draw_random_rooms(struct map_t* map, int x, int y){
   //Assumes empty map
-  int stop = rand()%7+2;
+  int stop = rand()%7+3; //min 3 rooms, max 10
   int prevw=-1, prevh=-1, prevx=-1, prevy=-1;
   for(int i=0; i<stop; i++){
     int randw=(10-i)*(rand()%3+1)+3;

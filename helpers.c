@@ -89,6 +89,18 @@ bool str_is_num(char* str){
   return true;
 }
 
+int *strToInts(char *str){
+  int *to_ret = NULL;
+  if(str != NULL){
+    int len = strlen(str);
+    to_ret = (int *)Calloc(len, sizeof(int));
+    for(int i = 0; i < len; i++){
+      to_ret[i] = (int)(str[i]);
+    }
+  }
+  return to_ret;
+}
+
 void* Calloc(int items, int size)
 {
   void* ret = calloc(items, size);
@@ -893,7 +905,7 @@ void draw_borders(){
 }
 
 
-char display_list(char *instr, char **items, int num_items, int col_width){
+char display_list(char *instr, int **items, int num_items, int col_width){
   clear();
   draw_borders();
 
@@ -917,12 +929,14 @@ char display_list(char *instr, char **items, int num_items, int col_width){
       move(2 + (i - prev_num) % max_items_per_col,
 	   3 + (((i - prev_num) / max_items_per_col)
 		* col_width));
-      addstr(items[i]);
+      for(int j = 0; items[i][j] != 0; j++){
+	addch(items[i][j]);
+      }
     }
 
     ESCDELAY = 25;
     timeout(1);
-    move(0,0);
+    move(TERMINAL_HEIGHT-1,TERMINAL_WIDTH);
     char ch = getch();
 
     //If user pressed ESC, we're done here

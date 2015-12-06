@@ -56,9 +56,10 @@ char *term;
 int qckmv_cmd;
 int num_turns;
 
-void* Calloc(int items, int size);
-char* str_lowercase(char* str);
-bool str_is_num(char* str);
+void *Calloc(int items, int size);
+char *str_lowercase(char *str);
+bool str_is_num(char *str);
+int *strToInts(char *str);
 int get_coord(int x,int y,int width);
 int get_distance(int x_0, int y_0, int x_1, int y_1);
 void get_coord_via_cursor(int* y, int* x);
@@ -71,7 +72,7 @@ bool in_range(struct creature_t *target, struct creature_t *seer);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
 
 void draw_borders();
-char display_list(char *instr, char **items, int num_items, int col_width);
+char display_list(char *instr, int **items, int num_items, int col_width);
 
 void game_init();
 void game_over();
