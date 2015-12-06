@@ -123,6 +123,7 @@ void cmd_init(){
   cmd_data[CMD_DESCEND] = '>';
   cmd_data[CMD_MANUAL] = '?';
   cmd_data[CMD_WAIT] = '.';
+  cmd_data[CMD_STATS] = 'S';
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -440,7 +441,7 @@ void manual(){
   int page = 0;
   char ch = 0; //the character that the player presses
 
-  while(ch != 'q'){
+  while(ch != 'q' && ch != 'Q'){
     clear();
     int buffer_pos = 0;
 
@@ -521,9 +522,16 @@ void manual(){
     //Add quick nav information
     mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
 
-    //Get input
-    ch = getch();
+    ESCDELAY = 25;
+    timeout(1);
+    char ch = getch();
+
+    //Handle ESC
+    if(ch == 27 && getch() == ERR){
+      ch = 'q';}
+    timeout(-1);
     while(ch != '<' && ch != '>' && ch != 'q' && ch != 'Q'
+	  //chapter numbers have to be hard-coded in, unfortunately
 	  && ch != '0' && ch != '1' && ch != '2'
 	  && ch != '3' && ch != '4' && ch != '5'){
       ch = getch();}
@@ -625,7 +633,6 @@ void analyze_cmd_extended(){
 	ret = cmd_data_extended[i];
       }
     }
-    
   }
 
   curs_set(0);
@@ -725,6 +732,8 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }else if(cmd == cmd_data[CMD_MANUAL]){
     manual();
     to_return = false;
+  }else if(cmd == cmd_data[CMD_STATS]){
+    display_stats(player);
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }
@@ -861,6 +870,76 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
     return false;
   }
   return true;
+}
+
+void draw_borders(){
+  //Top
+  mvaddch(0,0,'+');
+  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
+    addch(ACS_HLINE);}
+  addch('+');
+
+  //Bottom
+  mvaddch(TERMINAL_HEIGHT-1, 0, '+');
+  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
+    addch(ACS_HLINE);}
+  addch('+');
+
+  //Sides
+  for(int j = 1; j < TERMINAL_HEIGHT-1; j++){
+    mvaddch(j, 0, ACS_VLINE); 
+    mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
+  }
+}
+
+
+char display_list(char *instr, char **items, int num_items, int col_width){
+  clear();
+  draw_borders();
+
+  //Info at bottom
+  move(TERMINAL_HEIGHT-2, 2);
+  addstr(instr);
+
+  //Now we look for user input and display items
+  int max_items_per_col = TERMINAL_HEIGHT - 5; //5 = Header+Footer+Buffer+Instr
+  int max_items_per_row = (TERMINAL_WIDTH - 3) / col_width;
+  int max_items_per_page = max_items_per_row * max_items_per_col;
+  int page = 0;
+  while(1){
+
+    int prev_num = (page * max_items_per_page);
+      
+    //Display items
+    for(int i = prev_num;
+	i < num_items && i < (prev_num + max_items_per_page); i++){
+      //Position where to put the next item
+      move(2 + (i - prev_num) % max_items_per_col,
+	   3 + (((i - prev_num) / max_items_per_col)
+		* col_width));
+      addstr(items[i]);
+    }
+
+    ESCDELAY = 25;
+    timeout(1);
+    move(0,0);
+    char ch = getch();
+
+    //If user pressed ESC, we're done here
+    if(ch == 27 && getch() == ERR){
+      timeout(-1);
+      return 0;}
+    if(ch == '<'){
+      page -= page != 0 ? 1 : 0;
+    }
+    else if(ch == '>'){
+      page += (prev_num + max_items_per_page) < num_items ? 1 : 0;
+    }
+    else if(isalnum(ch)){
+      timeout(-1);
+      return ch;
+    }
+  }
 }
 
 void game_init(int seed){

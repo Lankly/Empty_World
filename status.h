@@ -1,3 +1,4 @@
+#include "creature.h"
 #ifndef STATUS_H
 #define STATUS_H
 
@@ -19,6 +20,8 @@ void msg_addf(char* msg, ...);
 char* msg_prompt(char* prompt);
 int msg_promptchar(char* prompt);
 char* get_cur_msg();
+
+void display_stats(struct creature_t *creature);
 
 void status_init();
 

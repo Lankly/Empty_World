@@ -32,7 +32,8 @@
 #define CMD_DESCEND 18
 #define CMD_MANUAL 19
 #define CMD_WAIT 20
-#define CMD_MAX 20
+#define CMD_STATS 21
+#define CMD_MAX 21
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0
@@ -68,6 +69,9 @@ void cmd_remap();
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);
 bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
+
+void draw_borders();
+char display_list(char *instr, char **items, int num_items, int col_width);
 
 void game_init();
 void game_over();

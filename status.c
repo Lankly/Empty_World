@@ -9,6 +9,7 @@
 #include "colors.h"
 #include "helpers.h"
 #include "map.h"
+#include "creature.h"
 #include "player.h"
 
 static bool newmsg;
@@ -189,6 +190,62 @@ int msg_promptchar(char* prompt){
   }
   curs_set(0);
   return getch();
+}
+
+void display_stats(struct creature_t *creature){
+  int num_stats = 14;
+  int possible_nonnumbered_stats = 5;
+  int max_stat_length = 24;
+  char **output = (char**)Calloc(num_stats, sizeof(char*));
+  for(int i = 0; i < num_stats; i++){
+    output[i] = (char*)Calloc(max_stat_length, sizeof(char));
+  }
+  //start formatting the stats
+  sprintf(output[0],"Remaining HP - %d", get_health(creature));
+  sprintf(output[1],"Strength     - %d", get_strength(creature));
+  sprintf(output[2],"Perception   - %d", get_perception(creature));
+  sprintf(output[3],"Endurance    - %d", get_endurance(creature));
+  sprintf(output[4],"Charisma     - %d", get_charisma(creature));
+  sprintf(output[5],"Intelligence - %d", get_intelligence(creature));
+  sprintf(output[6],"Agility      - %d", get_agility(creature));
+  sprintf(output[7],"Level        - %d", get_level(creature));
+  sprintf(output[8],"Max HP       - %d", get_max_health(creature));
+
+  //Non-numbered stats
+  int cur = num_stats - possible_nonnumbered_stats;
+  if(creature->is_asleep){
+    sprintf(output[cur], "Is asleep");
+    cur++;
+  }
+  if(creature->is_immobile){
+    sprintf(output[cur], "Is immobile");
+    cur++;
+  }
+  if(creature->can_fly){
+    sprintf(output[cur],"Is flying");
+    cur++;
+  }
+  if(creature->is_blind){
+    sprintf(output[cur], "Is blind");
+    cur++;
+  }
+  if(creature->is_telepathic){
+    sprintf(output[cur], "Sees with their mind");
+    cur++;
+  }
+
+  //Actually display them
+  char *instr = Calloc(TERMINAL_WIDTH+1, sizeof(char));
+  snprintf(instr, TERMINAL_WIDTH,
+	   "Viewing stats for %s    ESC to quit",
+	   creature->name);
+  display_list(instr, output, num_stats, max_stat_length);
+
+  free(instr);
+  for(int i = 0; i < num_stats; i++){
+    free(output[i]);
+  }
+  free(output);
 }
 
 void status_init(){

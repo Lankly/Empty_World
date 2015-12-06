@@ -552,24 +552,7 @@ void display_inventory(){
   }
 
   clear();
-  //Create the borders
-  //Top
-  mvaddch(0,0,'+');
-  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
-    addch(ACS_HLINE);}
-  addch('+');
-
-  //Bottom
-  mvaddch(TERMINAL_HEIGHT-1, 0, '+');
-  for(int i = 1; i < TERMINAL_WIDTH-1; i++){
-    addch(ACS_HLINE);}
-  addch('+');
-
-  //Sides
-  for(int j = 1; j < TERMINAL_HEIGHT-1; j++){
-    mvaddch(j, 0, ACS_VLINE); 
-    mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
-  }
+  draw_borders();
 
   //Info at bottom
   char *output = (char*)Calloc(TERMINAL_WIDTH+1, sizeof(char));

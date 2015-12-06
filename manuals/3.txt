@@ -15,6 +15,7 @@ Menus and Commands
     o   Open something (i.e. door, chest, bag)
     C   Close something
     q   Quaff an item
+    S   view your Stats
     u   Use an item
     w   Wield an item to use as a weapon
     x   eXamine a tile, creature, or item (pick with cursor)
@@ -24,7 +25,7 @@ Menus and Commands
     8-colors        Toggles a more limited color palette
     num-lock        Switches movement keys to numpad and toggles the need
                     for numlock to be on or off
-		    Beware: Will not reassign keys that you have assigned
+		      Beware: Will not reassign keys that you have assigned
 		            to numbers or page directions
     toggle-numpad   Swaps numpad movement with hjklyubn movement
     quit            Quits the game
