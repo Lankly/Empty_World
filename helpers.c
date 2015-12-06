@@ -194,14 +194,14 @@ bool analyze_cmd(int cmd, int*x, int* y);
  * attempt to turn a closed door into an open door at this time. 
  * TODO: Include the ability to open items on the floor like chests.
  */
-void open_tile(int x, int y, int direction){
+void open_tile(struct map_t *map, int x, int y, int direction){
   int open_x = x, open_y = y;
   analyze_cmd(direction, &open_x, &open_y);
   
-  int otile=map_get_tile(cur_map,open_x,open_y);
+  int otile=map_get_tile(map,open_x,open_y);
   if(tile_data[otile].openable){
     if(otile==TILE_DOOR_CLOSE){
-      map_set_tile(cur_map,open_x,open_y,TILE_DOOR_OPEN);
+      map_set_tile(map,open_x,open_y,TILE_DOOR_OPEN);
     }else if(otile==TILE_DOOR_OPEN){
       msg_add("That door is already open.");
     }else if(otile==TILE_DOOR_BROKEN){
@@ -215,14 +215,14 @@ void open_tile(int x, int y, int direction){
 /* This function handles what to do when the close action is executed. It will
  * attempt to turn an open door into a closed door at this time.
  */
-void close_tile(int x, int y, int direction){
+void close_tile(struct map_t *map, int x, int y, int direction){
   int close_x = x, close_y = y;
   analyze_cmd(direction, &close_x, &close_y);
   
-  int ctile = map_get_tile(cur_map, close_x, close_y);
+  int ctile = map_get_tile(map, close_x, close_y);
   if(tile_data[ctile].openable){
     if(ctile == TILE_DOOR_OPEN){
-      map_set_tile(cur_map, close_x, close_y, TILE_DOOR_CLOSE);
+      map_set_tile(map, close_x, close_y, TILE_DOOR_CLOSE);
     }else if(ctile == TILE_DOOR_CLOSE){
       msg_add("That door is already closed.");
     }else if(ctile == TILE_DOOR_BROKEN){
@@ -729,10 +729,10 @@ bool analyze_cmd(int cmd, int* x, int* y){
     *x+=1;*y+=1;
   }
   else if(cmd == cmd_data[CMD_OPEN]){
-    open_tile(player->x, player->y, getch());
+    open_tile(cur_map, player->x, player->y, getch());
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
-    close_tile(player->x, player->y, getch());
+    close_tile(cur_map, player->x, player->y, getch());
   }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){

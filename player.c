@@ -2,8 +2,10 @@
 #include "classes.h"
 #include "colors.h"
 #include "creature.h"
+#include "helpers.h"
 #include "map.h"
 #include "status.h"
+#include "tiles.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,7 +55,12 @@ void playerTakeTurnCallback(struct creature_t* creature,
       player->y=plr_mv_to_y;
     }
   }
-  else{qckmv = false;}
+  else{
+    //If the creature couldn't move to that spot, see if it's a door and open it
+    if(map_get_tile(map, plr_mv_to_x, plr_mv_to_y) == TILE_DOOR_CLOSE){
+      open_tile(map, player->x, player->y, cmd);
+    }
+    qckmv = false;}
   
   if(qckmv){
     qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}

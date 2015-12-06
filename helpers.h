@@ -76,10 +76,10 @@ char display_list(char *instr, int **items, int num_items, int col_width);
 
 void game_init();
 void game_over();
-void draw_map(struct map_t* map);
+void draw_map(struct map_t *map);
 
-void open_tile();
-void close_tile();
+void open_tile(struct map_t *map, int x, int y, int direction);
+void close_tile(struct map_t *map, int x, int y, int direction);
 void pickup_tile();
 void debug();
 void manual();
