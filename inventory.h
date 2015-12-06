@@ -53,10 +53,11 @@ typedef struct{
   equipment_leg_t* right_leg;
   item_t* pants;
   item_t* neck;
-  item_t* weild;
+  item_t* wield;
 
   int max_weight;
   int cur_weight;
+  int num_items;
 
   struct inventory_node_t* first;
   struct inventory_node_t* last;
@@ -71,6 +72,6 @@ bool equip_by_item(struct creature_t* creature, item_t* item);
 bool equip_by_id(struct creature_t* creature, int inventory_id);
 bool unequip_by_item(struct creature_t* creature, item_t* item);
 bool unequip_by_id(struct creature_t* creature, int inventory_id);
-void display_inventory();
+void display_inventory(struct creature_t *c);
 
 #endif

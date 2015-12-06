@@ -203,49 +203,49 @@ void display_stats(struct creature_t *creature){
   char *format = Calloc(max_stat_length, sizeof(char));
   //start formatting the stats
   sprintf(format,"Remaining HP - %d", get_health(creature));
-  output[0] = strToInts(format);
+  output[0] = str_to_ints(format);
   sprintf(format,"Strength     - %d", get_strength(creature));
-  output[1] = strToInts(format);
+  output[1] = str_to_ints(format);
   sprintf(format,"Perception   - %d", get_perception(creature));
-  output[2] = strToInts(format);
+  output[2] = str_to_ints(format);
   sprintf(format,"Endurance    - %d", get_endurance(creature));
-  output[3] = strToInts(format);
+  output[3] = str_to_ints(format);
   sprintf(format,"Charisma     - %d", get_charisma(creature));
-  output[4] = strToInts(format);
+  output[4] = str_to_ints(format);
   sprintf(format,"Intelligence - %d", get_intelligence(creature));
-  output[5] = strToInts(format);
+  output[5] = str_to_ints(format);
   sprintf(format,"Agility      - %d", get_agility(creature));
-  output[6] = strToInts(format);
+  output[6] = str_to_ints(format);
   sprintf(format,"Level        - %d", get_level(creature));
-  output[7] = strToInts(format);
+  output[7] = str_to_ints(format);
   sprintf(format,"Max HP       - %d", get_max_health(creature));
-  output[8] = strToInts(format);
+  output[8] = str_to_ints(format);
 
   //Non-numbered stats
   int cur = num_stats - possible_nonnumbered_stats;
   if(creature->is_asleep){
     sprintf(format, "Is asleep");
-    output[cur] = strToInts(format);
+    output[cur] = str_to_ints(format);
     cur++;
   }
   if(creature->is_immobile){
     sprintf(format, "Is immobile");
-    output[cur] = strToInts(format);
+    output[cur] = str_to_ints(format);
     cur++;
   }
   if(creature->can_fly){
     sprintf(format,"Is flying");
-    output[cur] = strToInts(format);
+    output[cur] = str_to_ints(format);
     cur++;
   }
   if(creature->is_blind){
     sprintf(format, "Is blind");
-    output[cur] = strToInts(format);
+    output[cur] = str_to_ints(format);
     cur++;
   }
   if(creature->is_telepathic){
     sprintf(format, "Sees with their mind");
-    output[cur] = strToInts(format);
+    output[cur] = str_to_ints(format);
     cur++;
   }
 

@@ -89,11 +89,21 @@ bool str_is_num(char* str){
   return true;
 }
 
-int *strToInts(char *str){
+/* Takes in a string and returns an array of ints that, should those ints be
+ * cast to chars, are equivalent.
+ */
+int *str_to_ints(char *str){
   int *to_ret = NULL;
+  
+  //Don't do anything to a null string
   if(str != NULL){
     int len = strlen(str);
+    if(len == 0){
+      return (int *)Calloc(1, sizeof(int));
+    }
     to_ret = (int *)Calloc(len, sizeof(int));
+
+    //Copy everything over (and cast)
     for(int i = 0; i < len; i++){
       to_ret[i] = (int)(str[i]);
     }
@@ -726,7 +736,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
-    display_inventory();
+    display_inventory(player);
     to_return = false;
   }else if(cmd == cmd_data[CMD_REMAP]){
     cmd_remap();

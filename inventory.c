@@ -22,6 +22,7 @@ void inventory_init(struct creature_t* creature){
   creature->inventory->right_leg = 
     (equipment_leg_t*)Calloc(1,sizeof(equipment_leg_t));
   creature->inventory->last_inventory_id=-1;
+  creature->inventory->num_items = 0;
 }
 
 /* This method handles adding an item into the given creature's inventory
@@ -47,9 +48,10 @@ bool inventory_add(struct creature_t* creature, item_t* item){
     creature->inventory->last->next=to_add;
     creature->inventory->last=to_add;
   }
-  //Update weight, add an inventory id
+  //Update weight, add an inventory id, increment count
   creature->inventory->cur_weight+=item->weight;
   creature->inventory->last->id = ++creature->inventory->last_inventory_id;
+  creature->inventory->num_items++;
   return true;
 }
 
@@ -74,6 +76,7 @@ void inventory_remove_by_item(struct creature_t* creature, item_t* item){
   while(cur!=NULL){
     //If found, begin removing item
     if(item == cur->item){
+      creature->inventory->num_items--;
       //Case where remove first item
       if(prev==NULL){
 	creature->inventory->first = cur->next;
@@ -544,74 +547,38 @@ bool unequip_by_id(struct creature_t* creature, int inventory_id){
  * cannot have names longer than 16 characters, the layout for this menu will be
  * slightly different.
  */
-void display_inventory(){
+void display_inventory(struct creature_t *c){
   //Check to see if the player has any items in their inventory
-  if(player->inventory == NULL || player->inventory->first == NULL){
+  if(player->inventory == NULL || player->inventory->first == NULL
+     || player->inventory->num_items == 0){
     msg_add("Your inventory is empty.");
     return;
   }
 
-  clear();
-  draw_borders();
-
-  //Info at bottom
-  char *output = (char*)Calloc(TERMINAL_WIDTH+1, sizeof(char));
-  move(TERMINAL_HEIGHT-2, 2);
-  strncpy(output,"< > To navigate, a-Z to use, ESC to quit", TERMINAL_WIDTH);
-  addstr(output);
-  for(int i = 0; i < TERMINAL_WIDTH; i++){
-    output[i] = '\0';}
-
-  //Now we look for user input and display items
-  bool done = false;
-  int item_max_name_size = MAX_NAME_LEN;
-  int col_width = item_max_name_size + 4;
-  int max_items_per_col = TERMINAL_HEIGHT - 5;
-  int max_items_per_row = (TERMINAL_WIDTH - 3) / col_width;
-  int max_items_per_page = max_items_per_row * max_items_per_col;
-  int page = 0;
-  while(!done){
-
-    //Display items
-    int id = 0;
-    for(struct inventory_node_t *cur = player->inventory->first;
-	id <= ((page+1) * max_items_per_page) && cur != NULL;
-	cur = cur->next)
-      {
-	if(id < (max_items_per_page * (page + 1))){
-	  //Position where to put the next item
-	  int prev_num = (page * max_items_per_page);
-	  move(2 + (id - prev_num) % max_items_per_col,
-	       3 + (((id - prev_num) / max_items_per_col)
-		    * col_width));
-	  addch((((int)'a') + id) | COLOR_PAIR(CP_GREEN_BLACK));
-	  addstr(" - ");
-	  if(cur->item->name == NULL){
-	    cur->item->name = "Null";}
-	  strncpy(output, cur->item->name, item_max_name_size);
-	  addstr(output);
-	}
-	id++;
-	if(cur == player->inventory->last){
-	  break;}
-    }
-    
-
-    ESCDELAY = 25;
-    timeout(1);
-    char ch = getch();
-
-    //If user pressed ESC, we're done here
-    if(ch == 27 && getch() == ERR){
-      done = true;}
-    timeout(-1);
-    if(!done){
-      if(ch == '<'){
-	page -= page != 0 ? 1 : 0;
-      }
-      else if(ch == '>'){
-	page += id % max_items_per_page == 0 ? 1 : 0;
-      }
-    }
+  //We need to figure out how wide we want our columns
+  int col_width = MAX_NAME_LEN + 4; //4 = 'X - '
+  
+  //Initialize the array we will use with the display_list function
+  int **items = Calloc(c->inventory->num_items, sizeof(int*));
+  
+  //Initialize the char array we will use to format our strings
+  char *format = Calloc(col_width+1, sizeof(char));
+  
+  int id = 0;
+  //Create list of items out of the creature's inventory
+  for(struct inventory_node_t *cur = c->inventory->first;
+      cur != NULL && id < c->inventory->num_items;
+      cur = cur->next){
+    snprintf(format, col_width, "%c - %s",
+	     (char)(((int)'a') + id),
+	     cur->item->name);
+    items[id] = str_to_ints(format);
+    items[id][0] = (items[id][0]) | COLOR_PAIR(CP_GREEN_BLACK);
+    id++;
   }
+      
+  display_list("< > To navigate, a-Z to use, ESC to quit",
+	       items,
+	       c->inventory->num_items,
+	       col_width);
 }

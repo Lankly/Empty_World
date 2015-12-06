@@ -430,16 +430,16 @@ int creature_get_damage(struct creature_t* creature){
     quit("ERROR: Cannot get damage of NULL creature.");
   }
   double to_return = 0;
-  if(creature->inventory != NULL && creature->inventory->weild != NULL){
+  if(creature->inventory != NULL && creature->inventory->wield != NULL){
     /* Base weapon damage is a function of strength, health, and weapon damage
      */
-    to_return += creature->inventory->weild->damage * 
+    to_return += creature->inventory->wield->damage * 
       (creature->strength / 2) *
       (((double)creature->health
 	/ (double)get_max_health(creature) < .5) ? 1 : .8);
     /* If the weapon is ranged, intelligence is taken into account.
      */
-    if(creature->inventory->weild->ranged){
+    if(creature->inventory->wield->ranged){
 	to_return = to_return * creature->intelligence > 2 ? 1 : .8;
     }
   }
