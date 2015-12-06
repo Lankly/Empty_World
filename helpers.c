@@ -752,8 +752,8 @@ bool analyze_cmd(int cmd, int* x, int* y){
  * otherwise.
  */
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer){
-  return sqrt(pow((target_x - seer->x), 2) + pow((target_y - seer->y), 2))
-	      <= creature_see_distance(seer);
+  return get_distance(target_x, target_y, seer->x, seer->y)
+    <= creature_see_distance(seer);
 }
 
 /* This function takes in a target creature and determines if that tile is 

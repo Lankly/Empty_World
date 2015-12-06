@@ -352,9 +352,7 @@ bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
     return false;}
 
   //If the seer is the player, do a wall-check. Return true otherwise.
-  return seer == player ? map_tile_is_visible(cur_map, target->x, target->y,
-					      player)
-    : true;
+  return map_tile_is_visible(cur_map, target->x, target->y, seer);
 }
 
 /* This method returns true if a given creature can move to a given tile, not

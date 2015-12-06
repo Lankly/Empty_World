@@ -453,26 +453,30 @@ void map_examine_tile(struct map_t* map){
   msg_addf("%s", tile_data[map_get_tile(map, x, y)].exam_text);
 }
 
-/* Line of sight code         *
- * this is a Boolean function *
- * that returns FALSE if the  *
- * monster cannot see the     *
- * player and TRUE if it can  *
- *                            *
- * It has the monsters x and y*
- * coords as parameters       */
+/* Line of sight code              *
+ * this is a Boolean function      *
+ * that returns FALSE if the       *
+ * creature cannot see the         *
+ * given point and TRUE if it can  *
+ *                                 *
+ * It has the monsters x and y     *
+ * coords as parameters            */
 bool map_tile_is_visible(struct map_t* map, int check_x, int check_y, 
 			 struct creature_t *c){
   //Initial checks
   if(map->dlevel != c->dlevel){return false;}
   if(c->x == check_x && c->y == check_y){return true;}
+  //Check to see if it's in the possible radius of the creature's sight
+  if(get_distance(check_x, check_y, c->x, c->y) > creature_see_distance(c)){
+    return false;
+  }
      
   int t, x, y, abs_delta_x, abs_delta_y, sign_x, sign_y, delta_x, delta_y;
   
-  /* Delta x is the creature's x minus the check_x
-   * d is my dungeon structure and px is the creature's
+  /* Delta x is the creature's x minus the check_x       *
+   * d is my dungeon structure and px is the creature's  *
    * x position. check_x is the target x position passed *
-   * to the function.                                 */
+   * to the function.                                    */
   delta_x = c->x - check_x;
   
   /* delta_y is the same as delta_x using the y coordinates */
@@ -520,7 +524,7 @@ bool map_tile_is_visible(struct map_t* map, int check_x, int check_y,
     }while(tile_data[map_get_tile(map, x, y)].transparent);
     
     /* the loop was exited because the monster's sight was blocked *
-     * return FALSE: the monster cannot see the player             */
+     * return FALSE: the monster cannot see the point              */
     return false;
   }
   else
@@ -590,10 +594,8 @@ void map_reveal(struct map_t *map, int rev_dist){
   //For each point in the map,
   for(int j=0; j < map->height; j++){
     for(int i=0; i < map->width; i++){
-      //Check to see if it's in the possible radius to reveal a tile
-      int dist = get_distance(i, j, player->x, player->y);
-      //If it is, also check whether or not something's in the way
-      if(dist <= rev_dist && map_tile_is_visible(map, i, j, player)){
+      //Check whether or not something's in the way
+      if(map_tile_is_visible(map, i, j, player)){
 	//Reveal the tile
 	map->known_map->tiles[get_coord(i, j, TERMINAL_WIDTH)] =
 	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
