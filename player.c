@@ -59,6 +59,12 @@ void playerTakeTurnCallback(struct creature_t* creature,
     qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
 }
 
+void playerKillCallback(struct creature_t *c, struct map_t *map){
+  if(c->health <= 0){
+    game_over();
+  }
+}
+
 void player_init(char* name){
   player = (struct creature_t*)Calloc(1,sizeof(struct creature_t));
   player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
@@ -99,6 +105,7 @@ void player_init(char* name){
   player->intrinsics = (intrinsics_list_t*)Calloc(1,sizeof(intrinsics_list_t));
   player->resistances = (resistances_list_t*)Calloc(1,sizeof(resistances_list_t));
   player->takeTurn = &playerTakeTurnCallback;
-
+  player->kill = &playerKillCallback;
+  
   cmd = 0;
 }

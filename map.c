@@ -467,7 +467,7 @@ bool map_tile_is_visible(struct map_t* map, int check_x, int check_y,
   if(map->dlevel != c->dlevel){return false;}
   if(c->x == check_x && c->y == check_y){return true;}
   //Check to see if it's in the possible radius of the creature's sight
-  if(get_distance(check_x, check_y, c->x, c->y) > creature_see_distance(c)){
+  if(!coord_in_range(check_x, check_y, c)){
     return false;
   }
      

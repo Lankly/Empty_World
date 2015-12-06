@@ -997,26 +997,26 @@ void game_init(int seed){
  * everything and restart the game.
  */
 void game_over(){
-    bool done = false;
-    while(!done){
-      char res = msg_promptchar("Game Over! Restart? (Y/n)");
-      if(res == 'n' || res =='N'){
-	res = msg_promptchar("Are you sure you want to quit? (y/N)");
-	if(res == 'y' || res == 'Y'){
-
-	  //TODO: Free everything.
-
-	  endwin();
-	  printf("You died!\n");
-	  exit(0);
-	}
-      }
-      else{
-	done = true;}
+  char res = 0;
+  while(res != 'y' && res != 'Y' && res != 'n' && res != 'N'
+	&& res != '\n' && res != 'q' && res != 'Q'){
+    res = msg_promptchar("Start a new game? (Y/n)");}
+  
+  if(res == 'n' || res =='N' || res == 'q' || res == 'Q'){
+    res = msg_promptchar("Are you sure you want to quit? (y/N)");
+    if(res == 'y' || res == 'Y'){
+      
+      //TODO: Free everything.
+      
+      endwin();
+      printf("You died!\n");
+      exit(0);
     }
-
+  }
+  else{
     //TODO: Free everything.
     free(player);
-
     game_init(0);
+  }
+  
 }
