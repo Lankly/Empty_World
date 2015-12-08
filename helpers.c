@@ -763,7 +763,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = (cmd == cmd_data[CMD_WAIT]);}
 
   if(to_return == false){
-    draw_status(); draw_map(cur_map);}
+    draw_status(cur_map, player); draw_map(cur_map);}
 
   return to_return;
 }
@@ -1021,21 +1021,18 @@ void game_init(int seed){
  * everything and restart the game.
  */
 void game_over(){
+  draw_status(cur_map, player);
   char res = 0;
   while(res != 'y' && res != 'Y' && res != 'n' && res != 'N'
 	&& res != '\n' && res != 'q' && res != 'Q'){
     res = msg_promptchar("Start a new game? (Y/n)");}
   
   if(res == 'n' || res =='N' || res == 'q' || res == 'Q'){
-    res = msg_promptchar("Are you sure you want to quit? (y/N)");
-    if(res == 'y' || res == 'Y'){
-      
-      //TODO: Free everything.
-      
-      endwin();
-      printf("You died!\n");
-      exit(0);
-    }
+    //TODO: Free everything.
+    
+    endwin();
+    printf("You died!\n");
+    exit(0);
   }
   else{
     //TODO: Free everything.

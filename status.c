@@ -16,7 +16,7 @@ static bool newmsg;
 static int num_msgs;
 static msg_t *cur_msg, *first_msg, *last_msg;
 
-void draw_status(map_t* map){
+void draw_status(map_t *map, struct creature_t *c){
   char* output = (char*)Calloc(81,sizeof(char));
 
   //Status bar
@@ -38,16 +38,16 @@ void draw_status(map_t* map){
 
   //Line one of info
   sprintf(output,"  %s, %-*s STR:%-2d PER:%-2d END:%-2d CHA:%-2d INT:%-2d AGL:%-2d LCK:%-2d  ",
-	  get_name(player),
-	  (int)(80-2-strlen(get_name(player))-2-5-2-5-2-5-2-5-2-5-2-5-2-5-2-2),
-	  class_data[player->class].name,
-	  get_strength(player),
-	  get_perception(player),
-	  get_endurance(player),
-	  get_charisma(player),
-	  get_intelligence(player),
-	  get_agility(player),
-	  get_luck(player));
+	  get_name(c),
+	  (int)(80-2-strlen(get_name(c))-2-5-2-5-2-5-2-5-2-5-2-5-2-5-2-2),
+	  class_data[c->class].name,
+	  get_strength(c),
+	  get_perception(c),
+	  get_endurance(c),
+	  get_charisma(c),
+	  get_intelligence(c),
+	  get_agility(c),
+	  get_luck(c));
   move(22,0);
   for(int i=0; i<80; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
@@ -59,17 +59,17 @@ void draw_status(map_t* map){
   move(23,0);
   addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
   addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
-  sprintf(output,"HP:%-3d", get_health(player));
+  sprintf(output,"HP:%-3d", get_health(c));
   for(int i = 0; i < 6; i++){
-    addch(output[i] | COLOR_PAIR(get_health(player) <(get_max_health(player)/2)?
-				 get_health(player) <(get_max_health(player)/5)?
+    addch(output[i] | COLOR_PAIR(get_health(c) <(get_max_health(c)/2)?
+				 get_health(c) <(get_max_health(c)/5)?
 				 CP_BLACK_RED : CP_BLACK_YELLOW : CP_BLACK_WHITE
 				 ));}
     
   sprintf(output,"  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d Trn:%-6d%*s",
-	  player->inventory != NULL ? player->inventory->cur_weight : 0,
-	  player->level,
-	  player->dlevel,
+	  c->inventory != NULL ? c->inventory->cur_weight : 0,
+	  c->level,
+	  c->dlevel,
 	  num_turns,
 	  80-2-3-3-2-4-3-2-4-3-2-5-2-4-6,"");
   for(int i=0; i<80-2-3-3; i++){

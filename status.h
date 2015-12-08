@@ -13,7 +13,7 @@ typedef struct msg_t {
   char* msg;
 } msg_t;
 
-void draw_status();
+void draw_status(map_t *map, struct creature_t *c);
 
 void msg_add(char* new_msg);
 void msg_addf(char* msg, ...);

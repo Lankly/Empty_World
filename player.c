@@ -13,7 +13,7 @@ void playerTakeTurnCallback(struct creature_t* creature,
 			    struct map_t* map){
   map_reveal(map, creature_see_distance(player));
   draw_map(map);
-  draw_status(map);
+  draw_status(map, creature);
 
   int plr_mv_to_x = player->x,
     plr_mv_to_y = player->y;
@@ -56,11 +56,17 @@ void playerTakeTurnCallback(struct creature_t* creature,
     }
   }
   else{
+    qckmv = false;
+    int tile = map_get_tile(map, plr_mv_to_x, plr_mv_to_y);
     //If the creature couldn't move to that spot, see if it's a door and open it
-    if(map_get_tile(map, plr_mv_to_x, plr_mv_to_y) == TILE_DOOR_CLOSE){
+    if(tile == TILE_DOOR_CLOSE){
       open_tile(map, player->x, player->y, cmd);
     }
-    qckmv = false;}
+    //If it's otherwise not passable, they should choose to do something else
+    else if(!tile_data[tile].passable){
+      playerTakeTurnCallback(creature, map);
+    }
+  }
   
   if(qckmv){
     qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
