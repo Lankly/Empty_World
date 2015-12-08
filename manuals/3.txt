@@ -11,15 +11,16 @@ Menus and Commands
     ,   pickup an item on the ground (if multiple, opens item menu)
     .   do nothing for the turn
     e   Eat an item
-    k   Kick something (Requires direction) 
+    k   Kick something (Requires direction)
+    m   record or stop recording a Macro
     o   Open something (i.e. door, chest, bag)
-    C   Close something
     q   Quaff an item
-    S   view your Stats
     u   Use an item
     w   Wield an item to use as a weapon
     x   eXamine a tile, creature, or item (pick with cursor)
     z   Zap an item (Wands only)
+    C   Close something
+    S   view your Stats
 
   The following is a list of Extended Commands. Extended Commands are commands that are written out in the Extended Commands Console, which is opened with '#'.
     8-colors        Toggles a more limited color palette

@@ -8,6 +8,7 @@
 #include "classes.h"
 #include "colors.h"
 #include "helpers.h"
+#include "hotkeys.h"
 #include "map.h"
 #include "creature.h"
 #include "player.h"
@@ -189,7 +190,27 @@ int msg_promptchar(char* prompt){
     }
   }
   curs_set(0);
-  return getch();
+
+  //Handle ESC
+  ESCDELAY = 25;
+  timeout(1);
+  int to_ret = ERR;
+  while(1){
+    //Handle hotkey being played back
+    if(playing_hotkey){
+      to_ret = get_next_cmd();
+    }
+    else{
+      to_ret = getch();}
+    if(to_ret == 27 && getch() == ERR){
+      return ERR;
+    }
+    else if(to_ret != ERR){
+      break;
+    }
+  }
+  timeout(-1);
+  return to_ret;
 }
 
 void display_stats(struct creature_t *creature){

@@ -2,6 +2,7 @@
 #include "classes.h"
 #include "colors.h"
 #include "creature.h"
+#include "hotkeys.h"
 #include "inventory.h"
 #include "items.h"
 #include "map.h"
@@ -43,24 +44,27 @@ void get_coord_via_cursor(int* y, int* x){
   curs_set(2);
   while(ch != '\n'){
     move(temp_y, temp_x);
-    ch = getch();
-    if(ch == cmd_data[CMD_UP] 
-       || ch == cmd_data[CMD_UP_RIGHT] 
+    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+      ch = getch();}
+    if(recording_hotkey){
+      record_cmd(ch);}
+    if(ch == cmd_data[CMD_UP] || ch == KEY_UP 
+       || ch == cmd_data[CMD_UP_RIGHT]
        || ch == cmd_data[CMD_UP_LEFT]){
       temp_y -= temp_y > 0 ? 1 :0;
     }
-    else if(ch == cmd_data[CMD_DOWN]
+    else if(ch == cmd_data[CMD_DOWN] || ch == KEY_DOWN
 	    || ch == cmd_data[CMD_DOWN_RIGHT]
 	    || ch == cmd_data[CMD_DOWN_LEFT]){
       //The -4 is -1 for movement, -3 for the status bar
       temp_y += temp_y < TERMINAL_HEIGHT-4 ? 1 : 0;
     }
-    if(ch == cmd_data[CMD_LEFT]
+    if(ch == cmd_data[CMD_LEFT] || ch == KEY_LEFT
        || ch == cmd_data[CMD_UP_LEFT]
        || ch == cmd_data[CMD_DOWN_LEFT]){
       temp_x -= temp_x > 0 ? 1 : 0;
     }
-    else if(ch == cmd_data[CMD_RIGHT]
+    else if(ch == cmd_data[CMD_RIGHT] || ch == KEY_RIGHT
 	    || ch == cmd_data[CMD_UP_RIGHT]
 	    || ch == cmd_data[CMD_DOWN_RIGHT]){
       temp_x += temp_x < TERMINAL_WIDTH-1 ? 1 : 0;
@@ -146,6 +150,7 @@ void cmd_init(){
   cmd_data[CMD_MANUAL] = '?';
   cmd_data[CMD_WAIT] = '.';
   cmd_data[CMD_STATS] = 'S';
+  cmd_data[CMD_HOTKEY] = 'm';
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -187,6 +192,17 @@ void cmd_remap(){
   }
 
   cmd_data[CMD] = new;
+}
+
+/* Returns true if there is a command mapped to a given key. False otherwise.
+ */
+bool cmd_exists(int cmd){
+  for(int i = 0; i <= CMD_MAX; i++){
+    if(cmd_data[i] == cmd){
+      return true;
+    }
+  }
+  return false;
 }
 
 bool analyze_cmd(int cmd, int*x, int* y);
@@ -516,37 +532,24 @@ void manual(){
       ar_pos++;
     }
 
-    //Print the top and bottom
-    mvaddch(0,0, '+');
-    mvaddch(0,TERMINAL_WIDTH-1, '+');
-    mvaddch(TERMINAL_HEIGHT-1,0, '+');
-    mvaddch(TERMINAL_HEIGHT-1, TERMINAL_WIDTH-1, '+');
-    //Add top and bottom border
-    mvaddch(1,0, ACS_VLINE);
-    mvaddch(TERMINAL_HEIGHT-2,0, ACS_VLINE);
-    mvaddch(1, TERMINAL_WIDTH-1, ACS_VLINE);
-    mvaddch(TERMINAL_HEIGHT-3,0, ACS_VLINE);
-    mvaddch(TERMINAL_HEIGHT-3, TERMINAL_WIDTH-1, ACS_VLINE);
-    mvaddch(TERMINAL_HEIGHT-2, TERMINAL_WIDTH-1, ACS_VLINE);
-    for(int i=1; i < TERMINAL_WIDTH-1; i++){
-      mvaddch(0,i, ACS_HLINE);
-      mvaddch(TERMINAL_HEIGHT-1, i, ACS_HLINE);
-    }
+    draw_borders();
 
     for(int j=2;  j < TERMINAL_HEIGHT-3; j++){
-      mvaddch(j,0, ACS_VLINE);
       if(page*(TERMINAL_HEIGHT-5)+j-2 < ar_pos){
-	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-5)+j-2]);}
-      mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
-      
+	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-5)+j-2]);
+      }
     } //for
 
     //Add quick nav information
     mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
 
-    ESCDELAY = 25;
-    timeout(1);
-    char ch = getch();
+    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+      ESCDELAY = 25;
+      timeout(1);
+      ch = getch();
+      if(ch != ERR){
+	record_cmd(ch);}
+    }
 
     //Handle ESC
     if(ch == 27 && getch() == ERR){
@@ -556,7 +559,11 @@ void manual(){
 	  //chapter numbers have to be hard-coded in, unfortunately
 	  && ch != '0' && ch != '1' && ch != '2'
 	  && ch != '3' && ch != '4' && ch != '5'){
-      ch = getch();}
+      if(recording_hotkey || (ch = get_next_cmd()) == 0){
+	ch = getch();
+      }
+    }
+    record_cmd(ch);
 
     //If the section or page is changed, change it
     ////Change back
@@ -638,8 +645,12 @@ void analyze_cmd_extended(){
     }
 
     move(MSG_ROW, strlen(ret)+1);
-    
-    ch = getch();
+
+    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+      ch = getch();
+      if(ch != ERR){
+	record_cmd(ch);}
+    }
     //special case for backspace
     if((ch==KEY_BACKSPACE || ch == 127) && ret_pos>=0){
       ret_pos--;
@@ -698,7 +709,10 @@ void analyze_cmd_extended(){
 bool analyze_cmd(int cmd, int* x, int* y){
   bool to_return = true;
   if(cmd == cmd_data[CMD_QCKMV]){
-    qckmv_cmd = getch();
+    if(recording_hotkey || (qckmv_cmd = get_next_cmd()) == 0){
+      qckmv_cmd = getch();
+      record_cmd(qckmv_cmd);
+    }
     if(qckmv_cmd == cmd_data[CMD_UP] || qckmv_cmd == KEY_UP
        || qckmv_cmd == cmd_data[CMD_DOWN] || qckmv_cmd == KEY_DOWN
        || qckmv_cmd == cmd_data[CMD_LEFT] || qckmv_cmd == KEY_LEFT
@@ -729,10 +743,20 @@ bool analyze_cmd(int cmd, int* x, int* y){
     *x+=1;*y+=1;
   }
   else if(cmd == cmd_data[CMD_OPEN]){
-    open_tile(cur_map, player->x, player->y, getch());
+    int dir = 0;
+    if(recording_hotkey || (dir = get_next_cmd()) == 0){
+      dir = getch();
+      record_cmd(dir);
+    }
+    open_tile(cur_map, player->x, player->y, dir);
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
-    close_tile(cur_map, player->x, player->y, getch());
+    int dir = 0;
+    if(recording_hotkey || (dir = get_next_cmd()) == 0){
+      dir = getch();
+      record_cmd(dir);
+    } 
+    close_tile(cur_map, player->x, player->y, dir);
   }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
@@ -756,8 +780,19 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = false;
   }else if(cmd == cmd_data[CMD_STATS]){
     display_stats(player);
+    to_return = false;
+  }else if(cmd == cmd_data[CMD_HOTKEY]){
+    if(!recording_hotkey){
+      start_recording();
+    }
+    else{
+      stop_recording();
+    }
+    to_return = false;
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
+  }else if(playback_hotkey(cmd)){
+    return false;
   }
   else{
     to_return = (cmd == cmd_data[CMD_WAIT]);}
@@ -947,8 +982,11 @@ char display_list(char *instr, int **items, int num_items, int col_width){
     ESCDELAY = 25;
     timeout(1);
     move(TERMINAL_HEIGHT-1,TERMINAL_WIDTH);
-    char ch = getch();
+    int ch = (playing_hotkey ? get_next_cmd() : getch());
 
+    if(recording_hotkey && ch != ERR){
+      record_cmd(ch);}
+    
     //If user pressed ESC, we're done here
     if(ch == 27 && getch() == ERR){
       timeout(-1);
@@ -981,6 +1019,8 @@ void game_init(int seed){
   use_8_colors = term != NULL && !strstr(term, "xterm");
   use_num_lock = true;
   use_numpad = true;
+  recording_hotkey = false;
+  playing_hotkey = false;
 
   //Initialize game data
   tile_data_init();

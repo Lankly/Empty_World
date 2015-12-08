@@ -33,7 +33,8 @@
 #define CMD_MANUAL 19
 #define CMD_WAIT 20
 #define CMD_STATS 21
-#define CMD_MAX 21
+#define CMD_HOTKEY 22
+#define CMD_MAX 22
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0
@@ -52,6 +53,8 @@ bool qckmv;
 bool use_8_colors;
 bool use_num_lock;
 bool use_numpad;
+bool recording_hotkey;
+bool playing_hotkey;
 char *term;
 int qckmv_cmd;
 int num_turns;
@@ -66,6 +69,7 @@ void get_coord_via_cursor(int* y, int* x);
 void quit(const char* error_msg);
 void cmd_init();
 void cmd_remap();
+bool cmd_exists(int cmd);
 
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);
