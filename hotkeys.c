@@ -119,3 +119,12 @@ bool playback_hotkey(int cmd){
   }
   return false;
 }
+
+int Getch(){
+  int to_ret = 0;
+  if((recording_hotkey || (to_ret = get_next_cmd()) == 0)
+     && ((to_ret = getch()) != ERR)){
+    record_cmd(to_ret);
+  }
+  return to_ret;
+}

@@ -92,7 +92,7 @@ int map_get_tile(struct map_t* map, int x, int y){
     printf("Error: Map is null\n");
     exit(1);
   }
-  else if(x<0 || y<0 || x>=map->width || y>=map->height){
+  else if(x<0 || y<0 || x >= map->width || y >= map->height){
     return TILE_UNKNOWN;
   }
   return map->tiles[y*map->width+x];
@@ -119,71 +119,28 @@ void map_draw_rect(struct map_t* map, int x, int y, int w, int h, int tile){
   }
 }
 
+/* Takes in a map and draws borders around all its rooms
+ */
 void map_draw_borders(struct map_t* map){
   if(map==NULL){
-    endwin();
-    printf("Error: Map nonexistant\n");
-    exit(1);
+    quit("Error: NULL Map\n");
   }
-  for(int j=0; j<map->height; j++){
-    for(int i=0; i<map->width; i++){
-      if(map->tiles[j*map->width+i]==TILE_UNKNOWN){
-	int chk_x=i+1,chk_y=j;
-	bool done=false;
+  //Loop through the map and add walls next to floors
+  for(int j = 0; j < map->height; j++){
+    for(int i = 0; i < map->width; i++){
+      //Don't want to replace corridors or floors, so only edit on blank tiles
+      if(map_get_tile(map, i, j) == TILE_UNKNOWN){
 	
-	//Check right
-	if(chk_x<map->width
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i]=TILE_WALL;
-	  done=true;
-	}//Check right, down
-	chk_y++;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check down
-	chk_x--;
-	if(!done && chk_x<map->width
-	   && chk_y<map->height
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check down, left
-	chk_x--;
-	if(!done && chk_x<map->width
-	   && chk_y<map->height
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check left
-	chk_y--;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check up,left
-	chk_y--;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check up
-	chk_x++;
-	if(!done && chk_x<map->width 
-	   && chk_y<map->height 
-	   && map->tiles[chk_y*map->width+chk_x]==TILE_FLOOR){
-	  map->tiles[j*map->width+i] = TILE_WALL;
-	  done=true;
-	}//Check up, right
-	chk_x++;
-	if(!done 
-	   && chk_x<map->width 
-	   && chk_y<map->height 
-	   && map->tiles[chk_y*map->width+chk_x] == TILE_FLOOR){
+	//Check each direciton for a floor
+	if(map_get_tile(map, i+1, j) == TILE_FLOOR
+	   || map_get_tile(map, i+1, j+1) == TILE_FLOOR
+	   || map_get_tile(map, i+1, j-1) == TILE_FLOOR
+	   || map_get_tile(map, i, j+1) == TILE_FLOOR
+	   || map_get_tile(map, i, j-1) == TILE_FLOOR
+	   || map_get_tile(map, i-1, j+1) == TILE_FLOOR
+	   || map_get_tile(map, i-1, j) == TILE_FLOOR
+	   || map_get_tile(map, i-1, j-1) == TILE_FLOOR){
+	  //Set this to a wall tile
 	  map->tiles[j*map->width+i] = TILE_WALL;
 	}
       }

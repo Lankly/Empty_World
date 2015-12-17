@@ -32,4 +32,6 @@ int get_next_cmd();
 rec_t *get_hotkey_by_cmd(int cmd);
 bool playback_hotkey(int cmd);
 
+int Getch();
+
 #endif
