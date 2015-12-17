@@ -3,7 +3,7 @@
 #include "colors.h"
 #include "creature.h"
 #include "helpers.h"
-#include "hotkeys.h"
+#include "macros.h"
 #include "map.h"
 #include "status.h"
 #include "tiles.h"
@@ -26,8 +26,8 @@ void playerTakeTurnCallback(struct creature_t* creature,
     if(qckmv){
       cmd = qckmv_cmd;
     }
-    //Handle hotkey playback
-    else if(playing_hotkey){
+    //Handle macro playback
+    else if(playing_macro){
       cmd = get_next_cmd();
     }else{
       cmd = getch();

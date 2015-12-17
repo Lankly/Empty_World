@@ -33,7 +33,7 @@
 #define CMD_MANUAL 19
 #define CMD_WAIT 20
 #define CMD_STATS 21
-#define CMD_HOTKEY 22
+#define CMD_MACRO 22
 #define CMD_MAX 22
 
 //Please keep this sorted alphabetically (after unknown)
@@ -53,8 +53,8 @@ bool qckmv;
 bool use_8_colors;
 bool use_num_lock;
 bool use_numpad;
-bool recording_hotkey;
-bool playing_hotkey;
+bool recording_macro;
+bool playing_macro;
 char *term;
 int qckmv_cmd;
 int num_turns;

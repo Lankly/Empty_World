@@ -2,7 +2,7 @@
 #include "classes.h"
 #include "colors.h"
 #include "creature.h"
-#include "hotkeys.h"
+#include "macros.h"
 #include "inventory.h"
 #include "items.h"
 #include "map.h"
@@ -44,9 +44,9 @@ void get_coord_via_cursor(int* y, int* x){
   curs_set(2);
   while(ch != '\n'){
     move(temp_y, temp_x);
-    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+    if(recording_macro || (ch = get_next_cmd()) == 0){
       ch = getch();}
-    if(recording_hotkey){
+    if(recording_macro){
       record_cmd(ch);}
     if(ch == cmd_data[CMD_UP] || ch == KEY_UP 
        || ch == cmd_data[CMD_UP_RIGHT]
@@ -150,7 +150,7 @@ void cmd_init(){
   cmd_data[CMD_MANUAL] = '?';
   cmd_data[CMD_WAIT] = '.';
   cmd_data[CMD_STATS] = 'S';
-  cmd_data[CMD_HOTKEY] = 'm';
+  cmd_data[CMD_MACRO] = 'm';
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -543,7 +543,7 @@ void manual(){
     //Add quick nav information
     mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
 
-    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+    if(recording_macro || (ch = get_next_cmd()) == 0){
       ESCDELAY = 25;
       timeout(1);
       ch = getch();
@@ -559,7 +559,7 @@ void manual(){
 	  //chapter numbers have to be hard-coded in, unfortunately
 	  && ch != '0' && ch != '1' && ch != '2'
 	  && ch != '3' && ch != '4' && ch != '5'){
-      if(recording_hotkey || (ch = get_next_cmd()) == 0){
+      if(recording_macro || (ch = get_next_cmd()) == 0){
 	ch = getch();
       }
     }
@@ -646,7 +646,7 @@ void analyze_cmd_extended(){
 
     move(MSG_ROW, strlen(ret)+1);
 
-    if(recording_hotkey || (ch = get_next_cmd()) == 0){
+    if(recording_macro || (ch = get_next_cmd()) == 0){
       ch = getch();
       if(ch != ERR){
 	record_cmd(ch);}
@@ -709,7 +709,7 @@ void analyze_cmd_extended(){
 bool analyze_cmd(int cmd, int* x, int* y){
   bool to_return = true;
   if(cmd == cmd_data[CMD_QCKMV]){
-    if(recording_hotkey || (qckmv_cmd = get_next_cmd()) == 0){
+    if(recording_macro || (qckmv_cmd = get_next_cmd()) == 0){
       qckmv_cmd = getch();
       record_cmd(qckmv_cmd);
     }
@@ -744,7 +744,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }
   else if(cmd == cmd_data[CMD_OPEN]){
     int dir = 0;
-    if(recording_hotkey || (dir = get_next_cmd()) == 0){
+    if(recording_macro || (dir = get_next_cmd()) == 0){
       dir = getch();
       record_cmd(dir);
     }
@@ -752,7 +752,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
     int dir = 0;
-    if(recording_hotkey || (dir = get_next_cmd()) == 0){
+    if(recording_macro || (dir = get_next_cmd()) == 0){
       dir = getch();
       record_cmd(dir);
     } 
@@ -781,8 +781,8 @@ bool analyze_cmd(int cmd, int* x, int* y){
   }else if(cmd == cmd_data[CMD_STATS]){
     display_stats(player);
     to_return = false;
-  }else if(cmd == cmd_data[CMD_HOTKEY]){
-    if(!recording_hotkey){
+  }else if(cmd == cmd_data[CMD_MACRO]){
+    if(!recording_macro){
       start_recording();
     }
     else{
@@ -791,7 +791,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = false;
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
-  }else if(playback_hotkey(cmd)){
+  }else if(playback_macro(cmd)){
     return false;
   }
   else{
@@ -982,9 +982,9 @@ char display_list(char *instr, int **items, int num_items, int col_width){
     ESCDELAY = 25;
     timeout(1);
     move(TERMINAL_HEIGHT-1,TERMINAL_WIDTH);
-    int ch = (playing_hotkey ? get_next_cmd() : getch());
+    int ch = (playing_macro ? get_next_cmd() : getch());
 
-    if(recording_hotkey && ch != ERR){
+    if(recording_macro && ch != ERR){
       record_cmd(ch);}
     
     //If user pressed ESC, we're done here
@@ -1019,8 +1019,8 @@ void game_init(int seed){
   use_8_colors = term != NULL && !strstr(term, "xterm");
   use_num_lock = true;
   use_numpad = true;
-  recording_hotkey = false;
-  playing_hotkey = false;
+  recording_macro = false;
+  playing_macro = false;
 
   //Initialize game data
   tile_data_init();

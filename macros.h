@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
-#ifndef HOTKEY_H
-#define HOTKEY_H
+#ifndef MACRO_H
+#define MACRO_H
 
 /* Holds a command from a given recording and the next command */
 typedef struct rec_t {
@@ -22,15 +22,15 @@ typedef struct reclist_t {
  */
 rec_t *next_cmd;
 
-reclist_t *hotkeys;
+reclist_t *macros;
 
 void start_recording();
 void record_cmd(int cmd);
 void stop_recording();
 int get_next_cmd();
 
-rec_t *get_hotkey_by_cmd(int cmd);
-bool playback_hotkey(int cmd);
+rec_t *get_macro_by_cmd(int cmd);
+bool playback_macro(int cmd);
 
 int Getch();
 

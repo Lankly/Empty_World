@@ -8,7 +8,7 @@
 #include "classes.h"
 #include "colors.h"
 #include "helpers.h"
-#include "hotkeys.h"
+#include "macros.h"
 #include "map.h"
 #include "creature.h"
 #include "player.h"
@@ -196,8 +196,8 @@ int msg_promptchar(char* prompt){
   timeout(1);
   int to_ret = ERR;
   while(1){
-    //Handle hotkey being played back
-    if(playing_hotkey){
+    //Handle macro being played back
+    if(playing_macro){
       to_ret = get_next_cmd();
     }
     else{

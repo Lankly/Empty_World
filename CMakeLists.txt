@@ -16,6 +16,6 @@ add_executable(EmptyWorld
 	status.c
 	tiles.c
 	classes.c
-	hotkeys.c
+	macros.c
 )
 target_link_libraries(EmptyWorld ncurses m)
