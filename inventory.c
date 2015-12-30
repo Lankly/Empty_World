@@ -572,8 +572,9 @@ void display_inventory(struct creature_t *c){
     snprintf(format, col_width, "%c - %s",
 	     (char)(((int)'a') + id),
 	     cur->item->name);
-    items[id] = str_to_ints(format);
+    items[id] = str_to_ints(format, col_width);
     items[id][0] = (items[id][0]) | COLOR_PAIR(CP_GREEN_BLACK);
+    memset(format, 0, col_width);
     id++;
   }
       

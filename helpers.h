@@ -62,7 +62,7 @@ int num_turns;
 void *Calloc(int items, int size);
 char *str_lowercase(char *str);
 bool str_is_num(char *str);
-int *str_to_ints(char *str);
+int *str_to_ints(char *str, int len);
 int get_coord(int x,int y,int width);
 int get_distance(int x_0, int y_0, int x_1, int y_1);
 void get_coord_via_cursor(int* y, int* x);

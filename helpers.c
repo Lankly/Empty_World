@@ -96,12 +96,11 @@ bool str_is_num(char* str){
 /* Takes in a string and returns an array of ints that, should those ints be
  * cast to chars, are equivalent.
  */
-int *str_to_ints(char *str){
+int *str_to_ints(char *str, int len){
   int *to_ret = NULL;
   
   //Don't do anything to a null string
   if(str != NULL){
-    int len = strlen(str);
     if(len == 0){
       return (int *)Calloc(1, sizeof(int));
     }
@@ -466,15 +465,32 @@ void xscend(int id){
   }
 }
 
+ssize_t readlink(const char *path, char *buf, size_t bufsize);
+
 /* Displays the user manual.
  */
 void manual(){
-  FILE *f = fopen("./manuals/manual.txt","r");
+  int buf_size = 1024;
+  char loc[buf_size];
+
+  //Try to find the directory that the executable is in
+  ssize_t read_ret = readlink("/proc/self/exe", loc, buf_size);
+  if(read_ret == -1){ read_ret = 0; }
+  else{
+    //If we found the path, remove the name the name so that we have directory
+    read_ret = strrchr(loc, '/') - loc + 1;
+  }
+  
+  //tack on manual to path
+  strcpy(loc + read_ret, "./manuals/manual.txt");
+  
+  //Try to open it
+  FILE *f = fopen(loc, "r");
   if(f == NULL){
     msg_add("Manual missing!");
     return;
   }
-
+  
   int section = 0; 
   int page = 0;
   char ch = 0; //the character that the player presses
@@ -558,7 +574,9 @@ void manual(){
     while(ch != '<' && ch != '>' && ch != 'q' && ch != 'Q'
 	  //chapter numbers have to be hard-coded in, unfortunately
 	  && ch != '0' && ch != '1' && ch != '2'
-	  && ch != '3' && ch != '4' && ch != '5'){
+	  && ch != '3' && ch != '4' && ch != '5'
+	  // as do directions
+	  && ch != KEY_LEFT && ch != KEY_RIGHT){
       if(recording_macro || (ch = get_next_cmd()) == 0){
 	ch = getch();
       }
@@ -567,14 +585,14 @@ void manual(){
 
     //If the section or page is changed, change it
     ////Change back
-    if(ch == '<'){
+    if(ch == '<' || ch == KEY_LEFT){
       if(page==0 && section > 0){
 	section--;
       }
       else if(page > 0){page--;}
     }
     ////Change forward
-    else if(ch == '>'){
+    else if(ch == '>' || ch == KEY_RIGHT){
       if(section < 5){
 	if((page+1)*(TERMINAL_HEIGHT-2-3) >= ar_pos){
 	  section++;
