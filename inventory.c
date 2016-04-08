@@ -113,7 +113,7 @@ item_t* inventory_remove_by_id(struct creature_t* creature, int inventory_id){
    */
   inventory_node_t* cur=creature->inventory->first;
   inventory_node_t* prev;
-  while(cur!=NULL && !cur->id>inventory_id){
+  while(cur!=NULL && cur->id <= inventory_id){
     //If found, begin removing item
     if(cur->id == inventory_id){
       item_t* to_return = cur->item;
@@ -270,7 +270,7 @@ bool equip_by_id(struct creature_t* creature, int inventory_id){
    * we ignore buffer overflow, which is never going to happen)
    */
   inventory_node_t* cur=creature->inventory->first;
-  while(cur!=NULL && !cur->id>inventory_id){
+  while(cur!=NULL && cur->id <= inventory_id){
     //If found, begin equip
     if(cur->id == inventory_id){
       item_t* to_equip = cur->item;

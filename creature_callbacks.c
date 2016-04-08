@@ -85,6 +85,8 @@ void defaultTakeTurnCallback(struct creature_t* creature,
     else{
       creature->pathfind(creature, map);}
   }
+
+  creature->turn_tokens--;
 }
 
 /* Callback used for killing a creature by default

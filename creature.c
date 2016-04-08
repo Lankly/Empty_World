@@ -29,7 +29,9 @@ void creature_data_init(){
     .is_immobile = true,
     .is_blind = true,
     .max_health = 100,
-    .takeTurn = &spawnerTakeTurnCallback
+    .takeTurn = &spawnerTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_HUMAN] = (struct creature_t){
     .corpse_type = CORPSE_HUMAN,
@@ -39,7 +41,9 @@ void creature_data_init(){
     .exam_text = "This is a human.",
     .max_health = 30,
     .strength = 2,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_GOBLIN] = (struct creature_t){
     .corpse_type = CORPSE_GOBLIN,
@@ -49,7 +53,9 @@ void creature_data_init(){
     .exam_text = "This is a goblin.",
     .max_health = 35,
     .strength = 3,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_ORC] = (struct creature_t){
     .corpse_type = CORPSE_ORC,
@@ -59,7 +65,9 @@ void creature_data_init(){
     .exam_text = "This is an orc.",
     .max_health = 40,
     .strength = 4,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_MINDFLAYER] = (struct creature_t){
     .corpse_type = CORPSE_MINDFLAYER,
@@ -70,7 +78,9 @@ void creature_data_init(){
     .can_fly = true,
     .max_health = 120,
     .strength = 15,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_SKELETON] = (struct creature_t){
     .corpse_type = CORPSE_SKELETON,
@@ -81,7 +91,9 @@ void creature_data_init(){
     .max_health = 10,
     .strength = 2,
     .perception = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
 
   creature_data[CREATURE_TYPE_RODENT] = (struct creature_t){
@@ -97,6 +109,8 @@ void creature_data_init(){
     .luck = 1,
     .takeTurn = &defaultTakeTurnCallback,
     .pathfind = &ratPathfindCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_AVIAN] = (struct creature_t){
     .corpse_type = CORPSE_AVIAN,
@@ -110,6 +124,8 @@ void creature_data_init(){
     .intelligence = 1,
     .luck = 1,
     .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_INSECT] = (struct creature_t){
     .corpse_type = CORPSE_INSECT, 
@@ -123,7 +139,9 @@ void creature_data_init(){
     .perception = 2,
     .charisma = -1,
     .luck = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_CANINE] = (struct creature_t){
     .corpse_type = CORPSE_CANINE,
@@ -137,6 +155,8 @@ void creature_data_init(){
     .intelligence = 2,
     .luck = 1,
     .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_FELINE] = (struct creature_t){
     .corpse_type = CORPSE_FELINE,
@@ -149,6 +169,8 @@ void creature_data_init(){
     .perception = 2,
     .intelligence = 3,
     .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_EQUINE] = (struct creature_t){
     .corpse_type = CORPSE_EQUUS,
@@ -159,6 +181,8 @@ void creature_data_init(){
     .max_health = 30,
     .strength = 8,
     .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_GOLEM] = (struct creature_t){
     .creature_id = CREATURE_TYPE_GOLEM,
@@ -168,6 +192,8 @@ void creature_data_init(){
     .max_health = 30,
     .strength = 3,
     .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
 
   creature_data[CREATURE_TYPE_EYE] = (struct creature_t){
@@ -179,7 +205,9 @@ void creature_data_init(){
     .can_fly = true,
     .max_health = 120,
     .strength = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_DEMON] =  (struct creature_t){
     .corpse_type = CORPSE_DEMON,
@@ -190,7 +218,9 @@ void creature_data_init(){
     .can_fly = true,
     .max_health = 200,
     .strength = 18,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_SENTINEL] = (struct creature_t){
     .corpse_type = CORPSE_SENTINEL,
@@ -200,7 +230,9 @@ void creature_data_init(){
     .exam_text = "This is a sentinel.",
     .max_health = 100,
     .strength = 10,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_GRIFFON] = (struct creature_t){
     .corpse_type = CORPSE_GRIFFON,
@@ -211,7 +243,9 @@ void creature_data_init(){
     .can_fly = true,
     .max_health = 80,
     .strength = 5,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_FOG] = (struct creature_t){
     .creature_id = CREATURE_TYPE_FOG,
@@ -221,7 +255,9 @@ void creature_data_init(){
     .can_fly = true,
     .max_health = 10,
     .strength = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
   creature_data[CREATURE_TYPE_PLANT] = (struct creature_t){
     .corpse_type = CORPSE_PLANT,
@@ -233,7 +269,9 @@ void creature_data_init(){
     .strength = 3,
     .perception = 1,
     .luck = 1,
-    .takeTurn = &defaultTakeTurnCallback
+    .takeTurn = &defaultTakeTurnCallback,
+    .turn_tokens = 1,
+    .turn_tokens_reset_amount = 1
   };
 }
 

@@ -204,7 +204,7 @@ bool cmd_exists(int cmd){
   return false;
 }
 
-bool analyze_cmd(int cmd, int*x, int* y);
+bool analyze_cmd(int cmd, int *x, int *y);
 /* This function handles what to do when the open action is executed. It will
  * attempt to turn a closed door into an open door at this time. 
  * TODO: Include the ability to open items on the floor like chests.
@@ -727,10 +727,7 @@ void analyze_cmd_extended(){
 bool analyze_cmd(int cmd, int* x, int* y){
   bool to_return = true;
   if(cmd == cmd_data[CMD_QCKMV]){
-    if(recording_macro || (qckmv_cmd = get_next_cmd()) == 0){
-      qckmv_cmd = getch();
-      record_cmd(qckmv_cmd);
-    }
+    qckmv_cmd = Getch();
     if(qckmv_cmd == cmd_data[CMD_UP] || qckmv_cmd == KEY_UP
        || qckmv_cmd == cmd_data[CMD_DOWN] || qckmv_cmd == KEY_DOWN
        || qckmv_cmd == cmd_data[CMD_LEFT] || qckmv_cmd == KEY_LEFT
@@ -760,6 +757,16 @@ bool analyze_cmd(int cmd, int* x, int* y){
   else if(cmd == cmd_data[CMD_DOWN_RIGHT]){
     *x+=1;*y+=1;
   }
+  else if(cmd == KEY_MOUSE){
+    if(getmouse(&mouse) == OK){
+      if(mouse.bstate & BUTTON1_CLICKED){
+	msg_add("Left");
+      }
+      else if(mouse.bstate & BUTTON3_CLICKED){
+	msg_add("Right");
+      }
+    }
+  }
   else if(cmd == cmd_data[CMD_OPEN]){
     int dir = 0;
     if(recording_macro || (dir = get_next_cmd()) == 0){
@@ -775,6 +782,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
       record_cmd(dir);
     } 
     close_tile(cur_map, player->x, player->y, dir);
+   
   }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
@@ -1050,7 +1058,9 @@ void game_init(int seed){
   status_init();
   cmd_init();
   num_turns = 0;
-
+  //Enable left and right click
+  mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, NULL);
+  
   //Setup floor
   cur_map = (map_t*)Calloc(1,sizeof(map_t));
   map_init(cur_map,
@@ -1098,4 +1108,30 @@ void game_over(){
     game_init(0);
   }
   
+}
+
+void display_mouse(){
+  //check if mouse is in-bounds
+  if(mouse.x > 0 && mouse.x < TERMINAL_WIDTH
+     && mouse.y > 0 && mouse.y < TERMINAL_HEIGHT
+     //and that the mouse moved
+     && (mouse.x != mouse_prev_x || mouse.y != mouse_prev_y))
+    {
+      msg_add("check");
+      
+      //move to old position and reset the highlighting
+      move(mouse_prev_y, mouse_prev_x);
+      chtype old = inch() | A_NORMAL;
+      addch((int)old);
+      move(mouse.y, mouse.x);
+
+      //move to new position and add highlighting
+      move(mouse.y, mouse.x);
+      old = inch() | A_STANDOUT;
+      addch((int)old);
+
+      //change the old position information
+      mouse_prev_x = mouse.x;
+      mouse_prev_y = mouse.y;
+    }
 }

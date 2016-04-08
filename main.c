@@ -35,9 +35,16 @@ int main(int argc, char** argv){
     //Let each creature take its turn
     for(creature_list_node_t* cur = cur_map->creatures->first; 
 	cur != NULL; cur = cur->next){
-      cur->creature->takeTurn(cur->creature, cur_map);
+      //If this creature is not out of move tokens, take turn.
+      if(cur->creature->turn_tokens > 0){
+	cur->creature->takeTurn(cur->creature, cur_map);
+      }
+      //Otherwise, skip the turn to reset them
+      else{
+	cur->creature->turn_tokens = cur->creature->turn_tokens_reset_amount;
+      }
     }
-    num_turns++;
+    //num_turns++;
   }
 
   endwin();

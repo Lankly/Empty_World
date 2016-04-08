@@ -120,10 +120,13 @@ bool playback_macro(int cmd){
   return false;
 }
 
+/* This getch behaves like normal getch, except if we're running a macro, it
+ * gets the next key in that macro instead of user input
+ */
 int Getch(){
   int to_ret = 0;
-  if((recording_macro || (to_ret = get_next_cmd()) == 0)
-     && ((to_ret = getch()) != ERR)){
+  if((recording_macro || (to_ret = get_next_cmd()) == 0)){
+    while((to_ret = getch()) == ERR || to_ret == 27);
     record_cmd(to_ret);
   }
   return to_ret;

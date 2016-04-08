@@ -142,6 +142,9 @@ struct creature_t{
    * every turn cycle.
    */
 
+  int turn_tokens;
+  int turn_tokens_reset_amount;
+  
   int corpse_type;
   int were_type;
   int class;

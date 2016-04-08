@@ -21,6 +21,8 @@ struct class_t{
   int intelligence_bonus;
   int agility_bonus;
   int luck_bonus;
+
+  int turn_tokens_starting_amount;
 };
 
 struct class_t class_data[CLASS_MAX+1];

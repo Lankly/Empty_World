@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include "map.h"
+#include <ncurses.h>
 
 #ifndef HELPERS_H
 #define HELPERS_H
@@ -48,6 +49,8 @@ int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
 
 WINDOW *WIN;
+MEVENT mouse;
+int mouse_prev_x, mouse_prev_y;
 
 bool qckmv;
 bool use_8_colors;
@@ -58,6 +61,7 @@ bool playing_macro;
 char *term;
 int qckmv_cmd;
 int num_turns;
+
 
 void *Calloc(int items, int size);
 char *str_lowercase(char *str);
@@ -90,5 +94,7 @@ void manual();
 void xscend();
 void analyze_cmd_extended();
 bool analyze_cmd(int cmd, int* x, int* y);
+
+void display_mouse();
 
 #endif

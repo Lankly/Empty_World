@@ -3,7 +3,8 @@ project (EmptyWorld)
 find_library(ncurses REQUIRED)
 set(CMAKE_C_FLAGS "-std=c99 -Wall -Werror -pedantic -g")
 add_executable(EmptyWorld
-	main.c
+        main.c
+        bodies.c
 	colors.c
 	creature.c
 	creature_callbacks.c

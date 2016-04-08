@@ -18,7 +18,9 @@ void playerTakeTurnCallback(struct creature_t* creature,
 
   int plr_mv_to_x = player->x,
     plr_mv_to_y = player->y;
-  
+
+  //Use timeout so that we can get the mouse movement
+  timeout(1);
   do{
     /* If the player is quickmoving, keep doing that. 
      * Else, look for keyboard input.
@@ -33,9 +35,13 @@ void playerTakeTurnCallback(struct creature_t* creature,
       cmd = getch();
       record_cmd(cmd);
     }
+
+    display_mouse();
     
-  }while(!analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y));
-    
+  }while(cmd == 27
+	 || !analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y));
+  timeout(-1);
+  
   /* Ensure that the player is light enough to pass through corners,
        that they are not behind a closed door.
   */
@@ -61,6 +67,9 @@ void playerTakeTurnCallback(struct creature_t* creature,
       player->x=plr_mv_to_x;
       player->y=plr_mv_to_y;
     }
+    //Maybe increment turn counter
+    player->turn_tokens--;
+    if(player->turn_tokens == 0){num_turns++;}
   }
   else{
     qckmv = false;
@@ -68,13 +77,16 @@ void playerTakeTurnCallback(struct creature_t* creature,
     //If the creature couldn't move to that spot, see if it's a door and open it
     if(tile == TILE_DOOR_CLOSE){
       open_tile(map, player->x, player->y, cmd);
+      //Maybe increment turn counter
+      player->turn_tokens--;
+      if(player->turn_tokens == 0){num_turns++;}
     }
     //If it's otherwise not passable, they should choose to do something else
     else if(!tile_data[tile].passable){
       playerTakeTurnCallback(creature, map);
     }
   }
-  
+
   if(qckmv){
     qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
 }
@@ -126,6 +138,9 @@ void player_init(char* name){
   player->resistances = (resistances_list_t*)Calloc(1,sizeof(resistances_list_t));
   player->takeTurn = &playerTakeTurnCallback;
   player->kill = &playerKillCallback;
+
+  player->turn_tokens = class_data[player->class].turn_tokens_starting_amount;
+  player->turn_tokens_reset_amount = player->turn_tokens;
   
   cmd = 0;
 }
