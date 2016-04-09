@@ -1,4 +1,6 @@
 Tips
 ----
 
-  1 - RTFM
+  1 - Make macros for things you don't want to do repeatedly.
+  2 - Use the targeted attack to make strategic choices.
+  3 - RTFM

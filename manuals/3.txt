@@ -19,6 +19,7 @@ Menus and Commands
     w   Wield an item to use as a weapon
     x   eXamine a tile, creature, or item (pick with cursor)
     z   Zap an item (Wands only)
+    A   open the targeted Attack interface (pick with direction)
     C   Close something
     S   view your Stats
 
