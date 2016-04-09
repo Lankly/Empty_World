@@ -101,6 +101,7 @@ void defaultKillCallback(struct creature_t *a, struct map_t *map){
   add_item(map, a->x, a->y, corpse, false);
 
   map_remove_creature(map, a);
+  body_part_free(a->body);
   free(a);
 }
 
@@ -834,4 +835,13 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
   //msg_addf("Spawned %s", c->name);
   set_health(c, get_max_health(c));
   c->dlevel = map->dlevel;
+  switch(c->creature_id){
+  case CREATURE_TYPE_RODENT :
+    c->body = gen_rat(false);
+    break;
+  case CREATURE_TYPE_FELINE :
+    c->body = gen_cat(false);
+  default:
+    c->body = NULL;
+  }
 }

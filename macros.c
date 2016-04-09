@@ -126,7 +126,7 @@ bool playback_macro(int cmd){
 int Getch(){
   int to_ret = 0;
   if((recording_macro || (to_ret = get_next_cmd()) == 0)){
-    while((to_ret = getch()) == ERR || to_ret == 27);
+    while((to_ret = getch()) == ERR);
     record_cmd(to_ret);
   }
   return to_ret;

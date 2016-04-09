@@ -116,6 +116,7 @@ void player_init(char* name){
   set_charisma(player, 1);
   set_intelligence(player, 1);
   set_luck(player, 1);
+  set_dexterity(player, 1);
   set_health(player, 10);
   set_max_health(player, get_health(player));
   set_max_hunger(player, 200);
@@ -143,4 +144,8 @@ void player_init(char* name){
   player->turn_tokens_reset_amount = player->turn_tokens;
   
   cmd = 0;
+}
+
+int get_cur_weapon_skill(){
+  return get_dexterity(player);
 }

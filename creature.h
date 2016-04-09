@@ -3,6 +3,7 @@
 #ifndef CREATURE_H
 #define CREATURE_H
 
+#include "bodies.h"
 #include "items.h"
 #include "map.h"
 
@@ -29,15 +30,17 @@
 #define CREATURE_TYPE_EYE      19
 #define CREATURE_TYPE_MAX      19
 
-//DAMAGE TYPES LIST
-#define DMG_UNKNOWN 0
-#define DMG_BLUNT   1
-#define DMG_FIRE    2
-#define DMG_ICE     3
-#define DMG_WATER   4
-#define DMG_LIGHTNING 5
-#define DMG_PSYCHIC 6
-#define DMG_MAX     6
+//Damage Types
+#define DMG_BLUNT 0
+#define DMG_SLASHING 1
+#define DMG_PIERCING 2
+#define DMG_FIRE 3
+#define DMG_COLD 4
+#define DMG_INFECTION 5
+#define DMG_CRUSHING 6
+#define DMG_EXPLOSIVE 7
+#define DMG_PSYCHIC 8
+#define DMG_MAX 8
 
 //EXTRINSICS,INTRINSICS LIST
 #define TRINSIC_UNKNOWN 0
@@ -126,13 +129,15 @@ typedef void (*creaturePathfindCallback)(struct creature_t *creature,
 typedef void (*creatureKillCallback)(struct creature_t *creature,
 				     struct map_t *map);
 
+struct body_part_t;
+
 #include "inventory.h"
 struct creature_t{
   int strength;  int perception;    int endurance;
   int charisma;  int intelligence;  int agility;
-  int luck;      int health;        int hunger;
-  int gold;      int level;         int max_hunger;
-  int max_health;
+  int dexterity; int luck;
+  int health;    int hunger;        int gold;
+  int level;     int max_hunger;    int max_health;
   
   /* This is how hunger works:
    * You have a max_hunger. This represents how much food can be in your stomach
@@ -173,6 +178,8 @@ struct creature_t{
   creatureTakeTurnCallback takeTurn;
   creaturePathfindCallback pathfind;
   creatureKillCallback kill;
+
+  struct body_part_t *body;
 };
 
 #include "creature_callbacks.h"
@@ -182,9 +189,9 @@ typedef struct creature_list_node_t{
   struct creature_t *creature;
   struct creature_list_node_t *next;
 }creature_list_node_t;
-struct creature_list_t{
+typedef struct creature_list_t{
   struct creature_list_node_t *first;
-};
+}creature_list_t;
 
 //This is all the default kinds of creatures that can be created
 struct creature_t creature_data[CREATURE_TYPE_MAX+1];
@@ -192,6 +199,7 @@ struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 void creature_data_init();
 struct creature_t *creature_create_from_data(int index);
 struct creature_t *creature_spawn(int creature_id, struct map_t *map);
+struct creature_t *get_creature_at_position(int x, int y, creature_list_t *l);
 void damage_creature(struct creature_t *target, char *source, int dmg);
 void creature_place_on_map(struct creature_t *creature, map_t *map);
 int creature_see_distance(struct creature_t *creature);
@@ -217,6 +225,7 @@ void set_charisma(struct creature_t *c, int ch);
 void set_intelligence(struct creature_t *c, int i);
 void set_agility(struct creature_t *c, int a);
 void set_luck(struct creature_t *c, int l);
+void set_dexterity(struct creature_t *c, int d);
 
 void set_health(struct creature_t *c, int h);
 void set_max_health(struct creature_t *c, int mh);
@@ -247,6 +256,7 @@ int get_charisma(struct creature_t *c);
 int get_intelligence(struct creature_t *c);
 int get_agility(struct creature_t *c);
 int get_luck(struct creature_t *c);
+int get_dexterity(struct creature_t *c);
 
 void add_health(struct creature_t *c, int h);
 

@@ -20,16 +20,20 @@
 
 #define DAMAGE_UNHURT 0
 #define DAMAGE_BRUISED 1
-#define DAMAGE_BROKEN 2
-#define DAMAGE_SEVERED 3
+#define DAMAGE_CRIPPLED 2
+#define DAMAGE_BROKEN 3
+#define DAMAGE_SEVERED 4
 
 struct bodylist_t;
 typedef struct body_part_t{
   char *name;
+  char *image;
+  int image_width;
   bool bleeding;
   int blood_remaining;
   int damage;
   int health;
+  int health_max;
   int size;
   bool vital;
   itemlist_t *armor;
@@ -58,6 +62,7 @@ body_part_t *gen_cat_torso(bool giant);
 body_part_t *gen_human();
 body_part_t *gen_human_head();
 body_part_t *gen_human_torso();
+body_part_t *gen_owl(bool giant);
 body_part_t *gen_rat(bool giant);
 body_part_t *gen_rat_torso(bool giant);
 
@@ -66,6 +71,14 @@ void bodylist_add(bodylist_t *list, body_part_t *part);
 void bodylist_remove(bodylist_t *list, body_part_t *part);
 void bodylist_remove_by_name(bodylist_t *list, char *name);
 
+int body_part_chance_to_hit(struct creature_t *attacker,
+			    body_part_t *part, int largest_size);
+
+void body_part_free(body_part_t *part);
+void bodylist_free(bodylist_t *list);
+
 item_t *body_to_item(body_part_t *part);
+
+bool target_attack();
 
 #endif

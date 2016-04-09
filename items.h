@@ -95,12 +95,16 @@ typedef struct item_zap_t{
 //Material Types
 #define MAT_UNKNOWN 0
 #define MAT_CLOTH   1
-#define MAT_LEATHER 2
-#define MAT_WOOD    3
-#define MAT_SILVER  4
-#define MAT_GOLD    5
+#define MAT_GOLD    2
+#define MAT_LEATHER 3
+#define MAT_WOOD    4
+#define MAT_SILVER  5
 #define MAT_STONE   6
-#define MAT_IRON    7
+#define MAT_BRONZE  7
+#define MAT_IRON    8
+#define MAT_STEEL   9
+#define MAT_ADAMANTINE 10
+#define MAT_MITHRIL 11
 
 //WEARABLE TYPES LIST
 #define WEAR_UNKNOWN 0

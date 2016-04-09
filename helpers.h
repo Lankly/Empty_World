@@ -35,7 +35,8 @@
 #define CMD_WAIT 20
 #define CMD_STATS 21
 #define CMD_MACRO 22
-#define CMD_MAX 22
+#define CMD_TARGET_ATTK 23
+#define CMD_MAX 23
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0

@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include "bodies.h"
 #include "classes.h"
 #include "colors.h"
 #include "creature.h"
@@ -150,6 +151,7 @@ void cmd_init(){
   cmd_data[CMD_WAIT] = '.';
   cmd_data[CMD_STATS] = 'S';
   cmd_data[CMD_MACRO] = 'm';
+  cmd_data[CMD_TARGET_ATTK] = 'A';
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -393,6 +395,10 @@ void debug(){
     set_health(player, 10000);
   }else if(!strcmp(debug_cmd_lower,"maketelepathic")){
     set_telepathic(player, true);
+  }else if(!strcmp(debug_cmd_lower,"spawnrat")){
+    creature_spawn(CREATURE_TYPE_RODENT,cur_map);
+  }else if(!strcmp(debug_cmd_lower,"spawnowl")){
+    creature_spawn(CREATURE_TYPE_AVIAN, cur_map);
   }
 }
 
@@ -815,6 +821,8 @@ bool analyze_cmd(int cmd, int* x, int* y){
       stop_recording();
     }
     to_return = false;
+  }else if(cmd == cmd_data[CMD_TARGET_ATTK]){
+    to_return = target_attack();
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }else if(playback_macro(cmd)){

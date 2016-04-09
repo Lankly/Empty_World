@@ -15,4 +15,7 @@ int cmd;
   struct map_t* map);*/
 
 void player_init();
+
+int get_cur_weapon_skill();
+
 #endif

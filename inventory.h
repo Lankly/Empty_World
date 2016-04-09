@@ -5,6 +5,8 @@
 #ifndef INVENTORY_H
 #define INVENTORY_H
 
+struct creature_t;
+
 typedef struct{
   item_t* item;
   bool contributes_to_weight;

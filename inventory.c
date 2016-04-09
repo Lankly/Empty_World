@@ -5,6 +5,8 @@
 #include "status.h"
 #include <string.h>
 
+struct creature_t;
+
 /* Initializes the player's inventory equip slots
  */
 void inventory_init(struct creature_t* creature){
