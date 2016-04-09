@@ -499,7 +499,7 @@ void manual(){
   
   int section = 0; 
   int page = 0;
-  char ch = 0; //the character that the player presses
+  int ch = 0; //the character that the player presses
 
   while(ch != 'q' && ch != 'Q'){
     clear();
