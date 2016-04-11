@@ -307,11 +307,15 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
   map_add_creature(map, c);
 
   switch(c->creature_id){
+  case CREATURE_TYPE_AVIAN :
+    c->body = gen_owl(false);
+    break;
   case CREATURE_TYPE_RODENT :
     c->body = gen_rat(false);
     break;
   case CREATURE_TYPE_FELINE :
     c->body = gen_cat(false);
+    break;
   default:
     c->body = NULL;
   }

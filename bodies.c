@@ -5,6 +5,7 @@
 #include <string.h>
 #include "colors.h"
 #include "creature.h"
+#include "creature_callbacks.h"
 #include "inventory.h"
 #include "items.h"
 #include "macros.h"
@@ -229,10 +230,62 @@ body_part_t *gen_human_torso(){
 }
 
 body_part_t *gen_owl(bool giant){
-  body_part_t *owl = generate_part("Cave Owl", -1,
+  body_part_t *owl = generate_part("Cave Owl", 10,
 				   BLOOD_FULL,
 				   SIZE_SMALL + giant,
-				   false);
+				   true);
+  owl->attached = bodylist_new();
+  
+  body_part_t *head =
+    generate_part("Head", 4, BLOOD_FULL, SIZE_TINY + giant, true);
+  head->blunt_message = "bash its skull in";
+  head->cold_message = "freeze its brain";
+  head->crush_message = "crush its skull in";
+  head->explode_message = "cause its head to explode";
+  head->fire_message = "cook its brain through the skull";
+  head->pierce_message = "pierce its brain through the skull";
+  head->psychic_message = "destroy its tiny mind";
+  head->slash_message = "cave its skull in";
+  head->organs = bodylist_new();
+  bodylist_add(head->organs,
+	       generate_part("Brain", 3, BLOOD_FULL, SIZE_TINY, false));
+
+  body_part_t *limbs = generate_part("Limbs", 12,
+				     BLOOD_FULL, SIZE_SMALL + giant, false);
+  limbs->attached = bodylist_new();
+  bodylist_add(limbs->attached,
+	       generate_part("Left wing",3,BLOOD_FULL, SIZE_TINY+giant, false));
+  bodylist_add(limbs->attached,
+	       generate_part("Right wing",3,BLOOD_FULL,SIZE_TINY+giant, false));
+  bodylist_add(limbs->attached,
+	       generate_part("Left leg", 3, BLOOD_FULL,SIZE_TINY+giant, false));
+  bodylist_add(limbs->attached,
+	       generate_part("Right leg",3, BLOOD_FULL,SIZE_TINY+giant, false));
+
+  bodylist_add(owl->attached, limbs);
+  bodylist_add(owl->attached, gen_rat_torso(giant));
+  bodylist_add(owl->attached, head);
+
+  owl->image =
+    "                ____\n"
+    "             ,''    ''.\n"
+    "            / `-.  .-' \\\n"
+    "           /( (O))((O) )\n"
+    "          /'-..-'/\\`-..|\n"
+    "        ,'\\   `-.\\/.--'|\n"
+    "      ,' ( \\           |\n"
+    "    ,'( (   `._        |\n"
+    "   /( (  ( ( | `-._ _,-;\n"
+    "  /( (  ( ( (|     '  ;\n"
+    " / ((  (    /        /\n"
+    "//         /        /\n"
+    "//  / /  ,'        /\n"
+    "// /    ,'         /\n"
+    "//  / ,'          ;\n"
+    "//_,-'          ;\n"
+    "// /,,,,..-))-))\\";
+  owl->image_width = 24;
+  
   return owl;
 }
 
@@ -260,9 +313,7 @@ body_part_t *gen_rat(bool giant){
 			     SIZE_TINY + giant, false));
   bodylist_add(limbs->attached,
 	       generate_part("Tail", 1, 0, SIZE_TINY + giant, false));
-  bodylist_add(rat->attached, limbs);
   
-  bodylist_add(rat->attached, gen_rat_torso(giant));
   
   body_part_t *head =
     generate_part("Head", 4, BLOOD_FULL, SIZE_TINY + giant, true);
@@ -277,6 +328,9 @@ body_part_t *gen_rat(bool giant){
   head->organs = bodylist_new();
   bodylist_add(head->organs,
 	       generate_part("Brain", 3, BLOOD_FULL, SIZE_TINY, false));
+  
+  bodylist_add(rat->attached, limbs);
+  bodylist_add(rat->attached, gen_rat_torso(giant));
   bodylist_add(rat->attached, head);
 
   int rv = rand()%3;
@@ -331,6 +385,16 @@ body_part_t *gen_rat_torso(bool giant){
   bodylist_add(torso->organs,
 	       generate_part("Guts", 3, BLOOD_EMPTY, SIZE_TINY + giant, false));
 
+  torso->blunt_message = "destroy its rib cage";
+  torso->cold_message = "freeze its heart";
+  torso->crush_message = "crush its rib cage";
+  torso->explode_message = "explode it from the inside out";
+  torso->fire_message = "burn it to death";
+  torso->infect_message = "give it high cholesterol";
+  torso->pierce_message = "stab into its chest and pierce its heart";
+  torso->psychic_message = "will its heart to stop";
+  torso->slash_message = "slash its torso open";
+  
   return torso;
 }
 
@@ -452,6 +516,52 @@ void bodylist_free(bodylist_t *list){
   }
 }
 
+/* Draws the image associated with a creature onto either the left or right
+ * half of the screen. Assumes that the image will fit in half the screen.
+ * Returns the height of the image.
+ */
+int draw_body_image(struct creature_t *creature, bool left){
+  if(creature == NULL || creature->body == NULL){
+    return 0;}
+  
+  int padding = left ? 0 : TERMINAL_WIDTH/2;
+  padding += (TERMINAL_WIDTH/2 - creature->body->image_width - 4)/2;
+  
+  //Draw the top of the bounding box for the image
+  mvaddch(1, padding,'+');
+  for(int i = 0; i < creature->body->image_width+2; i++){
+    addch(ACS_HLINE);
+  }
+  addch('+');
+  mvaddch(2, padding, ACS_VLINE); addch(' ');
+  
+  int num_lines = 0;
+  int len = strlen(creature->body->image);
+  
+  //Now draw the image
+  for(int i = 0; i < len; i++){
+    if(creature->body->image[i] == '\n'){
+      mvaddch(2+num_lines,
+	      1 + padding + creature->body->image_width + 2,
+	      ACS_VLINE);
+      num_lines++;
+      mvaddch(2+num_lines, padding, ACS_VLINE); addch(' ');
+      i++;
+    }
+    addch(creature->body->image[i]);
+  }
+  
+  //Finish the bounding box
+  mvaddch(2+num_lines, 1 + padding + creature->body->image_width + 2,ACS_VLINE);
+  mvaddch(3+num_lines, padding, '+');
+  for(int i = 0; i < creature->body->image_width+2; i++){
+    addch(ACS_HLINE);
+  }
+  addch('+');
+
+  return num_lines;
+}
+
 /* Deals damage to a creature's body part. Also handles killing them.
  */
 bool damage_body_part(int *choice, struct creature_t *attacker,
@@ -565,8 +675,8 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 		  MAX_MSG_LEN - strlen("You succumb to your injuries"));
 	}
 	else{
-	  strncpy(message, "You succumb to your injuries",
-		  MAX_MSG_LEN - strlen("You succumb to your injuries"));
+	  strncpy(message, "It succumbs to its injuries",
+		  MAX_MSG_LEN - strlen("It succumbs to its injuries"));
 	}
 	strncat(message, ".", MAX_MSG_LEN - strlen(message));
 
@@ -574,7 +684,12 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 	free(message);
 	
 	//Kill callback
-	target->kill(target, cur_map);
+	if(target->kill == NULL){
+	  defaultKillCallback(target, cur_map);
+	}
+	else{
+	  target->kill(target, cur_map);
+	}
       }
     }
     else{
@@ -656,8 +771,9 @@ void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
     char *odds_str = Calloc(TERMINAL_WIDTH/2, sizeof(char));
     sprintf(odds_str, "%d%% chance to hit", odds);
     mvaddstr(TERMINAL_HEIGHT - 2,
-	     (TERMINAL_WIDTH/2 - strlen(odds_str))/2,
+	     (TERMINAL_WIDTH/2 - strlen(odds_str) + 2)/2,
 	     odds_str);
+    free(odds_str);
   }
   mvaddstr(2 + *lines_used, TERMINAL_WIDTH/2 + depth, body->name);
   (*lines_used)++;
@@ -701,43 +817,16 @@ bool target_attack(){
 
     clear();
     draw_borders();
-
-    //Draw the top of the bounding box for the image
-    mvaddch(1,2,'+');
-    for(int i = 0; i < target->body->image_width+2; i++){
-      addch(ACS_HLINE);
-    }
-    addch('+');
-    mvaddch(2,2, ACS_VLINE); addch(' ');
-    
-    int num_lines = 0;
-    int len = strlen(target->body->image);
-    
-    //Now draw the image
-    for(int i = 0; i < len; i++){
-      if(target->body->image[i] == '\n'){
-	mvaddch(2+num_lines, 3 + target->body->image_width + 2, ACS_VLINE);
-	num_lines++;
-	mvaddch(2+num_lines, 2, ACS_VLINE); addch(' ');
-	i++;
-      }
-      addch(target->body->image[i]);
-    }
-    
-    //Finish the bounding box
-    mvaddch(2+num_lines, 3 + target->body->image_width + 2, ACS_VLINE);
-    mvaddch(3+num_lines, 2, '+');
-    for(int i = 0; i < target->body->image_width+2; i++){
-      addch(ACS_HLINE);
-    }
-    addch('+');
-    
+    int num_lines = draw_body_image(target, true);
+    int padding = (TERMINAL_WIDTH/2 - target->body->image_width - 4)/2;
+      
     //Info
     mvaddstr(4 + num_lines,
-	     2 + (4 + target->body->image_width - strlen(target->name))/2,
+	     padding + (4 + target->body->image_width - strlen(target->name))/2,
 	     target->name);
-    mvaddstr(6 + num_lines,
-	     2+ (4+ target->body->image_width - strlen("Pick your target"))/2,
+    mvaddstr(5 + num_lines,
+	     padding + (4+ target->body->image_width
+			- strlen("Pick your target"))/2,
 	     "Pick your target.");
     
     //Input
