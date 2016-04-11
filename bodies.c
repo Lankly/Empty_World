@@ -30,67 +30,46 @@ body_part_t *generate_part(char *name, int health, int blood, int size, bool v){
 }
 
 body_part_t *gen_arm(bool left){
-  body_part_t *arm = generate_part(left ? "Left upper arm" : "Right upper arm",
-				   10,
-				   BLOOD_FULL,
-				   SIZE_AVG,
-				   false);
+  body_part_t *arm = generate_part(left ? "Left arm" : "Right arm", 55,
+				   BLOOD_FULL, SIZE_LARGE, false);
   arm->attached = bodylist_new();
+
+  body_part_t *upper =
+    generate_part(left ? "Left upper arm" : "Right upper arm",
+		  30,
+		  BLOOD_FULL,
+		  SIZE_AVG,
+		  false);
   body_part_t *forearm = generate_part(left ? "Left forearm" : "Right forearm",
-				       10, BLOOD_FULL, SIZE_AVG, false);
+				       25, BLOOD_FULL, SIZE_AVG, false);
   forearm->attached = bodylist_new();
   bodylist_add(forearm->attached, gen_hand(left));
+
+  bodylist_add(arm->attached, upper);
   bodylist_add(arm->attached, forearm);
-  
   return arm;
-}
-
-body_part_t *gen_foot(bool left){
-  body_part_t *foot = generate_part(left ? "Left foot" : "Right foot",
-				    5,
-				    BLOOD_FULL,
-				    SIZE_SMALL,
-				    false);
-  foot->attached = bodylist_new();
-  bodylist_add(foot->attached, generate_part("Big toe", 1,
-					     BLOOD_INSIGNIFICANT,
-					     SIZE_TINY, false));
-  bodylist_add(foot->attached, generate_part("Pointer toe", 1,
-					     BLOOD_INSIGNIFICANT,
-					     SIZE_TINY, false));
-  bodylist_add(foot->attached, generate_part("Middle toe", 1,
-					     BLOOD_INSIGNIFICANT,
-					     SIZE_TINY, false));
-  bodylist_add(foot->attached, generate_part("Ring toe", 1,
-					     BLOOD_INSIGNIFICANT,
-					     SIZE_TINY, false));
-  bodylist_add(foot->attached, generate_part("Little toe", 1,
-					     BLOOD_INSIGNIFICANT,
-					     SIZE_TINY, false));
-
-  return foot;
 }
 
 body_part_t *gen_hand(bool left){
   body_part_t *hand = generate_part(left ? "Left hand" : "Right hand",
-				    5,
+				    20,
 				    BLOOD_FULL,
 				    SIZE_SMALL,
 				    false);
   hand->attached = bodylist_new();
-  bodylist_add(hand->attached, generate_part("Thumb", 1,
+  bodylist_add(hand->attached, generate_part("Thumb", 3,
 					     BLOOD_INSIGNIFICANT,
 					     SIZE_TINY, false));
-  bodylist_add(hand->attached, generate_part("Pointer finger", 1,
+  bodylist_add(hand->attached, generate_part("Pointer finger", 3,
 					     BLOOD_INSIGNIFICANT,
 					     SIZE_TINY, false));
-  bodylist_add(hand->attached, generate_part("Middle finger", 1,
+  bodylist_add(hand->attached, generate_part("Middle finger", 3,
 					     BLOOD_INSIGNIFICANT,
 					     SIZE_TINY, false));
-  bodylist_add(hand->attached, generate_part("Ring finger", 1,
+  bodylist_add(hand->attached, generate_part("Ring finger", 3,
 					     BLOOD_INSIGNIFICANT,
 					     SIZE_TINY, false));
-  bodylist_add(hand->attached, generate_part("Little finger", 1,
+  bodylist_add(hand->attached, generate_part("Little finger", 2,
 					     BLOOD_INSIGNIFICANT,
 					     SIZE_TINY, false));
 
@@ -98,18 +77,20 @@ body_part_t *gen_hand(bool left){
 }
 
 body_part_t *gen_leg(bool left){
-  body_part_t *leg = generate_part(left ? "Left thigh" : "Right thigh",
-				    15,
-				    BLOOD_FULL,
-				    SIZE_LARGE,
-				    false);
+  body_part_t *leg = generate_part(left ? "Left leg" : "Right leg", 80,
+				   BLOOD_FULL, SIZE_LARGE, false);
   leg->attached = bodylist_new();
-  body_part_t *shin = generate_part(left ? "Left shin" : "Right shin",
-				    10, BLOOD_FULL, SIZE_AVG, false);
-  shin->attached = bodylist_new();
-  bodylist_add(shin->attached, gen_foot(left));
-  bodylist_add(leg->attached, shin);
+  body_part_t *thigh = generate_part(left ? "Left thigh" : "Right thigh",
+				     35,
+				     BLOOD_FULL,
+				     SIZE_LARGE,
+				     false);
 
+  bodylist_add(leg->attached, generate_part(left ? "Left foot" : "Right foot",
+					    20, BLOOD_FULL, SIZE_SMALL, false));
+  bodylist_add(leg->attached, generate_part(left ? "Left shin" : "Right shin",
+					    25, BLOOD_FULL, SIZE_AVG, false));
+  bodylist_add(leg->attached, thigh);
   return leg;
 }
 
@@ -169,9 +150,31 @@ body_part_t *gen_cat_torso(bool giant){
 }
 
 body_part_t *gen_human(){
-  return gen_human_torso();
-}
+  body_part_t *human = generate_part("Human", 200, BLOOD_FULL, SIZE_LARGE, true);
+  human->attached = bodylist_new();
+  
+  body_part_t *arms = generate_part("Arms", 110, BLOOD_FULL, SIZE_AVG, false);
+  arms->attached = bodylist_new();
+  bodylist_add(arms->attached, gen_arm(true));
+  bodylist_add(arms->attached, gen_arm(false));
+  
+  body_part_t *legs = generate_part("Legs", 160, BLOOD_FULL, SIZE_AVG, false);
+  legs->attached = bodylist_new();
+  bodylist_add(legs->attached, gen_leg(true));
+  bodylist_add(legs->attached, gen_arm(false));
+  
+  body_part_t *torso = gen_human_torso();
+  body_part_t *head = gen_human_head();
+  body_part_t *neck = generate_part("Neck", 20, BLOOD_FULL, SIZE_SMALL, true);
 
+  bodylist_add(human->attached, legs); //80+80
+  bodylist_add(human->attached, arms); //55+55
+  bodylist_add(human->attached, torso); //80
+  bodylist_add(human->attached, neck); //20
+  bodylist_add(human->attached, head); //30
+
+  return human;
+}
 body_part_t *gen_human_head(){
   body_part_t *head = gen_head();
 
@@ -180,31 +183,34 @@ body_part_t *gen_human_head(){
   bodylist_add(head->attached,
 	       generate_part("Right ear", 3, 0, SIZE_TINY, false));
   bodylist_add(head->attached,
-	       generate_part("Hair", 0, BLOOD_NONE, SIZE_TINY, false));
-  bodylist_add(head->attached,
 	       generate_part("Nose", 3, 0, SIZE_TINY, false));
+  bodylist_add(head->attached,
+	       generate_part("Left eye", 3, 0, SIZE_TINY, false));
+  bodylist_add(head->attached,
+	       generate_part("Right eye", 3, 0, SIZE_TINY, false));
 
+  head->health = 30;
+  head->health_max = head->health;
+  
   return head;
 }
-
 body_part_t *gen_human_torso(){
-  body_part_t *torso = generate_part("Thorax", 50, BLOOD_FULL, SIZE_LARGE, true);
-
+  body_part_t *torso = generate_part("Torso", 80, BLOOD_FULL, SIZE_LARGE, false);
   torso->attached = bodylist_new();
-  torso->organs = bodylist_new();
-  bodylist_add(torso->attached, gen_arm(true));
-  bodylist_add(torso->attached, gen_arm(false));
-  bodylist_add(torso->organs,
+  
+  body_part_t *thorax = generate_part("Thorax", 50, BLOOD_FULL, SIZE_LARGE, true);
+  thorax->attached = bodylist_new();
+  
+  thorax->organs = bodylist_new();
+  bodylist_add(thorax->organs,
 	       generate_part("Heart", 20, BLOOD_EMPTY, SIZE_SMALL, true));
-  bodylist_add(torso->organs,
+  bodylist_add(thorax->organs,
 	       generate_part("Lungs", 20, BLOOD_EMPTY, SIZE_AVG, true));
   
   body_part_t *abdomen = generate_part("Abdomen", 30,
 				       BLOOD_FULL, SIZE_AVG, true);
-  abdomen->attached = bodylist_new();
   abdomen->organs = bodylist_new();
-  bodylist_add(abdomen->attached, gen_leg(true));
-  bodylist_add(abdomen->attached, gen_arm(false));
+  
   bodylist_add(abdomen->organs,
 	       generate_part("Stomach", 6, BLOOD_FULL, SIZE_SMALL, true));
   bodylist_add(abdomen->organs,
@@ -212,17 +218,13 @@ body_part_t *gen_human_torso(){
 			     BLOOD_EMPTY, SIZE_SMALL, true));
   bodylist_add(abdomen->organs,
 	       generate_part("Large intestine", 4, BLOOD_EMPTY, SIZE_SMALL, true));
-  bodylist_add(torso->attached, abdomen);
   bodylist_add(abdomen->organs,
 	       generate_part("Liver", 3, BLOOD_EMPTY, SIZE_TINY, true));
   bodylist_add(abdomen->organs,
 	       generate_part("Kidneys", 4, BLOOD_EMPTY, SIZE_TINY, true));
-
-  body_part_t *neck = generate_part("Neck", 20, BLOOD_FULL, SIZE_SMALL, true);
-  bodylist_add(torso->attached, neck);
-  neck->attached = bodylist_new();
-  bodylist_add(neck->attached, gen_human_head());
   
+  bodylist_add(torso->attached, thorax);
+  bodylist_add(torso->attached, abdomen);
   return torso;
 }
 
@@ -235,10 +237,10 @@ body_part_t *gen_owl(bool giant){
 }
 
 body_part_t *gen_rat(bool giant){
-  body_part_t *rat = generate_part("Rat", 5+9+4,
+  body_part_t *rat = generate_part("Rat", 10,
 				   BLOOD_FULL,
 				   SIZE_SMALL + giant,
-				   false);
+				   true);
   rat->attached = bodylist_new();
 
   body_part_t *limbs =
@@ -264,6 +266,14 @@ body_part_t *gen_rat(bool giant){
   
   body_part_t *head =
     generate_part("Head", 4, BLOOD_FULL, SIZE_TINY + giant, true);
+  head->blunt_message = "bash its skull in";
+  head->cold_message = "freeze its brain";
+  head->crush_message = "crush its skull in";
+  head->explode_message = "cause its head to explode";
+  head->fire_message = "cook its brain through the skull";
+  head->pierce_message = "pierce its brain through the skull";
+  head->psychic_message = "destroy its tiny mind";
+  head->slash_message = "cave its skull in";
   head->organs = bodylist_new();
   bodylist_add(head->organs,
 	       generate_part("Brain", 3, BLOOD_FULL, SIZE_TINY, false));
@@ -337,6 +347,7 @@ void bodylist_add(bodylist_t *list, body_part_t *part){
   new->next = list->next;
   list->next = new;
   list->part = part;
+  list->num_parts++;
 }
 
 /* Removes a given body part from a given bodylist. If the part was not in the
@@ -441,14 +452,196 @@ void bodylist_free(bodylist_t *list){
   }
 }
 
-void limb_list_helper(int depth, int *lines_used, body_part_t* body, int select,
-		      int largest_size){
+/* Deals damage to a creature's body part. Also handles killing them.
+ */
+bool damage_body_part(int *choice, struct creature_t *attacker,
+		      struct creature_t *target,
+		      body_part_t *part, int dmg, int dmg_type){
+  if(choice == NULL || part == NULL){
+    //No damage done yet
+    return false;
+  }
+  
+  //Check if we're already there
+  if(*choice <= 0){
+    
+    /* Start off by attempting to deal the damage (if a super-part was hit, this
+     * is a guaranteed hit because choice will be -1)
+     */
+    if(*choice == -1
+       || (rand()%100) <= body_part_chance_to_hit(attacker, target, part)){
+      
+      //If the part has sub-parts, hit a sub-part
+      if(part->attached != NULL && part->attached->num_parts != 0){
+	*choice = -1;
+	bool done = false;
+	while(!done){
+	  int rv = rand() % part->attached->num_parts;
+	  bodylist_t *cur = part->attached;
+	  while(rv > 0){
+	    cur = cur->next;
+	    rv--;
+	  }
+	  /* Don't want all sub-parts to have an equal chance of getting hit,
+	   * so we just keep trying to hit them until it happens.
+	   */
+	  int c2h = body_part_chance_to_hit(attacker, target, cur->part);
+	  if(c2h > 0 && rand() % c2h == 0){
+	    //Extra damage to parts shouldn't affect upwards
+	    if(part->health > 0){
+	      part->health -= dmg > part->health ? part->health : dmg;
+	    }
+      
+	    damage_body_part(choice, attacker, target,
+			     cur->part, dmg, dmg_type);
+	    done = true;
+	  }
+	}
+      }
+      //If it didn't, then show a damage message.
+      else{
+	part->health -= dmg;
+      
+	if(dmg == 0 && attacker == player){
+	  msg_add("You deal no damage.");
+	}
+	else if(dmg == 0){
+	  msg_addf("The %s deals no damage.", attacker->name);
+	}
+	else if(attacker == player){
+	  msg_addf("You hit the %s's %s.", target->name, part->name);
+	}
+	else if(target == player){
+	  msg_addf("The %s hits your %s.", attacker->name, part->name);
+	}
+	else{
+	  msg_addf("The %s hits the %s.", attacker->name, target->name);
+	}
+      }
+
+      //Check for death
+      if(part->health < 0 && part->vital){
+	//Say how they died
+	char *message = Calloc(MAX_MSG_LEN+1, sizeof(char));
+	if(attacker == player){
+	  strcat(message, "You ");
+	}
+	else{
+	  strcat(message, "The ");
+	  strncat(message, target->name, MAX_MSG_LEN - strlen(message));
+	  strncat(message, " ", MAX_MSG_LEN - strlen(message));
+	}
+	if(dmg_type == DMG_BLUNT && part->blunt_message != NULL){
+	  strncat(message, part->blunt_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_COLD && part->cold_message != NULL){
+	  strncat(message, part->cold_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_CRUSHING && part->crush_message != NULL){
+	  strncat(message, part->crush_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_EXPLOSIVE && part->explode_message != NULL){
+	  strncat(message, part->explode_message,
+		  MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_FIRE && part->fire_message != NULL){
+	  strncat(message, part->fire_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_INFECTION && part->infect_message != NULL){
+	  strncat(message, part->infect_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_PIERCING && part->pierce_message != NULL){
+	  strncat(message, part->pierce_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_PSYCHIC && part->psychic_message != NULL){
+	  strncat(message, part->psychic_message,
+		  MAX_MSG_LEN - strlen(message));
+	}
+	else if (dmg_type == DMG_SLASHING && part->slash_message != NULL){
+	  strncat(message, part->slash_message, MAX_MSG_LEN - strlen(message));
+	}
+	else if(target == player){
+	  strncpy(message, "You succumb to your injuries",
+		  MAX_MSG_LEN - strlen("You succumb to your injuries"));
+	}
+	else{
+	  strncpy(message, "You succumb to your injuries",
+		  MAX_MSG_LEN - strlen("You succumb to your injuries"));
+	}
+	strncat(message, ".", MAX_MSG_LEN - strlen(message));
+
+	msg_add(message);
+	free(message);
+	
+	//Kill callback
+	target->kill(target, cur_map);
+      }
+    }
+    else{
+      if(attacker == player){
+	msg_addf("You miss the %s.", target->name);
+      }
+      else if(target == player){
+	msg_addf("The %s misses you.", attacker->name);
+      }
+      else{
+	msg_addf("The %s misses the %s.", attacker->name, target->name);
+      }
+    }
+    return true; //Return that the attack is done
+    
+    //Assess the kind of damage done to the body part
+    if(part->health <= 0){
+      part->damage = DAMAGE_BROKEN;
+      
+      //Chance of severed body part, depending on size
+      if(dmg_type == DMG_SLASHING && !(rand()%part->size)){
+	//TODO: Sever the limb
+      }
+    }
+    else if(part->health < part->health_max/4){
+      part->damage = DAMAGE_CRIPPLED;
+      //Chance of breaking, depending on size
+      if(dmg_type == DMG_BLUNT && !(rand()%part->size)){
+	part->damage = DAMAGE_BROKEN;
+      }
+    }
+    else if(part->health < part->health_max/1.5){
+      part->damage = DAMAGE_BRUISED;
+    }
+
+    //Damage messages
+    if(part->damage == DAMAGE_BROKEN && target == player){
+      msg_addf("Your %s is broken!", part->name);
+    }
+    else if(part->damage == DAMAGE_BROKEN){
+      msg_addf("The %s's %s is broken!", target->name, part->name);
+    }
+
+    return true;
+  }
+  (*choice)--;
+
+  for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
+    if(damage_body_part(choice, attacker, target, cur->part, dmg, dmg_type)){
+      //If damage was dealt to a part of this, subtract that damage from this
+      part->health -= dmg;
+      return true;
+    }
+  }
+
+  //We never dealt damage along this path, so return false
+  return false;
+}
+
+void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
+		      body_part_t* body, int select, int largest_size){
   if(body == NULL){
     return;
   }
   
   if(*lines_used == select){
-    int odds = body_part_chance_to_hit(player, body, largest_size);
+    int odds = body_part_chance_to_hit(player, target, body);
     
     //These colors show how relatively easy each part is to hit
     if(odds > 75){
@@ -474,56 +667,8 @@ void limb_list_helper(int depth, int *lines_used, body_part_t* body, int select,
   attroff(COLOR_PAIR(CP_BLACK_RED));
   
   for(bodylist_t *cur = body->attached; cur != NULL; cur = cur->next){
-    limb_list_helper(2+depth, lines_used, cur->part, select, largest_size);
+    limb_list_helper(target, 2+depth, lines_used, cur->part, select, largest_size);
   }
-}
-bool target_damage_helper(int *choice, struct creature_t *c,
-			  body_part_t *part, int dmg, int dmg_type){
-  if(choice == NULL || part == NULL){
-    //No damage done in this case
-    return false;
-  }
-  //Check if we're already there
-  if(*choice == 0){
-    //Start off by dealing the damage
-    part->health -= dmg;
-    //Assess the kind of damage done to the body part
-    if(part->health <= 0){
-      part->damage = DAMAGE_BROKEN;
-      //Chance of severed body part, depending on size
-      if(dmg_type == DMG_SLASHING && !(rand()%part->size)){
-	//TODO: Sever the limb
-      }
-    }
-    else if(part->health < part->health_max/4){
-      part->damage = DAMAGE_CRIPPLED;
-      //Chance of breaking, depending on size
-      if(dmg_type == DMG_BLUNT && !(rand()%part->size)){
-	part->damage = DAMAGE_BROKEN;
-      }
-    }
-    else if(part->health < part->health_max/1.5){
-      part->damage = DAMAGE_BRUISED;
-    }
-
-    if(part->health < 0 && part->vital){
-      c->kill(c, cur_map);
-    }
-
-    return true;
-  }
-  (*choice)--;
-
-  for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
-    if(target_damage_helper(choice, c, cur->part, dmg, dmg_type)){
-      //If damage was dealt to a part of this, subtract that damage from this
-      part->health -= dmg;
-      return true;
-    }
-  }
-
-  //We never dealt damage along this path, so return false
-  return false;
 }
 bool target_attack(){
   int dir = msg_promptchar("Target which direction?");
@@ -599,7 +744,8 @@ bool target_attack(){
     while(choice == -1){
       //List of limbs
       int lines = 0;
-      limb_list_helper(0, &lines, target->body, selector, target->body->size);
+      limb_list_helper(target, 0, &lines, target->body,
+		       selector, target->body->size);
       
       //Get user input
       int ch = Getch();
@@ -614,8 +760,8 @@ bool target_attack(){
       }
     }
     //TODO: Implement damage type
-    target_damage_helper(&choice, target, target->body,
-			 creature_get_damage(player),0);
+    damage_body_part(&choice, player, target, target->body,
+		     creature_get_damage(player),0);
 
     return true;
   }
@@ -624,9 +770,13 @@ bool target_attack(){
 }
 
 int body_part_chance_to_hit(struct creature_t *attacker,
-			    body_part_t *part, int largest_size){
-  if(attacker == NULL || part == NULL){
-    return 0;}
+			    struct creature_t *target,
+			    body_part_t *part){
+  if(attacker == NULL || target == NULL || part == NULL){
+    return 0;
+  }
+
+  int largest_size = target->body->size;
   int result = 0;
   int cur_wep_skill = get_cur_weapon_skill();
   result += cur_wep_skill > 10 ? 30 : cur_wep_skill * 3;
@@ -650,7 +800,7 @@ int body_part_chance_to_hit(struct creature_t *attacker,
 
   int underneath = 0, count = 3;
   for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
-    underneath += body_part_chance_to_hit(attacker, cur->part, largest_size);
+    underneath += body_part_chance_to_hit(attacker, target, cur->part);
     count++;
   }
   underneath = underneath / count;

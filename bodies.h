@@ -35,11 +35,22 @@ typedef struct body_part_t{
   int health;
   int health_max;
   int size;
-  bool vital;
   itemlist_t *armor;
   itemlist_t *held;
   itemlist_t *stuck;
+
+  bool vital;
+  char *blunt_message;
+  char *cold_message;
+  char *crush_message;
+  char *explode_message;
+  char *fire_message;
+  char *infect_message;
+  char *pierce_message;
+  char *psychic_message;
+  char *slash_message;
   
+  struct body_part_t *attached_to;
   struct bodylist_t *attached;
   struct bodylist_t *organs;
 } body_part_t;
@@ -47,12 +58,12 @@ typedef struct body_part_t{
 typedef struct bodylist_t{
   body_part_t *part;
   struct bodylist_t *next;
+  int num_parts;
 }bodylist_t;
 
 body_part_t *generate_part(char *name, int h, int b, int s, bool v);
 
 body_part_t *gen_arm(bool left);
-body_part_t *gen_foot(bool left);
 body_part_t *gen_hand(bool left);
 body_part_t *gen_leg(bool left);
 body_part_t *gen_head();
@@ -71,8 +82,12 @@ void bodylist_add(bodylist_t *list, body_part_t *part);
 void bodylist_remove(bodylist_t *list, body_part_t *part);
 void bodylist_remove_by_name(bodylist_t *list, char *name);
 
+bool damage_body_part(int *choice, struct creature_t *attacker,
+		      struct creature_t *target,
+		      body_part_t *part, int dmg, int dmg_type);
 int body_part_chance_to_hit(struct creature_t *attacker,
-			    body_part_t *part, int largest_size);
+			    struct creature_t *target,
+			    body_part_t *part);
 
 void body_part_free(body_part_t *part);
 void bodylist_free(bodylist_t *list);

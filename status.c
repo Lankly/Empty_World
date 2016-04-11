@@ -15,99 +15,101 @@
 
 static bool newmsg;
 static int num_msgs;
-static msg_t *cur_msg, *first_msg, *last_msg;
+static msg_t *first_msg, *last_msg;
 
 void draw_status(map_t *map, struct creature_t *c){
   char* output = (char*)Calloc(81,sizeof(char));
 
   //Status bar
   if(newmsg){
-    if(cur_msg->next != NULL){
-      sprintf(output,"    %-*s[MORE]    ",MAX_MSG_LEN,cur_msg->msg);
-    }
-    else{
-      sprintf(output,"    %-*s          ",MAX_MSG_LEN,cur_msg->msg);      
-    }
+    //If too many messages, "..." will be displayed, so +3
+    sprintf(output,"%-*s",MAX_MSG_LEN + 3, last_msg->msg);
+    newmsg = false;
+    qckmv = false;
   }
   else{
-    sprintf(output,"%80s", "");
-  }  //now color the output while addch-ing
+    sprintf(output,"%-*s", TERMINAL_WIDTH, " ");
+  }
+
   move(MSG_ROW,0);
-  for(int i=0; i<80; i++){
+  //now color the output while addch-ing
+  for(int i = 0; i < TERMINAL_WIDTH; i++){
     addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
   }
 
   //Line one of info
-  sprintf(output,"  %s, %-*s STR:%-2d PER:%-2d END:%-2d CHA:%-2d INT:%-2d AGL:%-2d LCK:%-2d  ",
-	  get_name(c),
-	  (int)(80-2-strlen(get_name(c))-2-5-2-5-2-5-2-5-2-5-2-5-2-5-2-2),
-	  class_data[c->class].name,
-	  get_strength(c),
-	  get_perception(c),
-	  get_endurance(c),
-	  get_charisma(c),
-	  get_intelligence(c),
-	  get_agility(c),
-	  get_luck(c));
-  move(22,0);
-  for(int i=0; i<80; i++){
+  sprintf(output, "%s, %s%-*s", c->name, class_data[c->class].name,
+	  (int)(TERMINAL_WIDTH - 2
+		- strlen(c->name)
+		- strlen(class_data[c->class].name)),
+	  " ");
+  move(TERMINAL_HEIGHT - 2,0);
+  for(int i = 0; i < TERMINAL_WIDTH; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
-    /*    int tempx; int tempy;
-	  getyx(stdscr, &tempy, &tempx);*/
   }
 
   //Line two of info
-  move(23,0);
-  addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
-  addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
-  sprintf(output,"HP:%-3d", get_health(c));
-  for(int i = 0; i < 6; i++){
-    addch(output[i] | COLOR_PAIR(get_health(c) <(get_max_health(c)/2)?
-				 get_health(c) <(get_max_health(c)/5)?
-				 CP_BLACK_RED : CP_BLACK_YELLOW : CP_BLACK_WHITE
-				 ));}
-    
-  sprintf(output,"  ENC:%-3d  Lvl:%-3d  Dlvl:%-2d Trn:%-6d%*s",
-	  c->inventory != NULL ? c->inventory->cur_weight : 0,
-	  c->level,
-	  c->dlevel,
-	  num_turns,
-	  80-2-3-3-2-4-3-2-4-3-2-5-2-4-6,"");
-  for(int i=0; i<80-2-3-3; i++){
-    addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
+  move(TERMINAL_HEIGHT - 1, 0);
+  for(int i = 0; i < TERMINAL_WIDTH; i++){
+    addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
   }
   free(output);
 }
 
-void msg_add(char* new_msg){
+void msg_add(char *new_msg){
   if(new_msg == NULL){new_msg = "Bad message";}
-  
-  char* m = (char*) Calloc(MAX_MSG_LEN+1,sizeof(char*));
-  strncpy(m,new_msg,MAX_MSG_LEN);
+
   //If no messages exist
-  if(num_msgs==0){
-    cur_msg = (msg_t*) Calloc(1,sizeof(msg_t));
-    cur_msg->msg = m;
-  }//If we have not reached max messages
-  else if (num_msgs<MAX_MSGS){
-    last_msg->next = (msg_t*) Calloc(1,sizeof(msg_t));
-    last_msg->next->prev=last_msg;
-    last_msg=last_msg->next;
-    if(!newmsg){
-      cur_msg=last_msg;
+  if(num_msgs == 0){
+    first_msg = (msg_t *)Calloc(1, sizeof(msg_t));
+    first_msg->msg = (char *)Calloc(MAX_MSG_LEN + 4, sizeof(char*));
+    strncpy(first_msg->msg, new_msg, MAX_MSG_LEN);
+    last_msg = first_msg;
+    num_msgs++;
+  }
+  //If we have not reached max messages
+  else if (num_msgs < MAX_MSGS){
+    //Try to append message to existing unread messages
+    if(newmsg && last_msg->msg != NULL
+       && (strlen(last_msg->msg) + strlen(new_msg) < (MAX_MSG_LEN-1))){
+      
+      strcat(last_msg->msg, " ");
+      strcat(last_msg->msg, new_msg);
     }
-  }//If there are too many messages
+    //If too many unread messages to fit in message bar
+    else if(newmsg){
+      //Add "..." to existing unread message
+      strcat(last_msg->msg, "...");
+      //Display the message
+      draw_status(cur_map, player);
+      //Wait for a key
+      Getch();
+      //Call this function again
+      msg_add(new_msg);
+    }
+    //Otherwise, just add a new message
+    else{
+      last_msg->next = (msg_t*) Calloc(1,sizeof(msg_t));
+      last_msg->next->prev = last_msg;
+      last_msg = last_msg->next;
+      last_msg->msg = (char *)Calloc(MAX_MSG_LEN + 4, sizeof(char*));
+      strncpy(last_msg->msg, new_msg, MAX_MSG_LEN);
+      num_msgs++;
+    }
+  }
+  //If there are too many messages
   else{
     //delete the first
-    first_msg=first_msg->next;
+    first_msg = first_msg->next;
     free(first_msg->prev->msg);
     free(first_msg->prev);
-    first_msg->prev=0;
-    //call this method again
+    first_msg->prev = NULL;
+
+    //call this function again
     num_msgs--;
-    msg_add(m);
+    msg_add(new_msg);
   }
-  newmsg=true;
+  newmsg = true;
 }
 
 /*Same as msg_add, but with more arguments*/
@@ -286,9 +288,9 @@ void display_stats(struct creature_t *creature){
 }
 
 void status_init(){
-  char welcome_msg[81];
+  char welcome_msg[MAX_MSG_LEN];
   sprintf(welcome_msg, "Welcome to the game, %s!", get_name(player));
   msg_add(welcome_msg);
 }
 
-char* get_cur_msg(){return cur_msg->msg;}
+char* get_cur_msg(){return last_msg == NULL ? "" : last_msg->msg;}

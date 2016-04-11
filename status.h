@@ -2,8 +2,8 @@
 #ifndef STATUS_H
 #define STATUS_H
 
-#define MAX_MSGS 10
-#define MAX_MSG_LEN 66
+#define MAX_MSGS 15
+#define MAX_MSG_LEN 76
 #define MAX_NAME_LEN 32 > (TERMINAL_WIDTH-4) ? TERMINAL_WIDTH-4 : 32
 #define MSG_ROW 21
 

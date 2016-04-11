@@ -66,27 +66,29 @@ void defaultPathfindCallback(struct creature_t* creature,
   }
 }
 
-void defaultTakeTurnCallback(struct creature_t* creature,
+void defaultTakeTurnCallback(struct creature_t* c,
 			     struct map_t* map){
   //Make sure everything is right before starting
-  if(creature==NULL){quit("ERROR: Cannot move NULL Creature");}
+  if(c==NULL){quit("ERROR: Cannot move NULL Creature");}
   if(map==NULL){quit("Error: Cannot move Creature on NULL Map");}
   
   //If player is adjacent, attack
-  int x_diff = player->x-creature->x;
-  int y_diff = player->y-creature->y;
+  int x_diff = player->x - c->x;
+  int y_diff = player->y - c->y;
   if(x_diff >= -1 && x_diff <= 1 && y_diff >= -1 && y_diff <= 1){
-    damage_creature(player, creature->name, creature_get_damage(creature));
+    int temp = 0;
+    damage_body_part(&temp, c, player, player->body,
+		     creature_get_damage(c), DMG_SLASHING);
   }
   //Otherwise, pathfind
   else{
-    if(creature->pathfind == NULL){
-      defaultPathfindCallback(creature, map);}
+    if(c->pathfind == NULL){
+      defaultPathfindCallback(c, map);}
     else{
-      creature->pathfind(creature, map);}
+      c->pathfind(c, map);}
   }
 
-  creature->turn_tokens--;
+  c->turn_tokens--;
 }
 
 /* Callback used for killing a creature by default
@@ -835,13 +837,4 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
   //msg_addf("Spawned %s", c->name);
   set_health(c, get_max_health(c));
   c->dlevel = map->dlevel;
-  switch(c->creature_id){
-  case CREATURE_TYPE_RODENT :
-    c->body = gen_rat(false);
-    break;
-  case CREATURE_TYPE_FELINE :
-    c->body = gen_cat(false);
-  default:
-    c->body = NULL;
-  }
 }

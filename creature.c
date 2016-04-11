@@ -641,9 +641,9 @@ int get_class(struct creature_t *c){
 }
 
 int get_health(struct creature_t* c){
-  if(c == NULL){
+  if(c == NULL || c->body == NULL){
     return 0;}
-  return c->health;
+  return c->body->health;
 }
 
 int get_max_health(struct creature_t* c){

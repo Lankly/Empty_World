@@ -58,9 +58,11 @@ void playerTakeTurnCallback(struct creature_t* creature,
 
     //And attacking if so
     if(creature_in_way){
-      damage_creature(creature_in_way, 
-		      player->name, 
-		      creature_get_damage(player));
+      int temp = 0;
+      damage_body_part(&temp, player, creature_in_way,
+		       creature_in_way->body,
+		       creature_get_damage(player),
+		       DMG_BLUNT);
     }
     else{
       //If no creature in way, just move there.
@@ -92,9 +94,7 @@ void playerTakeTurnCallback(struct creature_t* creature,
 }
 
 void playerKillCallback(struct creature_t *c, struct map_t *map){
-  if(c->health <= 0){
-    game_over();
-  }
+  game_over();
 }
 
 void player_init(char* name){
@@ -142,6 +142,8 @@ void player_init(char* name){
 
   player->turn_tokens = class_data[player->class].turn_tokens_starting_amount;
   player->turn_tokens_reset_amount = player->turn_tokens;
+
+  player->body = gen_human();
   
   cmd = 0;
 }

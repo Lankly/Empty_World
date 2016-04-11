@@ -831,8 +831,8 @@ bool analyze_cmd(int cmd, int* x, int* y){
   else{
     to_return = (cmd == cmd_data[CMD_WAIT]);}
 
-  if(to_return == false){
-    draw_status(cur_map, player); draw_map(cur_map);}
+  if(cmd != ERR && to_return == false){
+    draw_status(cur_map, player);}
 
   return to_return;
 }
@@ -1101,17 +1101,19 @@ void game_over(){
   char res = 0;
   while(res != 'y' && res != 'Y' && res != 'n' && res != 'N'
 	&& res != '\n' && res != 'q' && res != 'Q'){
-    res = msg_promptchar("Start a new game? (Y/n)");}
+    getch();
+    res = msg_promptchar("Start a new game? (Y/n)");
+  }
+  
+  //TODO: Free everything.
   
   if(res == 'n' || res =='N' || res == 'q' || res == 'Q'){
-    //TODO: Free everything.
     
     endwin();
     printf("You died!\n");
     exit(0);
   }
   else{
-    //TODO: Free everything.
     free(player);
     game_init(0);
   }
