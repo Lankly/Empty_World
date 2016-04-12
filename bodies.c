@@ -18,7 +18,7 @@ body_part_t *generate_part(char *name, int health, int blood, int size, bool v){
 
   //Add the info
   if(name != NULL){
-    to_ret->name = Calloc(strlen(name), sizeof(char));
+    to_ret->name = Calloc(strlen(name)+1, sizeof(char));
     strcpy(to_ret->name, name);
   }
   to_ret->health = health;
@@ -489,10 +489,8 @@ void body_part_free(body_part_t *part){
     free(cur);
     cur = next;
   }
-  for(itemlist_t *cur = part->held; cur != NULL;){
-    itemlist_t *next = cur->next;
-    free(cur);
-    cur = next;
+  if(part->held != NULL){
+    free(part->held);
   }
   for(itemlist_t *cur = part->stuck; cur != NULL;){
     itemlist_t *next = cur->next;
@@ -619,10 +617,12 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 	  msg_addf("The %s deals no damage.", attacker->name);
 	}
 	else if(attacker == player){
-	  msg_addf("You hit the %s's %s.", target->name, part->name);
+	  msg_addf("You hit the %s's %s.", target->name,
+		   str_lowercase(part->name));
 	}
 	else if(target == player){
-	  msg_addf("The %s hits your %s.", attacker->name, part->name);
+	  msg_addf("The %s hits your %s.", attacker->name,
+		   str_lowercase(part->name));
 	}
 	else{
 	  msg_addf("The %s hits the %s.", attacker->name, target->name);
@@ -727,10 +727,10 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 
     //Damage messages
     if(part->damage == DAMAGE_BROKEN && target == player){
-      msg_addf("Your %s is broken!", part->name);
+      msg_addf("Your %s is broken!", str_lowercase(part->name));
     }
     else if(part->damage == DAMAGE_BROKEN){
-      msg_addf("The %s's %s is broken!", target->name, part->name);
+      msg_addf("The %s's %s is broken!",target->name,str_lowercase(part->name));
     }
 
     return true;
@@ -747,6 +747,37 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 
   //We never dealt damage along this path, so return false
   return false;
+}
+
+/* Finds an asked-for body part in the hierarchy of body parts. If the part is
+ * not found, returns NULL.
+ */
+body_part_t *get_body_part_by_name(body_part_t *part, char *name){
+  if(part == NULL || name == NULL){
+    return NULL;
+  }
+
+  //If this is the part, we're done
+  if(strcmp(part->name, name) == 0){
+    return part;
+  }
+
+  //Otherwise, check all sub-parts
+  for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
+    body_part_t *res = get_body_part_by_name(cur->part, name);
+    if(res != NULL){
+      return res;
+    }
+  }
+  for(bodylist_t *cur = part->organs; cur != NULL; cur = cur->next){
+    body_part_t *res = get_body_part_by_name(cur->part, name);
+    if(res != NULL){
+      return res;
+    }
+  }
+
+  //If it wasn't found, return NULL
+  return NULL;
 }
 
 void limb_list_helper(struct creature_t *target, int depth, int *lines_used,

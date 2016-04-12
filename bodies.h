@@ -36,7 +36,7 @@ typedef struct body_part_t{
   int health_max;
   int size;
   itemlist_t *armor;
-  itemlist_t *held;
+  item_t *held;
   itemlist_t *stuck;
 
   bool vital;
@@ -82,9 +82,12 @@ void bodylist_add(bodylist_t *list, body_part_t *part);
 void bodylist_remove(bodylist_t *list, body_part_t *part);
 void bodylist_remove_by_name(bodylist_t *list, char *name);
 
+int draw_body_image(struct creature_t *c, bool left);
+
 bool damage_body_part(int *choice, struct creature_t *attacker,
 		      struct creature_t *target,
 		      body_part_t *part, int dmg, int dmg_type);
+body_part_t *get_body_part_by_name(body_part_t *part, char *name);
 int body_part_chance_to_hit(struct creature_t *attacker,
 			    struct creature_t *target,
 			    body_part_t *part);

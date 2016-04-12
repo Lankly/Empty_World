@@ -94,6 +94,23 @@ bool str_is_num(char* str){
   return true;
 }
 
+/* Takes in an array of ints and returns an array of chars that, when cast
+ * to ints, are equivalent (forgetting data loss). Includes a NULL-terminator.
+ */
+char *ints_to_str(int *ints, int len){
+  if(ints == NULL){
+    return NULL;
+  }
+  
+  char *to_ret = Calloc(len + 1, sizeof(char));
+
+  for(int i = 0; i < len; i++){
+    to_ret[i] = (char)(ints[i]);
+  }
+
+  return to_ret;
+}
+
 /* Takes in a string and returns an array of ints that, should those ints be
  * cast to chars, are equivalent.
  */
@@ -152,6 +169,7 @@ void cmd_init(){
   cmd_data[CMD_STATS] = 'S';
   cmd_data[CMD_MACRO] = 'm';
   cmd_data[CMD_TARGET_ATTK] = 'A';
+  cmd_data[CMD_PREV_MSG] = 16; //Ctrl+p
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -809,6 +827,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
     xscend(ITEM_DOWN_STAIR);
   }else if(cmd == cmd_data[CMD_MANUAL]){
     manual();
+    draw_map(cur_map);
     to_return = false;
   }else if(cmd == cmd_data[CMD_STATS]){
     display_stats(player);
@@ -823,6 +842,9 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = false;
   }else if(cmd == cmd_data[CMD_TARGET_ATTK]){
     to_return = target_attack();
+  }else if(cmd == cmd_data[CMD_PREV_MSG]){
+    prev_message();
+    to_return = false;
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();
   }else if(playback_macro(cmd)){

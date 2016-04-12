@@ -13,12 +13,13 @@
 #include "creature.h"
 #include "player.h"
 
-static bool newmsg;
-static int num_msgs;
-static msg_t *first_msg, *last_msg;
+bool newmsg;
+int num_msgs, prev_msg;
+msg_t *first_msg, *last_msg;
+
 
 void draw_status(map_t *map, struct creature_t *c){
-  char* output = (char*)Calloc(81,sizeof(char));
+  char* output = (char*)Calloc(TERMINAL_WIDTH + 1,sizeof(char));
 
   //Status bar
   if(newmsg){
@@ -26,34 +27,107 @@ void draw_status(map_t *map, struct creature_t *c){
     sprintf(output,"%-*s",MAX_MSG_LEN + 3, last_msg->msg);
     newmsg = false;
     qckmv = false;
+    prev_msg = 0;
   }
   else{
-    sprintf(output,"%-*s", TERMINAL_WIDTH, " ");
+    if(!prev_msg){
+      sprintf(output,"%-*s", TERMINAL_WIDTH, " ");
+    }
   }
-
+  
   move(MSG_ROW,0);
   //now color the output while addch-ing
-  for(int i = 0; i < TERMINAL_WIDTH; i++){
+  for(int i = 0; i < TERMINAL_WIDTH && output[i] != '\0'; i++){
     addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
   }
 
-  //Line one of info
-  sprintf(output, "%s, %s%-*s", c->name, class_data[c->class].name,
-	  (int)(TERMINAL_WIDTH - 2
-		- strlen(c->name)
-		- strlen(class_data[c->class].name)),
-	  " ");
+  free(output);
+  output = Calloc(TERMINAL_WIDTH + 1, sizeof(char));
+  
+  //Line one of info (always at least player_name, class_name)
+  char *name_and_class = Calloc(TERMINAL_WIDTH, sizeof(char));
+  sprintf(name_and_class, "%s, %s", c->name, class_data[c->class].name);
+  strncat(output,name_and_class,(int)(TERMINAL_WIDTH - strlen(output)));
+  
+  ////Contains information about what is in the left and right hand
+  char *left_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
+  body_part_t *lh = get_body_part_by_name(c->body, "Left hand");
+  strncat(left_hand, "  LeftHand:", TERMINAL_WIDTH);
+  strncat(left_hand, lh == NULL ? "Gone" : lh->held == NULL ? "None"
+	  : lh->held->name, TERMINAL_WIDTH - strlen(left_hand));
+
+  if((strlen(output) + strlen(left_hand)) < TERMINAL_WIDTH){
+    strcat(output, left_hand);
+  }
+
+  char *right_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
+  body_part_t *rh = get_body_part_by_name(c->body, "Right hand");
+  strncat(right_hand, " RightHand:", TERMINAL_WIDTH);
+  strncat(right_hand, rh == NULL ? "Gone" : rh->held == NULL ? "None"
+	  : rh->held->name, TERMINAL_WIDTH - strlen(right_hand));
+
+  if((strlen(output) + strlen(right_hand)) < TERMINAL_WIDTH){
+    strcat(output, right_hand);
+  }
+
+  ////Pad the string
+  char *padding = Calloc(TERMINAL_WIDTH+1, sizeof(char));
+  sprintf(padding, "%-*s", (int)(TERMINAL_WIDTH)," ");
+  strncat(output, padding, ((int)(TERMINAL_WIDTH - strlen(output))));
+
+  ////print out the string
   move(TERMINAL_HEIGHT - 2,0);
+  attron(A_BOLD);
+  for(int i = 0; i < TERMINAL_WIDTH; i++){
+    addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
+    if(i >= strlen(name_and_class)){
+      attroff(A_BOLD);
+    }
+  }
+
+  //Line two of info
+  free(output);
+  output = Calloc(TERMINAL_WIDTH+1, sizeof(char));
+  
+  char *help = Calloc(7, sizeof(char));
+  sprintf(help, "Help:%c", (char)cmd_data[CMD_MANUAL]);
+  if(TERMINAL_WIDTH - strlen(output) - strlen(help) > 0){
+    strcat(output, help);}
+  free(help);
+  
+  ////Pad the string
+  strncat(output, padding, ((int)(TERMINAL_WIDTH - strlen(output))));
+
+  ////print out the string
+  move(TERMINAL_HEIGHT - 1, 0);
   for(int i = 0; i < TERMINAL_WIDTH; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
   }
 
-  //Line two of info
-  move(TERMINAL_HEIGHT - 1, 0);
-  for(int i = 0; i < TERMINAL_WIDTH; i++){
-    addch(' ' | COLOR_PAIR(CP_BLACK_WHITE));
-  }
+  free(name_and_class);
+  free(padding);
+  free(left_hand);
+  free(right_hand);
   free(output);
+}
+
+void prev_message(){
+  prev_msg++;
+  msg_t *cur = last_msg;
+  for(int i = 0; i < prev_msg && cur != NULL; i++){
+    cur = cur->prev;
+  }
+  //If it was NULL, then we need to loop back to the start
+  if(cur == NULL){
+    cur = last_msg;
+    prev_msg = 0;
+  }
+  attron(COLOR_PAIR(CP_GREEN_BLACK));
+  mvaddstr(MSG_ROW, 1, cur->msg);
+  for(int i = strlen(cur->msg); i < TERMINAL_WIDTH; i++){
+    addch(' ');
+  }
+  attroff(COLOR_PAIR(CP_GREEN_BLACK));
 }
 
 void msg_add(char *new_msg){
@@ -80,7 +154,7 @@ void msg_add(char *new_msg){
     else if(newmsg){
       //Add "..." to existing unread message
       strcat(last_msg->msg, "...");
-      //Display the message
+      //Display the message (sets newmsg to false)
       draw_status(cur_map, player);
       //Wait for a key
       Getch();
@@ -89,7 +163,7 @@ void msg_add(char *new_msg){
     }
     //Otherwise, just add a new message
     else{
-      last_msg->next = (msg_t*) Calloc(1,sizeof(msg_t));
+      last_msg->next = (msg_t *)Calloc(1, sizeof(msg_t));
       last_msg->next->prev = last_msg;
       last_msg = last_msg->next;
       last_msg->msg = (char *)Calloc(MAX_MSG_LEN + 4, sizeof(char*));

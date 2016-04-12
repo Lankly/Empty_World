@@ -15,6 +15,8 @@ typedef struct msg_t {
 
 void draw_status(map_t *map, struct creature_t *c);
 
+void prev_message();
+
 void msg_add(char* new_msg);
 void msg_addf(char* msg, ...);
 char* msg_prompt(char* prompt);
