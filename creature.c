@@ -310,11 +310,17 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
   case CREATURE_TYPE_AVIAN :
     c->body = gen_owl(false);
     break;
-  case CREATURE_TYPE_RODENT :
-    c->body = gen_rat(false);
-    break;
   case CREATURE_TYPE_FELINE :
     c->body = gen_cat(false);
+    break;
+  case CREATURE_TYPE_INSECT :
+    c->body = gen_hornet(false);
+    break;
+  case CREATURE_TYPE_PLANT :
+    c->body = gen_fungus(false);
+    break;
+  case CREATURE_TYPE_RODENT :
+    c->body = gen_rat(false);
     break;
   default:
     c->body = NULL;

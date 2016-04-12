@@ -5,7 +5,7 @@ Credits
 
   This game uses NCURSES and is written in C. My text editor of choice is Emacs.
 
-  The game's ASCII-art name was taken from http://patorjk.com/ and uses the 'Ogre' font with slight modification. The ACII-art rat was created by Irene Klein and Andreas Schamanek. ASCII owl by jrei.
+  The game's ASCII-art name was taken from http://patorjk.com/ and uses the 'Ogre' font with slight modification. Various ASCII-art by ikas, itz, jrei, mh, Row.
 
   I would like to thank the following testers:
     -hatkirby

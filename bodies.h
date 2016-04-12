@@ -70,6 +70,8 @@ body_part_t *gen_head();
 
 body_part_t *gen_cat(bool giant);
 body_part_t *gen_cat_torso(bool giant);
+body_part_t *gen_fungus(bool giant);
+body_part_t *gen_hornet(bool giant);
 body_part_t *gen_human();
 body_part_t *gen_human_head();
 body_part_t *gen_human_torso();

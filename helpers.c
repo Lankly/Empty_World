@@ -417,6 +417,8 @@ void debug(){
     creature_spawn(CREATURE_TYPE_RODENT,cur_map);
   }else if(!strcmp(debug_cmd_lower,"spawnowl")){
     creature_spawn(CREATURE_TYPE_AVIAN, cur_map);
+  }else if(!strcmp(debug_cmd_lower, "spawnhornet")){
+    creature_spawn(CREATURE_TYPE_INSECT, cur_map);
   }
 }
 

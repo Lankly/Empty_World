@@ -150,6 +150,109 @@ body_part_t *gen_cat_torso(bool giant){
   return torso;
 }
 
+body_part_t *gen_fungus(bool giant){
+  body_part_t *fungus = generate_part("Fungus", 3, BLOOD_NONE, SIZE_SMALL+giant,
+				      true);
+  fungus->attached = bodylist_new();
+
+  body_part_t *cap = generate_part("Cap", 2, BLOOD_NONE, SIZE_TINY+giant,false);
+  body_part_t *stem = generate_part("Stem",3, BLOOD_NONE, SIZE_TINY+giant,true);
+  
+  switch(rand() % 2){
+  case 0:
+    fungus->image =
+      "         ___..._\n"
+      "    _,--'       \"`-.\n"
+      "  ,'.  .            \\\n"
+      ",/:. .     .       .'\n"
+      "|;..  .      _..--'\n"
+      "`--:...-,-'""\\\n"
+      "        |:.  `.\n"
+      "        l;.   l\n"
+      "        `|:.   |\n"
+      "         |:.   `.,\n"
+      "        .l;.    j, ,\n"
+      "     `. \\`;:.   //,/\n"
+      "      .\\\\)`;,|\\'/(\n"
+      "       ` `itz `(,;\n";
+      break;
+  default:
+    fungus->image =
+      "       __.....__\n"
+      "    .'\" _  o    \"`.\n"
+      "  .' O (_)     () o`.\n"
+      " .           O       .\n"
+      ". ()   o__...__    O  .\n"
+      ". _.--\"\"\"       \"\"\"--._ .\n"
+      ":\"                     \";\n"
+      " `-.__    :   :    __.-'\n"
+      "      \"\"\"-:   :-\"\"\"\n"
+      "         J     L\n"
+      "         :     :\n"
+      "        J       L\n"
+      "        :       :\n"
+      "        `._____.' mh;\n";
+  }
+
+  bodylist_add(fungus->attached, stem);
+  bodylist_add(fungus->attached, cap);
+
+  return fungus;
+}
+
+body_part_t *gen_hornet(bool giant){
+  body_part_t *hornet = generate_part("Hornet", 8, BLOOD_FULL, SIZE_SMALL,true);
+  hornet->attached = bodylist_new();
+  
+  body_part_t *head = generate_part("Head",4, BLOOD_FULL, SIZE_TINY+giant,true);
+
+  body_part_t *body = generate_part("Body", 6, BLOOD_FULL, SIZE_TINY, false);
+  body->attached = bodylist_new();
+  bodylist_add(body->attached,
+	       generate_part("Left hind leg", 1, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(body->attached,
+	       generate_part("Left middle leg", 1, BLOOD_FULL,SIZE_TINY,false));
+  bodylist_add(body->attached,
+	       generate_part("Left foreleg", 1, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(body->attached,
+	       generate_part("Right hind leg",1, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(body->attached,
+	       generate_part("Right middle leg",1,BLOOD_FULL,SIZE_TINY, false));
+  bodylist_add(body->attached,
+	       generate_part("Right foreleg", 1, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(body->attached,
+	       generate_part("Thorax", 1, BLOOD_FULL, SIZE_TINY, false));
+  
+  bodylist_add(hornet->attached, body);
+  bodylist_add(hornet->attached,
+	       generate_part("Left wing", 4, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(hornet->attached,
+	       generate_part("Right wing", 4, BLOOD_FULL, SIZE_TINY, false));
+  bodylist_add(hornet->attached, head);
+
+  hornet->image =
+    "                    .__.---- __.-7\n"
+    "_                 /      /-\"    /\n"
+    " \\          .--\" /     .^      /\n"
+    "\\ \\  ___   / .-~\"_~\"  /       /\n"
+    " \\.\\\" _/7-{ / /'~ ~ \\/  _._--^\n"
+    " /_.-~ \\|~~Y Y      /--\"\n"
+    "< _ __'_I__I |    _//  \\\\\n"
+    " \\_/_.~ j I~-'   (_/    )Y\n"
+    "   \">-'Y\\//\\     _.    ( j__\n"
+    "   /7--l //\"\\j|_/// ._  _7  ~-.\n"
+    "  //    \"/,^. | 7/--||-~__)    \\\n"
+    " //     // //\"'//   l`\"~_ Y   .-Y\n"
+    "L/     L/_//  //    ~7`  ||._/  |\n"
+    "          L/ L/     /`   ||     !\n"
+    "                   /`   //     /\n"
+    "             \\.--\"`    L/   .^\n"
+    "              \"-.____.----\"~";
+  hornet->image_width = 34;
+    
+  return hornet;
+}
+
 body_part_t *gen_human(){
   body_part_t *human = generate_part("Human", 200, BLOOD_FULL, SIZE_LARGE, true);
   human->attached = bodylist_new();
@@ -199,7 +302,7 @@ body_part_t *gen_human_torso(){
   body_part_t *torso = generate_part("Torso", 80, BLOOD_FULL, SIZE_LARGE, false);
   torso->attached = bodylist_new();
   
-  body_part_t *thorax = generate_part("Thorax", 50, BLOOD_FULL, SIZE_LARGE, true);
+  body_part_t *thorax = generate_part("Chest", 50, BLOOD_FULL, SIZE_LARGE, true);
   thorax->attached = bodylist_new();
   
   thorax->organs = bodylist_new();
@@ -405,6 +508,9 @@ bodylist_t *bodylist_new(){
 /* Adds a given body part to the start of a bodylist.
  */
 void bodylist_add(bodylist_t *list, body_part_t *part){
+  if(list == NULL){
+    quit("Can't add body part to NULL bodylist.");
+  }
   bodylist_t *new = bodylist_new();
   
   new->part = list->part;
