@@ -81,7 +81,7 @@ void defaultTakeTurnCallback(struct creature_t* c,
 		     creature_get_damage(c), DMG_SLASHING);
   }
   //Otherwise, pathfind
-  else{
+  else if(!c->is_immobile){
     if(c->pathfind == NULL){
       defaultPathfindCallback(c, map);}
     else{

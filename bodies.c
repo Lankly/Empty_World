@@ -174,7 +174,8 @@ body_part_t *gen_fungus(bool giant){
       "        .l;.    j, ,\n"
       "     `. \\`;:.   //,/\n"
       "      .\\\\)`;,|\\'/(\n"
-      "       ` `itz `(,;\n";
+      "       ` `itz `(,;";
+    fungus->image_width = 21;
       break;
   default:
     fungus->image =
@@ -191,7 +192,8 @@ body_part_t *gen_fungus(bool giant){
       "         :     :\n"
       "        J       L\n"
       "        :       :\n"
-      "        `._____.' mh;\n";
+      "        `._____.' mh;";
+    fungus->image_width = 25;
   }
 
   bodylist_add(fungus->attached, stem);
@@ -1024,6 +1026,10 @@ int body_part_chance_to_hit(struct creature_t *attacker,
     result += 10 + ((4-diff) * 3);
   }
 
+  if(target->is_immobile && result < 80){
+    result = 80;
+  }
+  
   int underneath = 0, count = 3;
   for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
     underneath += body_part_chance_to_hit(attacker, target, cur->part);
@@ -1031,6 +1037,7 @@ int body_part_chance_to_hit(struct creature_t *attacker,
   }
   underneath = underneath / count;
   result += underneath;
+
   
   return result > 99 ? (get_luck(attacker) > 5 ? 100 : 99) : result;
 }

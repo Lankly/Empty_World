@@ -264,6 +264,7 @@ void creature_data_init(){
     .corpse_type = CORPSE_PLANT,
     .creature_id = CREATURE_TYPE_PLANT,
     .display = 'f',
+    .is_immobile = true,
     .name = "Fungus",
     .exam_text = "This is a magic fungus with legs.",
     .max_health = 8,
