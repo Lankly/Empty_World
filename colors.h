@@ -15,6 +15,8 @@
 #define COLOR_GREY 7
 #define COLOR_DARK_GREY 8
 
+#define CP_CORPSE CP_DARK_GREY_BLACK
+
 //Initialize colors
 void color_init();
 

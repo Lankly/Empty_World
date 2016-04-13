@@ -108,7 +108,6 @@ void player_init(char* name){
   if(!strcmp(player->name, "")){
     player->name = "Lan";}
 
-  player->corpse_type = CORPSE_HUMAN;
   player->class = CLASS_NEWB;
   set_strength(player, 1);
   set_perception(player, 1);
@@ -125,9 +124,7 @@ void player_init(char* name){
   set_level(player, 1);
   set_dlevel(player, 1);
   
-  player->breathables = (breathe_list_t*)Calloc(1,sizeof(breathe_list_t));
   add_breathable(player, BREATHE_AIR);
-  player->consumables = (consume_list_t*)Calloc(1,sizeof(consume_list_t));
   add_consumable(player, CONSUME_ANIMAL);
   add_consumable(player, CONSUME_INSECT);
   add_consumable(player, CONSUME_FOOD);
@@ -135,8 +132,6 @@ void player_init(char* name){
   add_consumable(player, CONSUME_WATER);
   add_consumable(player, CONSUME_ALCOHOL);
   add_consumable(player, CONSUME_POTION);
-  player->intrinsics = (intrinsics_list_t*)Calloc(1,sizeof(intrinsics_list_t));
-  player->resistances = (resistances_list_t*)Calloc(1,sizeof(resistances_list_t));
   player->takeTurn = &playerTakeTurnCallback;
   player->kill = &playerKillCallback;
 

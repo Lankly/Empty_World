@@ -195,7 +195,6 @@ body_part_t *gen_fungus(bool giant){
       "        `._____.' mh;";
     fungus->image_width = 25;
   }
-
   bodylist_add(fungus->attached, stem);
   bodylist_add(fungus->attached, cap);
 
@@ -433,6 +432,17 @@ body_part_t *gen_rat(bool giant){
   head->organs = bodylist_new();
   bodylist_add(head->organs,
 	       generate_part("Brain", 3, BLOOD_FULL, SIZE_TINY, false));
+
+  item_t *teeth = Calloc(1, sizeof(item_t));
+  teeth->display = '"';
+  teeth->exam_text = "This is the front teeth of a rat.";
+  teeth->dmg_verb = "bite";
+  teeth->size = 1;
+  teeth->material = MAT_BONE;
+  teeth->health = 10;
+  teeth->damage = 4;
+  teeth->damage_type = DMG_SLASHING;
+  head->held = teeth;
   
   bodylist_add(rat->attached, limbs);
   bodylist_add(rat->attached, gen_rat_torso(giant));
@@ -585,6 +595,65 @@ item_t *body_to_item(body_part_t *part){
   return to_ret;
 }
 
+/* Returns an item that is associated with the given body. If the corpse
+ * cannot be created, returns NULL.
+ */
+item_t *create_corpse(struct creature_t *c){
+  if(c == NULL || c->body == NULL){
+    return NULL;
+  }
+  body_part_t *part = c->body;
+  
+  item_t *corpse = Calloc(1, sizeof(item_t));
+  corpse->corpse = part;
+  switch(part->size){
+  case (SIZE_TINY):
+    corpse->weight = 5;
+    break;
+  case (SIZE_SMALL):
+    corpse->weight = 12;
+    break;
+  case (SIZE_AVG):
+    corpse->weight = 25;
+    break;
+  case (SIZE_LARGE):
+    corpse->weight = 50;
+    break;
+  case (SIZE_HUGE):
+    corpse->weight = 100;
+    break;
+  }
+
+  corpse->health = part->health + 1;
+  corpse->damage = part->size;
+  corpse->damage_type = DMG_BLUNT;
+  corpse->edible = true;
+  corpse->curse_lvl = !(rand()%100) ? BUC_CURSED : BUC_UNCURSED;
+  corpse->display = COLOR_PAIR(CP_CORPSE) | (char)c->display;
+  
+  return corpse;
+}
+
+/* Returns the held item that deals the most damage. If no such weapon exists,
+ * returns NULL.
+ */
+item_t *get_weapon(body_part_t *part){
+  if(part == NULL){
+    return NULL;
+  }
+
+  item_t *weapon = part->held;
+  for(bodylist_t *cur = part->attached; cur != NULL; cur = cur->next){
+    item_t *other_wep = get_weapon(cur->part);
+    if(other_wep != NULL &&
+       (weapon == NULL || weapon->damage < other_wep->damage)){
+      weapon = other_wep;
+    }
+  }
+
+  return weapon;
+}
+
 /* Free everything in and attached to a body part, as well as the boyd part
  *  itself.
  */
@@ -717,6 +786,7 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
       //If it didn't, then show a damage message.
       else{
 	part->health -= dmg;
+	char *dmg_verb = get_dmg_verb(get_weapon(attacker->body));
       
 	if(dmg == 0 && attacker == player){
 	  msg_add("You deal no damage.");
@@ -725,11 +795,11 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 	  msg_addf("The %s deals no damage.", attacker->name);
 	}
 	else if(attacker == player){
-	  msg_addf("You hit the %s's %s.", target->name,
+	  msg_addf("You %s the %s's %s.", dmg_verb, target->name,
 		   str_lowercase(part->name));
 	}
 	else if(target == player){
-	  msg_addf("The %s hits your %s.", attacker->name,
+	  msg_addf("The %s %ss your %s.", attacker->name, dmg_verb,
 		   str_lowercase(part->name));
 	}
 	else{

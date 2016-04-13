@@ -34,6 +34,43 @@ int get_distance(int x_0, int y_0, int x_1, int y_1){
   return sqrt(pow(x_0 - x_1, 2) + pow(y_0 - y_1, 2));
 }
 
+/* Adds an item to the beginning of a list. Does not check for duplicates.
+ * Returns the beginning of the new list.
+ */
+intlist_t *intlist_add(intlist_t *list, int elem){
+  intlist_t *new = Calloc(1, sizeof(intlist_t));
+  new->elem = elem;
+  new->next = list;
+  list = new;
+
+  return new;
+}
+/* Removes the first instance of the given element from the given list.
+ */
+void intlist_remove(intlist_t *list, int elem){
+  if(list != NULL){
+    if(list->elem == elem){
+      list = list->next;
+    }
+    else{
+      intlist_remove(list->next, elem);
+    }
+  }
+}
+/* Handles freeing the entire intlist.
+ */
+void intlist_free(intlist_t *list){
+  if(list != NULL){
+    intlist_free(list->next);
+    free(list);
+  }
+}
+/* Returns a new intlist, with the first item being the given element.
+ */
+intlist_t *intlist_new(int elem){
+  return intlist_add(NULL, elem);
+}
+
 /* This function gives the player a cursor to move around on-scren with. When
  * they hit enter, the pointers we were given will be updated with that location
  */

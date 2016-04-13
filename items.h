@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <curses.h>
+#include "bodies.h"
 
 #ifndef ITEMS_H
 #define ITEMS_H
@@ -7,26 +8,24 @@
 #define ITEM_UNKNOWN  0
 #define ITEM_UP_STAIR 1
 #define ITEM_DOWN_STAIR 2
-#define CORPSE_HUMAN  3
-#define CORPSE_WERE   4
-#define CORPSE_ORC    5
-#define CORPSE_GOBLIN 6
-#define CORPSE_SKELETON 7
-#define CORPSE_CANINE 8
-#define CORPSE_FELINE 9
-#define CORPSE_INSECT 10
-#define CORPSE_RODENT 11
-#define CORPSE_AVIAN  12
-#define CORPSE_DEMON  13
-#define CORPSE_MINDFLAYER 14
-#define CORPSE_GRIFFON 15
-#define CORPSE_SENTINEL 16
-#define CORPSE_PLANT  17
-#define CORPSE_EYE    18
-#define CORPSE_SPAWNER 19
-#define CORPSE_EQUUS 20
-#define ITEM_IRON_SWORD 21
-#define ITEM_MAX 21
+#define ITEM_IRON_SWORD 3
+#define ITEM_MAX 3
+
+//Damage Types
+#define DMG_BLUNT 0
+#define DMG_SLASHING 1
+#define DMG_PIERCING 2
+#define DMG_FIRE 3
+#define DMG_COLD 4
+#define DMG_INFECTION 5
+#define DMG_CRUSHING 6
+#define DMG_EXPLOSIVE 7
+#define DMG_PSYCHIC 8
+#define DMG_MAX 8
+
+#define BUC_UNCURSED 0
+#define BUC_CURSED 1
+#define BUC_BLESSED 2
 
 //These are callbacks that will be inside of each item
 struct item_use_t; struct item_consume_t; struct item_zap_t;
@@ -42,27 +41,31 @@ typedef struct item_t{
   int display;
   char *name;
   char *exam_text;
+  char *dmg_verb;
   int gold_value;
   int size;//how much space it takes up on an item stack, in a bag
   int material;
   int weight;
+  int health;
   int damage;
+  int damage_type;
+  int weapon_type;
   int wearable;
 
-  bool ranged;
   bool is_static;
   bool is_two_handed;
-  bool legendary;//if true, only one may exist  
   bool stopme;
   bool immovable;
   bool edible;
 
   int extrinsic;
-  int curse_lvl;//0=uncursed,1=blessed,2=cursed
+  int curse_lvl;
   int water_breathing_lvl;//0=normal,1=shallow,2=deep
 
   struct map_t* go_to_map;
 
+  struct body_part_t *corpse;
+  
   itemUseCallback use;
   itemConsumeCallback consume;
   itemZapCallback zap;
@@ -98,13 +101,14 @@ typedef struct item_zap_t{
 #define MAT_GOLD    2
 #define MAT_LEATHER 3
 #define MAT_WOOD    4
-#define MAT_SILVER  5
-#define MAT_STONE   6
-#define MAT_BRONZE  7
-#define MAT_IRON    8
-#define MAT_STEEL   9
-#define MAT_ADAMANTINE 10
-#define MAT_MITHRIL 11
+#define MAT_BONE    5
+#define MAT_SILVER  6
+#define MAT_STONE   7
+#define MAT_BRONZE  8
+#define MAT_IRON    9
+#define MAT_STEEL   10
+#define MAT_ADAMANTINE 11
+#define MAT_MITHRIL 12
 
 //WEARABLE TYPES LIST
 #define WEAR_UNKNOWN 0
@@ -150,12 +154,11 @@ item_t* remove_item(struct map_t* map, int x, int y, int index);
 int count_items(struct map_t* map,int x,int y);
 void destroy_item(item_t* item);
 
+char *get_dmg_verb(item_t *weapon);
 int get_item_sym(struct map_t* map,int x,int y, int index);
 int get_top_item_sym(struct map_t* map,int x,int y);
 int get_top_item_sym_from_stack(struct item_map_t* items);
 
 item_t *item_create_from_data(int index);
-item_t *create_corpse(char *name, int type,
-		      int display, int class);
 int items_display(struct map_t* map,int x,int y);
 #endif

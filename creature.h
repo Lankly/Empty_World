@@ -30,18 +30,6 @@
 #define CREATURE_TYPE_EYE      19
 #define CREATURE_TYPE_MAX      19
 
-//Damage Types
-#define DMG_BLUNT 0
-#define DMG_SLASHING 1
-#define DMG_PIERCING 2
-#define DMG_FIRE 3
-#define DMG_COLD 4
-#define DMG_INFECTION 5
-#define DMG_CRUSHING 6
-#define DMG_EXPLOSIVE 7
-#define DMG_PSYCHIC 8
-#define DMG_MAX 8
-
 //EXTRINSICS,INTRINSICS LIST
 #define TRINSIC_UNKNOWN 0
 #define TRINSIC_FLYING 1
@@ -82,45 +70,6 @@
 #define BREATHE_LAVA 4
 #define BREATHE_MAX 4
 
-//This is a list of all the types of things that a creature can breathe
-typedef struct breathe_node_t{
-  int breathe_type;
-  struct breathe_node_t *next;
-}breathe_node_t;
-typedef struct{
-  struct breathe_node_t *first;
-}breathe_list_t;
-
-/* This is a list of all the types of things that a creature or the player can
- * eat or drink
- */
-typedef struct consume_node_t{
-  int consume_type;
-  struct consume_node_t* next;
-}consume_node_t;
-typedef struct{
-  consume_node_t *first;
-}consume_list_t;
-
-//This is a list of all the intrinsics that a creature has
-typedef struct intrinsics_node_t{
-  int intrinsic_type;
-  struct intrinsics_node_t *next;
-}intrinsics_node_t;
-typedef struct{
-  intrinsics_node_t *first;
-}intrinsics_list_t;
-
-//This is a list of all the resistances that a creature has
-typedef struct resistances_node_t{
-  int damage_type;
-  struct resistances_node_t *next;
-}resistances_node_t;
-typedef struct{
-  resistances_node_t *first;
-}resistances_list_t;
-
-
 struct creature_t; struct map_t; struct item_map_t;
 typedef void (*creatureTakeTurnCallback)(struct creature_t *creature,
 					 struct map_t *map);
@@ -150,7 +99,6 @@ struct creature_t{
   int turn_tokens;
   int turn_tokens_reset_amount;
   
-  int corpse_type;
   int were_type;
   int class;
   int creature_id;
@@ -169,10 +117,10 @@ struct creature_t{
   bool is_blind;
   bool is_telepathic;
 
-  breathe_list_t *breathables;
-  consume_list_t *consumables;
-  intrinsics_list_t *intrinsics;
-  resistances_list_t *resistances;
+  struct intlist_t *breathables;
+  struct intlist_t *consumables;
+  struct intlist_t *intrinsics;
+  struct intlist_t *resistances;
 
   inventory_t *inventory;
   creatureTakeTurnCallback takeTurn;
@@ -260,14 +208,14 @@ int get_dexterity(struct creature_t *c);
 
 void add_health(struct creature_t *c, int h);
 
-int add_breathable(struct creature_t *creature, int type);
-int add_consumable(struct creature_t *creature, int type);
-int add_intrinsic(struct creature_t *creature, int type);
-int add_resistance(struct creature_t *creature, int type);
+void add_breathable(struct creature_t *creature, int type);
+void add_consumable(struct creature_t *creature, int type);
+void add_intrinsic(struct creature_t *creature, int type);
+void add_resistance(struct creature_t *creature, int type);
 
-int remove_breathable(struct creature_t *creature, int type);
-int remove_consumable(struct creature_t *creature, int type);
-int remove_intrinsic(struct creature_t *creature, int type);
-int remove_resistance(struct creature_t *creature, int type);
+void remove_breathable(struct creature_t *creature, int type);
+void remove_consumable(struct creature_t *creature, int type);
+void remove_intrinsic(struct creature_t *creature, int type);
+void remove_resistance(struct creature_t *creature, int type);
 
 #endif

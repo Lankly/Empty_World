@@ -64,6 +64,10 @@ char *term;
 int qckmv_cmd;
 int num_turns;
 
+typedef struct intlist_t{
+  int elem;
+  struct intlist_t *next;
+}intlist_t;
 
 void *Calloc(int items, int size);
 char *str_lowercase(char *str);
@@ -72,6 +76,10 @@ int *str_to_ints(char *str, int len);
 char *ints_to_str(int *ints, int len);
 int get_coord(int x,int y,int width);
 int get_distance(int x_0, int y_0, int x_1, int y_1);
+intlist_t *intlist_add(intlist_t *list, int elem);
+void intlist_remove(intlist_t *list, int elem);
+void intlist_free(intlist_t *list);
+intlist_t *intlist_new(int elem);
 void get_coord_via_cursor(int* y, int* x);
 void quit(const char* error_msg);
 void cmd_init();

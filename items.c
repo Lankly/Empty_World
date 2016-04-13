@@ -61,167 +61,6 @@ void item_data_init(){
     .zap = &defaultZapCallback
   };
 
-  item_data[CORPSE_HUMAN] = (item_t){
-    .id = CORPSE_HUMAN,
-    .display = '@' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Human Corpse",
-    .exam_text = "It is the corpse of a human.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_ORC] = (item_t){
-    .id = CORPSE_ORC,
-    .display = 'R' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Orc Corpse",
-    .exam_text = "It is the corpse of an orc.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_GOBLIN] = (item_t){
-    .id = CORPSE_GOBLIN,
-    .display = 'G' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Goblin Corpse",
-    .exam_text = "It is the corpse of a goblin.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_SKELETON] = (item_t){
-    .id = CORPSE_SKELETON,
-    .display = 'S' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Skeleton",
-    .exam_text = "It a skeleton (Thankfully inanimate).",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_CANINE] = (item_t){
-    .id = CORPSE_CANINE,
-    .display = 'd' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Canine Corpse",
-    .exam_text = "It is the corpse of a canine.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_FELINE] = (item_t){
-    .id = CORPSE_FELINE,
-    .display = 'c' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Feline Corpse",
-    .exam_text = "It is the corpse of a feline.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_INSECT] = (item_t){
-    .id = CORPSE_INSECT,
-    .display = 'h' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Hornet Corpse",
-    .exam_text = "It is the corpse of a hornet. Yay!",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_AVIAN] = (item_t){
-    .id = CORPSE_AVIAN,
-    .display = 'o' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Owl Corpse",
-    .exam_text = "It is the corpse of an owl.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_DEMON] = (item_t){
-    .id = CORPSE_DEMON,
-    .display = 'E' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Demon Corpse",
-    .exam_text = "It is the corpse of a demon.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_MINDFLAYER] = (item_t){
-    .id = CORPSE_MINDFLAYER,
-    .display = 'M' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Mindflayer Corpse",
-    .exam_text = "It is the corpse of a mindflayer. Something about it unnerves you.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_GRIFFON] = (item_t){
-    .id = CORPSE_GRIFFON,
-    .display = 'G' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Griffon Corpse",
-    .exam_text = "It is the corpse of a griffon.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_SENTINEL] = (item_t){
-    .id = CORPSE_SENTINEL,
-    .display = 'T' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Sentinel Corpse",
-    .exam_text = "It is the corpse of a sentinel.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_PLANT] = (item_t){
-    .id = CORPSE_PLANT,
-    .display = 'f' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Fungus Corpse",
-    .exam_text = "It is a pile of moss.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_EYE] = (item_t){
-    .id = CORPSE_EYE,
-    .display = 'e' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Eyeball",
-    .exam_text = "It is an eyeball. Sure does look tasty... What?",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_SPAWNER] = (item_t){
-    .id = CORPSE_SPAWNER,
-    .display = '%' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "??? Corpse",
-    .exam_text = "It is the corpse of a...",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-  item_data[CORPSE_EQUUS] = (item_t){
-    .id = CORPSE_EQUUS,
-    .display = 'H' | COLOR_PAIR(CP_DARK_GREY_BLACK),
-    .name = "Horse Corpse",
-    .exam_text = "It is the corpse of a horpse.",
-    .size = 1,
-    .use = &defaultUseCallback,
-    .consume = &defaultConsumeCallback,
-    .zap = &defaultZapCallback
-  };
-
   //    1234567890-=qwertyuiop[]\asdfghjkl;'zxcvbnm,./
   //    !@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:"ZXCVBNM<>?
   //    ±²³´µ¶·¸¹°­½ñ÷åòôùõéïðÛÝÜáóäæçèêëì»§úøãöâîí¬®¯
@@ -383,6 +222,13 @@ void destroy_item(struct item_t* item){
   free(item);
 }
 
+/* Returns the custom verb for a given weapon, if there is one. If there isn't,
+ * simply returns the verb "hit".
+ */
+char *get_dmg_verb(item_t *weapon){
+  return weapon == NULL || weapon->dmg_verb == NULL ? "hit" : weapon->dmg_verb;
+}
+
 /* This function returns a char representing the item at the given index on
  * the item stack at the given coordinates in the given map.
  */
@@ -441,46 +287,6 @@ item_t* item_create_from_data(int index){
   memcpy(ret,&item_data[index],sizeof(item_t));
 
   return ret;
-}
-
-item_t *create_corpse(char *name, int type, 
-			     int display, int class){
-  //Create basic  corpse
-  struct item_t *corpse = item_create_from_data(ITEM_UNKNOWN);
-  corpse->display = display | COLOR_PAIR(CP_DARK_GREY_BLACK);
-  corpse->name = Calloc(MAX_NAME_LEN + 1, sizeof(char));
-  corpse->exam_text = Calloc(MAX_MSG_LEN + 1, sizeof(char));
-  corpse->size = 1;
-  
-  /* Customize corpse name, exam text */
-
-  strcat(corpse->name, name);
-
-  strcat(corpse->exam_text, "It is the corpse of a");
-  //a -> an where necessary
-  if(corpse->name[0]  ==  'a'  || corpse->name[0] == 'A'
-     || corpse->name[0] == 'e' || corpse->name[0] == 'E'
-     || corpse->name[0] == 'i' || corpse->name[0] == 'I'
-     || corpse->name[0] == 'o' || corpse->name[0] == 'O'
-     || corpse->name[0] == 'u' || corpse->name[0] == 'U'){
-    strcat(corpse->exam_text, "n");}
-  strcat(corpse->exam_text, " ");
-  strcat(corpse->exam_text, corpse->name);
-
-  if(class != CLASS_UNKNOWN){
-    strcat(corpse->name, " ");
-    strcat(corpse->name, class_data[class].name);}
-
-
-  strcat(corpse->exam_text, ".");
-
-  //If  is same type as player, add frowny face
-  strcat(corpse->name, " Corpse");
-  if(player->creature_id == type
-     || player->were_type == type){
-    strcat(corpse->exam_text, " :(");}
-
-  return corpse;
 }
 
 /* This will display all the items on a given tile of the map to the player.

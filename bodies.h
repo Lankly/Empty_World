@@ -31,8 +31,8 @@ typedef struct body_part_t{
   int image_width;
   bool bleeding;
   int blood_remaining;
-  int damage;
-  int health;
+  int health; //For HP
+  int damage; //For wounds
   int health_max;
   int size;
   itemlist_t *armor;
@@ -98,6 +98,8 @@ void body_part_free(body_part_t *part);
 void bodylist_free(bodylist_t *list);
 
 item_t *body_to_item(body_part_t *part);
+item_t *create_corpse(struct creature_t *c);
+item_t *get_weapon(body_part_t *part);
 
 bool target_attack();
 

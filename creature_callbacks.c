@@ -97,13 +97,17 @@ void defaultKillCallback(struct creature_t *a, struct map_t *map){
   if(a == NULL){quit("Error: Cannot kill NULL Animal.");}
   if(map == NULL){quit("Error: Cannot kill Animal on NULL Map.");}
 
-  struct item_t *corpse = create_corpse(a->name, a->creature_id,
-					a->display, a->class);
+  item_t *corpse = create_corpse(a);
 
-  add_item(map, a->x, a->y, corpse, false);
-
+  if(corpse != NULL){
+    add_item(map, a->x, a->y, corpse, false);
+  }
+    
   map_remove_creature(map, a);
-  body_part_free(a->body);
+  intlist_free(a->breathables);
+  intlist_free(a->consumables);
+  intlist_free(a->intrinsics);
+  intlist_free(a->resistances);
   free(a);
 }
 
