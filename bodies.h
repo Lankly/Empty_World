@@ -1,6 +1,8 @@
 #ifndef BODIES_H
 #define BODIES_H
 
+typedef struct body_part_t body_part_t;
+
 #include <stdbool.h>
 #include "inventory.h"
 
@@ -25,7 +27,7 @@
 #define DAMAGE_SEVERED 4
 
 struct bodylist_t;
-typedef struct body_part_t{
+struct body_part_t{
   char *name;
   char *image;
   int image_width;
@@ -53,7 +55,7 @@ typedef struct body_part_t{
   struct body_part_t *attached_to;
   struct bodylist_t *attached;
   struct bodylist_t *organs;
-} body_part_t;
+};
 
 typedef struct bodylist_t{
   body_part_t *part;

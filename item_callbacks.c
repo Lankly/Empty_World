@@ -24,17 +24,16 @@ void downStairUseCallback(struct item_use_t* data){
 	     map_get_max_item_height(cur_map),
 	     map_get_dlevel(cur_map) + 1);
     //Map draw
-    map_draw_random_rooms(data->item->go_to_map, player->x, player->y);
+    int px, py;
+    creature_get_coord(player, &px, &py);
+    map_draw_random_rooms(data->item->go_to_map, px, py);
     map_cleanup(data->item->go_to_map);
     map_draw_borders(data->item->go_to_map);
     //Move player
     map_remove_creature(cur_map, player);
     map_add_creature(data->item->go_to_map, player);
     //Place stairs
-    map_place_up_stair(data->item->go_to_map,
-		       player->x,
-		       player->y,
-		       cur_map);
+    map_place_up_stair(data->item->go_to_map, px, py, cur_map);
     map_place_down_stair_randomly(data->item->go_to_map);
     
     //Spawners
@@ -74,7 +73,7 @@ void ironSwordUseCallback(struct item_use_t* data){
     if(data->item == NULL){quit("Error: Cannot damage NULL item");}
     if(data->caller==NULL){quit("Error: Item_Use caller is NULL");}
     if(data->caller->material > data->item->material){
-      destroy_item(data->item);
+      free(data->item);
       msg_add("The blade completely destroys it!");
     }
     else{msg_add("The blade glances off, barely scratching it.");}

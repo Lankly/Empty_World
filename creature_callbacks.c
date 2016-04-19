@@ -18,7 +18,10 @@ void defaultPathfindCallback(struct creature_t* creature,
   //Make sure everything is right before starting
   if(creature==NULL){quit("ERROR: Cannot move NULL Creature");}
   if(map==NULL){quit("Error: Cannot move Creature on NULL Map");}
-  if(map_get_tile(map, creature->x, creature->y)==TILE_UNKNOWN){
+  int x, y, px, py;
+  creature_get_coord(creature, &x, &y);
+  creature_get_coord(player, &px, &py);
+  if(map_get_tile(map, x, y) == TILE_UNKNOWN){
     return;
   }
 
@@ -26,28 +29,28 @@ void defaultPathfindCallback(struct creature_t* creature,
   if(creature_is_visible(player, creature)){
     int move_x=0, move_y=0;
     //If the creature is to the right of the player
-    if(creature->x > player->x
-       && tile_data[map_get_tile(map, creature->x -1,
-				 creature->y)].passable){
+    if(x > px
+       && tile_data[map_get_tile(map, x -1,
+				 y)].passable){
       move_x--;}
     //If the creature is to the left of the player
-    else if(creature->x < player->x
-	    && tile_data[map_get_tile(map, creature->x + 1,
-				      creature->y)].passable){
+    else if(x < px
+	    && tile_data[map_get_tile(map, x + 1,
+				      y)].passable){
       move_x++;}
     //If the creature is below the player
-    if(creature->y > player->y
-       && tile_data[map_get_tile(map, creature->x + move_x,
-				 creature->y - 1)].passable){
+    if(y > py
+       && tile_data[map_get_tile(map, x + move_x,
+				 y - 1)].passable){
       move_y--;}
     //If the creature is above the player
-    else if(creature->y < player->y
-	    && tile_data[map_get_tile(map, creature->x + move_x,
-				      creature->y + 1)].passable){
+    else if(y < py
+	    && tile_data[map_get_tile(map, x + move_x,
+				      y + 1)].passable){
       move_y++;}
     
-    creature->x += move_x;
-    creature->y += move_y;
+    x += move_x;
+    y += move_y;
   }
   //Else wander randomly
   else{
@@ -57,58 +60,53 @@ void defaultPathfindCallback(struct creature_t* creature,
       move_x = (rand()%2) * ((rand() % 2) ? -1 : 1);
       move_y = (rand()%2) * ((rand() % 2) ? -1 : 1);
     }while(!tile_data[map_get_tile(map,
-				   creature->x+move_x,
-				   creature->y+move_y)].passable
+				   x+move_x,
+				   y+move_y)].passable
 	   && tries < 30);
     if(tries < 30){
-      creature->x = creature->x + move_x;
-      creature->y = creature->y + move_y;}
+      creature_place_at_coord(creature, map, x + move_x, y + move_y);
+    }
   }
 }
 
-void defaultTakeTurnCallback(struct creature_t* c,
-			     struct map_t* map){
+void defaultTakeTurnCallback(creature_t* c, map_t* map){
   //Make sure everything is right before starting
   if(c==NULL){quit("ERROR: Cannot move NULL Creature");}
   if(map==NULL){quit("Error: Cannot move Creature on NULL Map");}
-  
+
+  int x, y, px, py;
+  creature_get_coord(c, &x, &y);
+  creature_get_coord(player, &px, &py);
   //If player is adjacent, attack
-  int x_diff = player->x - c->x;
-  int y_diff = player->y - c->y;
+  int x_diff = px - x;
+  int y_diff = py - y;
   if(x_diff >= -1 && x_diff <= 1 && y_diff >= -1 && y_diff <= 1){
     int temp = 0;
-    damage_body_part(&temp, c, player, player->body,
+    damage_body_part(&temp, c, player, creature_get_body(player),
 		     creature_get_damage(c), DMG_SLASHING);
   }
   //Otherwise, pathfind
-  else if(!c->is_immobile){
-    if(c->pathfind == NULL){
-      defaultPathfindCallback(c, map);}
-    else{
-      c->pathfind(c, map);}
+  else if(!creature_is_immobile(c)){
+    creature_pathfind(c, map);
   }
-
-  c->turn_tokens--;
 }
 
 /* Callback used for killing a creature by default
  */
-void defaultKillCallback(creature_t *a, map_t *map){
-  if(a == NULL){quit("Error: Cannot kill NULL Animal.");}
-  if(map == NULL){quit("Error: Cannot kill Animal on NULL Map.");}
+void defaultKillCallback(creature_t *c, map_t *map){
+  if(c == NULL){quit("Error: Cannot kill NULL Creature.");}
+  if(map == NULL){quit("Error: Cannot kill Creature on NULL Map.");}
 
-  item_t *corpse = create_corpse(a);
+  int x, y;
+  creature_get_coord(c, &x, &y);
+  item_t *corpse = create_corpse(c);
 
   if(corpse != NULL){
-    map_add_item(map, a->x, a->y, corpse, false);
+    map_add_item(map, x, y, corpse, false);
   }
     
-  map_remove_creature(map, a);
-  intlist_free(a->breathables);
-  intlist_free(a->consumables);
-  intlist_free(a->intrinsics);
-  intlist_free(a->resistances);
-  free(a);
+  map_remove_creature(map, c);
+  creature_free(c);
 }
 
 /* Pathfinding for rats.
@@ -125,20 +123,28 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
    * non-rats.
    */
 
-  int move_x = INT_MIN, move_y = INT_MIN;
+  int x, y, move_x = INT_MIN, move_y = INT_MIN;
+  creature_get_coord(creature, &x, &y);
   
   /* Check to see if we're running away from something first */
   int closest_distance = INT_MAX;
-  struct creature_t *closest_creature = NULL;
+  creature_t *closest_creature = NULL;
   for(clist_t *cur = map_get_creatures(map);
       cur != NULL;
       cur = clist_next(cur)){
     creature_t *cur_creature = clist_get_creature(cur);
-    int dist = get_distance(creature->x, creature->y,
-			    cur_creature->x, cur_creature->y);
+    //Can't handle a NULL creature here, so move on
+    if(cur_creature == NULL){
+      break;
+    }
+    int cur_x, cur_y;
+    creature_get_coord(cur_creature, &cur_x, &cur_y);
+    
+    int dist = get_distance(x, y,
+			    cur_x, cur_y);
     //Compare distances, make sure we're not comparing with the same type
     if(dist < closest_distance &&
-       cur_creature->creature_id != creature->creature_id ){
+       creature_get_type(cur_creature) != creature_get_type(creature)){
       closest_distance = dist;
       closest_creature = cur_creature;
     }
@@ -146,13 +152,16 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
   //If we found something to run from
   if(closest_creature != NULL &&
      creature_is_visible(closest_creature, creature)){
+    int closest_x, closest_y;
+    creature_get_coord(closest_creature, &closest_x, &closest_y);
+    
     //Move away on the x-axis
-    if(creature->x < closest_creature->x &&
-       tile_data[map_get_tile(map,creature->x - 1, creature->y)].passable){
+    if(x < closest_x &&
+       tile_data[map_get_tile(map,x - 1, y)].passable){
       move_x = -1;
     }
-    else if(creature->x > closest_creature->x &&
-	    tile_data[map_get_tile(map,creature->x + 1, creature->y)].passable){
+    else if(x > closest_x &&
+	    tile_data[map_get_tile(map,x + 1, y)].passable){
       move_x = 1;
     }
     else{
@@ -160,17 +169,17 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
     }
 
     //Move away on the y-axis
-    if(creature->y < closest_creature->y){
+    if(y < closest_y){
       //check if it can move diagonally, or if it's the only way to go
       if(tile_data[map_get_tile(map,
-				creature->x + move_x,
-				creature->y-1)].passable){
+				x + move_x,
+				y-1)].passable){
 	move_y = -1;
       }
       //if it can't go diagonally, but it can go on both the x and the y-axis,
       //randomly pick x or y
       else if(move_x != 0 &&
-	      tile_data[map_get_tile(map, creature->x, creature->y-1)].passable
+	      tile_data[map_get_tile(map, x, y-1)].passable
 	      && rand()%2){
 	move_x = 0; move_y = -1;
       }
@@ -178,16 +187,16 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	move_y = 0;
       }
     }
-    else if(creature->y > closest_creature->y){
+    else if(y > closest_y){
       if(tile_data[map_get_tile(map,
-				creature->x + move_x,
-				creature->y+1)].passable){
+				x + move_x,
+				y+1)].passable){
 	move_y = 1;
       }
       //if it can't go diagonally, but it can go on both the x and the y-axis,
       //randomly pick x or y
       else if(move_x != 0 &&
-	      tile_data[map_get_tile(map, creature->x, creature->y+1)].passable
+	      tile_data[map_get_tile(map, x, y+1)].passable
 	      && rand()%2){
 	move_x = 0; move_y = -1;
       }
@@ -212,13 +221,13 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
     for(int j = -creature_see_distance(creature); 
 	j < creature_see_distance(creature);
 	j++){
-      int cur_y = creature->y + j;
+      int cur_y = y + j;
       for(int i = -creature_see_distance(creature);
 	  i < creature_see_distance(creature);
 	  i++){
 	//If there are no more items to look at
 	if(cur != NULL){
-	  int cur_x = creature->x + i;
+	  int cur_x = x + i;
 	  /* Check that this isn't out of range, that there's no wall in the way,
 	   * and that there are items here.
 	   */
@@ -232,8 +241,8 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 		 than anything else found so far. 
 	      */
 	      if(item->item->edible
-		 && get_distance(i, j, creature->x, creature->y) < dist){
-		dist = get_distance(i, j, creature->x, creature->y);
+		 && get_distance(i, j, x, y) < dist){
+		dist = get_distance(i, j, x, y);
 		move_x = 0;
 		if(j < 0){move_x = -1;}
 		else if(j > 0){move_x = 1;}
@@ -252,19 +261,19 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 
   //If not heading to food, move along a wall
   if(move_x == INT_MIN){
-    int r = map_get_tile(map, creature->x+1, creature->y);
-    int l = map_get_tile(map, creature->x-1, creature->y);
-    int u = map_get_tile(map, creature->x, creature->y-1);
-    int d = map_get_tile(map, creature->x, creature->y+1);
-    int ur = map_get_tile(map, creature->x+1, creature->y-1);
-    int ul = map_get_tile(map, creature->x-1, creature->y-1);
-    int dr = map_get_tile(map, creature->x+1, creature->y+1);
-    int dl = map_get_tile(map, creature->x-1, creature->y+1);
+    int r = map_get_tile(map, x+1, y);
+    int l = map_get_tile(map, x-1, y);
+    int u = map_get_tile(map, x, y-1);
+    int d = map_get_tile(map, x, y+1);
+    int ur = map_get_tile(map, x+1, y-1);
+    int ul = map_get_tile(map, x-1, y-1);
+    int dr = map_get_tile(map, x+1, y+1);
+    int dl = map_get_tile(map, x-1, y+1);
 
     //Figure out if already moving along the wall
     if(u == TILE_WALL || d == TILE_WALL || r == TILE_WALL || l == TILE_WALL
        || dr == TILE_WALL || dl == TILE_WALL || ur==TILE_WALL || ul==TILE_WALL
-       || map_get_tile(map, creature->x, creature->y) == TILE_CORRIDOR){
+       || map_get_tile(map, x, y) == TILE_CORRIDOR){
       bool can_go_up = u == TILE_CORRIDOR || r == TILE_WALL || l == TILE_WALL,
 	can_go_down = d == TILE_CORRIDOR || r == TILE_WALL || l == TILE_WALL, 
 	can_go_left = l == TILE_CORRIDOR || u == TILE_WALL || d == TILE_WALL,
@@ -303,7 +312,8 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 
       //If can continue moving, do so. If not, pick a new direction
       //up
-      if(creature->last_position == 2){
+      int last_pos = creature_get_last_position(creature);
+      if(last_pos == 2){
 	if(can_go_up && !can_go_ur && !can_go_ul){
 	  move_x = 0; move_y = -1;}
 	else if(can_go_ur || can_go_ul){
@@ -317,7 +327,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	else{move_x = 0; move_y = 1;}
       }
       //right
-      else if(creature->last_position == 4){
+      else if(last_pos == 4){
 	if(can_go_right && !can_go_ur && !can_go_dr){
 	  move_x = 1; move_y = 0;}
 	else if(can_go_ur || can_go_dr){
@@ -331,7 +341,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	else{move_x = -1; move_y = 0;}
       }
       //down
-      else if(creature->last_position == 8){
+      else if(last_pos == 8){
 	if(can_go_down && !can_go_dl && !can_go_dr){
 	  move_x = 0; move_y = 1;}
 	else if(can_go_dl || can_go_dr){
@@ -345,7 +355,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	else{move_x = 0; move_y = -1;}
       }
       //left
-      else if(creature->last_position == 6){
+      else if(last_pos == 6){
 	if(can_go_left && !can_go_ul && !can_go_dl){
 	  move_x = -1; move_y = 0;}
 	else if(can_go_ul || can_go_dl){
@@ -451,7 +461,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	    break;
 	  case 2:
 	    if(can_go_ul){
-	      if(creature->last_position != 7){
+	      if(last_pos != 7){
 		move_x = -1; move_y = -1;}
 	      else{
 		if(can_go_ur){
@@ -464,7 +474,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	      }
 	    }
 	    else if(can_go_ur){
-	      if(creature->last_position != 9){
+	      if(last_pos != 9){
 		move_x = 1; move_y = -1;}
 	      else if(can_go_dl){
 		move_x = -1; move_y = 1;}
@@ -472,7 +482,7 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 		move_x = 1; move_y = 1;}
 	    }
 	    else if(can_go_dl){
-	      if(creature->last_position != 1){
+	      if(last_pos != 1){
 		move_x = -1; move_y = 1;}
 	      else{
 		move_x = 1; move_y = 1;}
@@ -498,8 +508,8 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 	 */
 	if((map_get_tile(map, i, j) == TILE_WALL
 	   || map_tile_is_door(map_get_tile(map, i, j)))
-	   && get_distance(i, j, creature->x, creature->y) < dist){
-	  dist = get_distance(i, j, creature->x, creature->y);
+	   && get_distance(i, j, x, y) < dist){
+	  dist = get_distance(i, j, x, y);
 	  move_x = 0;
 	  if(j < 0){move_x = -1;}
 	  else if(j > 0){move_x = 1;}	  
@@ -513,18 +523,19 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
 
   //If wall not found
   if(move_x == INT_MIN){
+    int last_pos = creature_get_last_position(creature);
     //Continue moving in a straight line
-    if(creature->last_position != 0 && creature->last_position != 5){
+    if(last_pos != 0 && last_pos != 5){
       //x
-      move_x = (creature->last_position % 3);
+      move_x = (last_pos % 3);
       if(move_x == 2 ){move_x = 0;}
       else if(move_x == 0){move_x = -1;}
       
       //y
-      if(creature->last_position > 6){
+      if(last_pos > 6){
 	move_y = 1;}
       else{
-	move_y = creature->last_position > 3 ? 0 : -1;}      
+	move_y = last_pos > 3 ? 0 : -1;}      
     }
     //Choose a direction
     else{
@@ -534,19 +545,15 @@ void ratPathfindCallback(creature_t *creature, struct map_t *map){
   }
 
   //Just one final check to make sure the move is valid
-  if(tile_data[map_get_tile(map, creature->x + move_x,
-			    creature->y + move_y)].passable){
-    creature->x += move_x;
-    creature->y += move_y;
+  if(tile_data[map_get_tile(map, x + move_x,
+			    y + move_y)].passable){
+    creature_place_at_coord(creature, map, move_x + x, move_y + y);
     
     //Keep track of last position
-    if(move_y == 0){creature->last_position = 5;}
-    else if(move_y == -1){creature->last_position = 2;}
-    else if(move_y == 1){creature->last_position = 8;}
-    creature->last_position -= move_x;
+    creature_record_movement(creature, move_x, move_y);
   }
   else{
-    creature->last_position = 0;
+    creature_record_movement(creature, 0, 0);
   }
 }
 
@@ -673,7 +680,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
       set_perception(c, 1);
       set_intelligence(c, 0);
       set_immobile(c, true);
-      c->display = 'v';
+      creature_set_display(c, 'v');
       break;
     case 5:
       c = creature_spawn(CREATURE_TYPE_FELINE, map);
@@ -732,7 +739,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
 	set_perception(c, 1);
 	set_intelligence(c, 0);
 	set_immobile(c, true);
-	c->display = 'v';
+	creature_set_display(c, 'v');
 	break;
       }
     }

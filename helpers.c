@@ -266,22 +266,31 @@ bool analyze_cmd(int cmd, int *x, int *y);
  * attempt to turn a closed door into an open door at this time. 
  * TODO: Include the ability to open items on the floor like chests.
  */
-void open_tile(struct map_t *map, int x, int y, int direction){
-  int open_x = x, open_y = y;
+void open_tile(map_t *map, int x, int y, int direction){
+  int px, py, open_x = x, open_y = y;
+  creature_get_coord(player, &px, &py);
   analyze_cmd(direction, &open_x, &open_y);
   
-  int otile=map_get_tile(map,open_x,open_y);
-  if(tile_data[otile].openable){
-    if(otile==TILE_DOOR_CLOSE){
-      map_set_tile(map,open_x,open_y,TILE_DOOR_OPEN);
-    }else if(otile==TILE_DOOR_OPEN){
-      msg_add("That door is already open.");
-    }else if(otile==TILE_DOOR_BROKEN){
-      msg_add("That door is broken.");
-    }
-  }else if(open_x==player->x && open_y==player->y){
+  if(open_x == px && open_y == py){
     msg_add("Invalid direction.");
-  }else{msg_add("That cannot be opened.");}
+    return;
+  }
+  
+  int otile = map_get_tile(map, open_x, open_y);
+      
+  switch(otile){
+  case(TILE_DOOR_CLOSE) :
+    map_set_tile(map, open_x, open_y, TILE_DOOR_OPEN);
+    break;
+  case(TILE_DOOR_OPEN) :
+    msg_add("That door is already open.");
+    break;
+  case(TILE_DOOR_BROKEN) :
+    msg_add("That door is broken.");
+    break;
+  default:
+    msg_add("That cannot be opened.");
+  }
 }
 
 /* This function handles what to do when the close action is executed. It will
@@ -305,11 +314,14 @@ void close_tile(struct map_t *map, int x, int y, int direction){
 
 /* This function handles picking an item up off of the floor.
  */
-void pickup_tile(struct creature_t* creature, struct map_t* map){
+void pickup_tile(creature_t* creature, map_t* map){
   if(creature == NULL){quit("Error: Cannot give item to NULL Creature");}
   if(map == NULL){quit("Error: Cannot get item of NULL Map");}
 
-  int count = count_items(map, creature->x, creature->y);
+  int x, y;
+  creature_get_coord(creature, &x, &y);
+  
+  int count = count_items(map, x, y);
   item_t* to_add;
   /* This is the case where the player has tried to pick up an item,
    * but there is nothing on the ground  beneath them.
@@ -324,7 +336,7 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
    * beneath the player.
    */
   else if(count == 1){
-    to_add = remove_item(map_get_items(map), creature->x, creature->y, 0);
+    to_add = remove_item(map_get_items(map), x, y, 0);
   }
 
   /* This is the case where there are multiple items on the ground 
@@ -333,9 +345,9 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
    */
   else if(creature == player){
     to_add = remove_item(map_get_items(map),
-			 creature->x,
-			 creature->y,
-			 items_display(map, creature->x, creature->y));
+			 x,
+			 y,
+			 items_display(map, x, y));
   }
 
   /* TODO: Nonplayer creature picking up from many items.
@@ -343,20 +355,24 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
   else{
     return;
   }
-  inventory_add(creature, to_add);
+  creature_add_item_to_inventory(creature, to_add);
 }
 
 void debug(){
   char* debug_cmd = msg_prompt("~ ");
   char* debug_cmd_lower = str_lowercase(debug_cmd);
+
+  int px, py;
+  creature_get_coord(player, &px, &py);
+  
   if(!strcmp(debug_cmd_lower,"place")){
     free(debug_cmd_lower);
     free(debug_cmd);
     
     char* debug_cmd = msg_prompt("Place where? ");
     char* debug_cmd_lower = str_lowercase(debug_cmd);
-    int place_x = player->x; 
-    int place_y = player->y;
+    int place_x = px; 
+    int place_y = py;
     
     if(!strcmp(debug_cmd_lower, "nw")){
       place_x--;
@@ -433,20 +449,6 @@ void debug(){
     exit(0);
   }else if(!strcmp(debug_cmd_lower,"reveal")){
     debug_reveal_map(cur_map);
-  }else if(!strcmp(debug_cmd_lower,"kill")){
-    int k_x = player->x;
-    int k_y = player->y;
-    get_coord_via_cursor(&k_y,&k_x);
-
-    for(clist_t *cur = map_get_creatures(cur_map);
-	cur != NULL;
-	cur = clist_next(cur)){
-      creature_t *cur_creature = clist_get_creature(cur);
-      if(cur_creature->x == k_x && cur_creature->y == k_y){
-	damage_creature(cur_creature, "GOD", 10000);
-	break;
-      }
-    }
   }else if(!strcmp(debug_cmd_lower,"toomuchhealth")){
     set_health(player, 10000);
   }else if(!strcmp(debug_cmd_lower,"maketelepathic")){
@@ -508,14 +510,15 @@ void toggle_numpad(){
  * or descend by checking the id of the items on the tile.
  */
 void xscend(int id){
-  int x = player->x;
-  int y = player->y;
-  struct map_t* m = cur_map;
+  int px, py;
+  creature_get_coord(player, &px, &py);
+
+  map_t* m = cur_map;
 
   for(item_map_t* items = map_get_items(m);
       items != NULL;
       items = items->next){
-    if(x == items->x && y == items->y){
+    if(px == items->x && py == items->y){
       for(struct itemlist_t* i = items->first;
 	  i != NULL;
 	  i = i->next){
@@ -839,20 +842,24 @@ bool analyze_cmd(int cmd, int* x, int* y){
       dir = getch();
       record_cmd(dir);
     }
-    open_tile(cur_map, player->x, player->y, dir);
+    int x, y;
+    creature_get_coord(player, &x, &y);
+    open_tile(cur_map, x, y, dir);
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
     int dir = 0;
     if(recording_macro || (dir = get_next_cmd()) == 0){
       dir = getch();
       record_cmd(dir);
-    } 
-    close_tile(cur_map, player->x, player->y, dir);
+    }
+    int x, y;
+    creature_get_coord(player, &x, &y);
+    close_tile(cur_map, x, y, dir);
    
   }else if(cmd == cmd_data[CMD_PICKUP]){
     pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
-    display_inventory(player);
+    creature_display_inventory(player);
     to_return = false;
   }else if(cmd == cmd_data[CMD_REMAP]){
     cmd_remap();
@@ -906,16 +913,21 @@ bool analyze_cmd(int cmd, int* x, int* y){
  * tile is in the range of the seer creature. Returns true if it is, false
  * otherwise.
  */
-bool coord_in_range(int target_x, int target_y, struct creature_t *seer){
-  return get_distance(target_x, target_y, seer->x, seer->y)
+bool coord_in_range(int target_x, int target_y, creature_t *seer){
+  int seer_x, seer_y;
+  creature_get_coord(seer, &seer_x, &seer_y);
+
+  return get_distance(target_x, target_y, seer_x, seer_y)
     <= creature_see_distance(seer);
 }
 
 /* This function takes in a target creature and determines if that tile is 
  * in the range of the seer creature. Returns true if it is, false otherwise.
  */
-bool in_range(struct creature_t *target, struct creature_t *seer){
-  return coord_in_range(target->x, target->y, seer);
+bool in_range(creature_t *target, creature_t *seer){
+  int tx, ty;
+  creature_get_coord(target, &tx, &ty);
+  return coord_in_range(tx, ty, seer);
 }
 
 bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
@@ -1126,7 +1138,6 @@ void game_init(int seed){
   classes_data_init();
   creature_data_init();
   player_init();
-  inventory_init(player);
   status_init();
   cmd_init();
   num_turns = 0;
@@ -1149,12 +1160,7 @@ void game_init(int seed){
   map_place_spawners(cur_map);  
 
   //Place character randomly
-  int h = map_get_height(cur_map),
-    w = map_get_width(cur_map);
-  while(map_get_tile(cur_map, player->x, player->y) != TILE_FLOOR){
-    player->x = rand() % w;
-    player->y = rand() % h;
-  }
+  creature_place_randomly_on_map(player, cur_map);
 }
 
 /* This function is called whenever the player is killed. It will prompt the 

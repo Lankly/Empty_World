@@ -176,15 +176,6 @@ item_t *remove_item(item_map_t *map, int x, int y, int index){
   return remove_item(map->next, x, y, index);
 }
 
-/* This function unequips the given item if it can,
- * and then frees that item. It does not care whether the
- * item was in the player's inventory or not when it frees the item
- */
-void destroy_item(struct item_t* item){
-  unequip_by_item(player,item);
-  free(item);
-}
-
 /* Returns the custom verb for a given weapon, if there is one. If there isn't,
  * simply returns the verb "hit".
  */

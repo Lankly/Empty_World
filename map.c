@@ -55,7 +55,7 @@ int map_get_max_item_height(map_t *map){
 
 /* This function adds a creature to a given map.
  */
-void map_add_creature(struct map_t *map, struct creature_t *creature){
+void map_add_creature(struct map_t *map, creature_t *creature){
   if(map == NULL){quit("Error: Cannot add Creature to NULL Map");}
   if(creature == NULL){quit("Error: Cannot add NULL Creature to Map");}
 
@@ -479,23 +479,17 @@ void map_place_down_stair_randomly(struct map_t* map){
   }
 }
 
-void map_place_spawners(struct map_t* map){
+void map_place_spawners(map_t* map){
   if(map == NULL){
     quit("Error: Cannot place spawners on NULL Map");}
   
   //We place one spawner for every ten levels, plus one
   for(int i = 0; i < ((map->dlevel/10) + 1); i++){
-    struct creature_t *spawner = 
+    creature_t *spawner = 
       creature_create_from_data(CREATURE_TYPE_SPAWNER);
 
-    /* Must be placed on an unknown tile. This makes it possible for it to be 
-     * seen from a corridor, but that does not matter since it cannot be killed
-     * except with a pick. */
-    do{
-      spawner->x = rand() % map->width;
-      spawner->y = rand() % map->height;
-    }while(map_get_tile(map, spawner->x, spawner->y) != TILE_UNKNOWN);
     map_add_creature(map, spawner);
+    creature_place_randomly_in_walls(spawner, map);
 
     //Each spawner is activated one hundred times when created (avg 5 creatures)
     //for(int i = 0; i < 100; i++){
@@ -520,21 +514,24 @@ bool map_coord_is_door(struct map_t* map, int x, int y){
  * enter. Then, it checks that coordinate for a creature, then an item stack, 
  * then the tile.
  */
-void map_examine_tile(struct map_t* map){
+void map_examine_tile(map_t *map){
   if(map == NULL){quit("Error: Cannot examine NULL Map");}
-  int x = player->x;
-  int y = player->y;
+  int x, y;
+  creature_get_coord(player, &x, &y);
   get_coord_via_cursor(&y, &x);
   
   //First loop through creatures
   if(map->creatures != NULL){
     for(clist_t* cur = map->creatures; cur != NULL; cur = clist_next(cur)){
       creature_t *cur_creature = clist_get_creature(cur);
-      if(cur_creature != NULL && cur_creature->x == x && cur_creature->y == y
-	 && (in_range(cur_creature, player)
-	     || is_telepathic(player))){
-	msg_addf("%s", cur_creature->exam_text);
-	return;
+      if(cur_creature != NULL){
+	int cur_x, cur_y;
+	creature_get_coord(cur_creature, &cur_x, &cur_y);
+	if(cur_x == x && cur_y == y && (in_range(cur_creature, player)
+	     || creature_is_telepathic(player))){
+	  creature_examine(cur_creature);
+	  return;
+	}
       }
     }
   }
@@ -559,8 +556,15 @@ void map_examine_tile(struct map_t* map){
  *                                 *
  * It has the monsters x and y     *
  * coords as parameters            */
-bool map_tile_is_visible(map_t* map, int check_x, int check_y, creature_t *c){
-  if(c->x == check_x && c->y == check_y){return true;}
+bool map_tile_is_visible(map_t *map, int check_x, int check_y, creature_t *c){
+  if(c == NULL){
+    return false;
+  }
+  int c_x, c_y;
+  creature_get_coord(c, &c_x, &c_y);
+  if(c_x == check_x && c_y == check_y){
+    return true;
+  }
   //Check to see if it's in the possible radius of the creature's sight
   if(!coord_in_range(check_x, check_y, c)){
     return false;
@@ -572,10 +576,10 @@ bool map_tile_is_visible(map_t* map, int check_x, int check_y, creature_t *c){
    * d is my dungeon structure and px is the creature's  *
    * x position. check_x is the target x position passed *
    * to the function.                                    */
-  delta_x = c->x - check_x;
+  delta_x = c_x - check_x;
   
   /* delta_y is the same as delta_x using the y coordinates */
-  delta_y = c->y - check_y;
+  delta_y = c_y - check_y;
   
   /* abs_delta_x & abs_delta_y: these are the absolute values of delta_x & delta_y */
   abs_delta_x = abs(delta_x);
@@ -610,7 +614,7 @@ bool map_tile_is_visible(map_t* map, int check_x, int check_y, creature_t *c){
       t += abs_delta_y * 2;
       
       /* check to see if we are at the creature's position */
-      if(x == c->x && y == c->y){
+      if(x == c_x && y == c_y){
 	/* return that the monster can see the creature */
 	return true;
       }
@@ -633,7 +637,7 @@ bool map_tile_is_visible(map_t* map, int check_x, int check_y, creature_t *c){
 	}
 	y += sign_y;
 	t += abs_delta_x * 2;
-	if(x == c->x && y == c->y){
+	if(x == c_x && y == c_y){
 	  return true;
 	}
       }while(tile_data[map_get_tile(map, x, y)].transparent);
@@ -667,11 +671,16 @@ bool map_tile_stopme(struct map_t *map, int x, int y){
 /* This function uses a pair of coordinates and a radius to reveal the floor of
  * a given map.
  */
-void map_reveal(struct map_t *map, int rev_dist){
+void map_reveal(map_t *map, int rev_dist){
   //Checks to make sure everything is OK
-  if(map == NULL){quit("Error: Cannot reveal NULL Map");}
-  if(player->x < 0 || player->y <0
-     || player->x > TERMINAL_WIDTH-1 || player->y > TERMINAL_HEIGHT-1){
+  if(map == NULL){
+    quit("Error: Cannot reveal NULL Map");
+  }
+
+  int px, py;
+  creature_get_coord(player, &px, &py);
+  if(px < 0 || py <0
+     || px > TERMINAL_WIDTH-1 || py > TERMINAL_HEIGHT-1){
     return;
   }
 
@@ -1112,9 +1121,15 @@ void draw_map(struct map_t* map){
   for(clist_t* cur = map_get_creatures(map);
       cur != NULL; cur = clist_next(cur)){
     creature_t *cur_creature = clist_get_creature(cur);
-    //Show creature if it's visible to the player
-    if(is_telepathic(player) || (creature_is_visible(cur_creature, player))){
-      mvaddch(cur_creature->y, cur_creature->x, cur_creature->display);}
+    if(cur_creature != NULL){
+      int cur_x, cur_y;
+      creature_get_coord(cur_creature, &cur_x, &cur_y);
+      
+      //Show creature if it's visible to the player
+      if(creature_is_telepathic(player)
+	 || (creature_is_visible(cur_creature, player))){
+	mvaddch(cur_y, cur_x, creature_get_display(cur_creature));}
+    }
   }
 }
 

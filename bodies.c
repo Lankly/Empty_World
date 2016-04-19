@@ -598,11 +598,11 @@ item_t *body_to_item(body_part_t *part){
 /* Returns an item that is associated with the given body. If the corpse
  * cannot be created, returns NULL.
  */
-item_t *create_corpse(struct creature_t *c){
-  if(c == NULL || c->body == NULL){
+item_t *create_corpse(creature_t *c){
+  body_part_t *part;
+  if(c == NULL || (part = creature_get_body(c)) == NULL){
     return NULL;
   }
-  body_part_t *part = c->body;
   
   item_t *corpse = Calloc(1, sizeof(item_t));
   corpse->corpse = part;
@@ -629,10 +629,10 @@ item_t *create_corpse(struct creature_t *c){
   corpse->damage_type = DMG_BLUNT;
   corpse->edible = true;
   corpse->curse_lvl = !(rand()%100) ? BUC_CURSED : BUC_UNCURSED;
-  corpse->display = COLOR_PAIR(CP_CORPSE) | (char)c->display;
+  corpse->display = COLOR_PAIR(CP_CORPSE) | (char)creature_get_display(c);
   corpse->exam_text = Calloc(MAX_MSG_LEN, sizeof(char));
   sprintf(corpse->exam_text, "This is the corpse of a %s.",
-	  str_lowercase(c->body->name));
+	  str_lowercase(part->name));
   
   return corpse;
 }
@@ -698,41 +698,43 @@ void bodylist_free(bodylist_t *list){
  * half of the screen. Assumes that the image will fit in half the screen.
  * Returns the height of the image.
  */
-int draw_body_image(struct creature_t *creature, bool left){
-  if(creature == NULL || creature->body == NULL){
-    return 0;}
+int draw_body_image(creature_t *creature, bool left){
+  body_part_t *body;
+  if(creature == NULL || (body = creature_get_body(creature)) == NULL){
+    return 0;
+  }
   
   int padding = left ? 0 : TERMINAL_WIDTH/2;
-  padding += (TERMINAL_WIDTH/2 - creature->body->image_width - 4)/2;
+  padding += (TERMINAL_WIDTH/2 - body->image_width - 4)/2;
   
   //Draw the top of the bounding box for the image
   mvaddch(1, padding,'+');
-  for(int i = 0; i < creature->body->image_width+2; i++){
+  for(int i = 0; i < body->image_width+2; i++){
     addch(ACS_HLINE);
   }
   addch('+');
   mvaddch(2, padding, ACS_VLINE); addch(' ');
   
   int num_lines = 0;
-  int len = strlen(creature->body->image);
+  int len = strlen(body->image);
   
   //Now draw the image
   for(int i = 0; i < len; i++){
-    if(creature->body->image[i] == '\n'){
+    if(body->image[i] == '\n'){
       mvaddch(2+num_lines,
-	      1 + padding + creature->body->image_width + 2,
+	      1 + padding + body->image_width + 2,
 	      ACS_VLINE);
       num_lines++;
       mvaddch(2+num_lines, padding, ACS_VLINE); addch(' ');
       i++;
     }
-    addch(creature->body->image[i]);
+    addch(body->image[i]);
   }
   
   //Finish the bounding box
-  mvaddch(2+num_lines, 1 + padding + creature->body->image_width + 2,ACS_VLINE);
+  mvaddch(2+num_lines, 1 + padding + body->image_width + 2,ACS_VLINE);
   mvaddch(3+num_lines, padding, '+');
-  for(int i = 0; i < creature->body->image_width+2; i++){
+  for(int i = 0; i < body->image_width+2; i++){
     addch(ACS_HLINE);
   }
   addch('+');
@@ -742,9 +744,9 @@ int draw_body_image(struct creature_t *creature, bool left){
 
 /* Deals damage to a creature's body part. Also handles killing them.
  */
-bool damage_body_part(int *choice, struct creature_t *attacker,
-		      struct creature_t *target,
-		      body_part_t *part, int dmg, int dmg_type){
+bool damage_body_part(int *choice, creature_t *attacker,
+		      creature_t *target, body_part_t *part,
+		      int dmg, int dmg_type){
   if(choice == NULL || part == NULL){
     //No damage done yet
     return false;
@@ -789,24 +791,25 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
       //If it didn't, then show a damage message.
       else{
 	part->health -= dmg;
-	char *dmg_verb = get_dmg_verb(get_weapon(attacker->body));
+	char *dmg_verb = get_dmg_verb(get_weapon(creature_get_body(attacker)));
       
 	if(dmg == 0 && attacker == player){
 	  msg_add("You deal no damage.");
 	}
 	else if(dmg == 0){
-	  msg_addf("The %s deals no damage.", attacker->name);
+	  msg_addf("The %s deals no damage.", creature_get_name(attacker));
 	}
 	else if(attacker == player){
-	  msg_addf("You %s the %s's %s.", dmg_verb, target->name,
+	  msg_addf("You %s the %s's %s.", dmg_verb, creature_get_name(target),
 		   str_lowercase(part->name));
 	}
 	else if(target == player){
-	  msg_addf("The %s %ss your %s.", attacker->name, dmg_verb,
+	  msg_addf("The %s %ss your %s.", creature_get_name(attacker), dmg_verb,
 		   str_lowercase(part->name));
 	}
 	else{
-	  msg_addf("The %s hits the %s.", attacker->name, target->name);
+	  msg_addf("The %s hits the %s.", creature_get_name(attacker),
+		   creature_get_name(target));
 	}
       }
 
@@ -819,7 +822,8 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 	}
 	else{
 	  strcat(message, "The ");
-	  strncat(message, target->name, MAX_MSG_LEN - strlen(message));
+	  strncat(message, creature_get_name(target),
+		  MAX_MSG_LEN - strlen(message));
 	  strncat(message, " ", MAX_MSG_LEN - strlen(message));
 	}
 	if(dmg_type == DMG_BLUNT && part->blunt_message != NULL){
@@ -865,23 +869,19 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
 	free(message);
 	
 	//Kill callback
-	if(target->kill == NULL){
-	  defaultKillCallback(target, cur_map);
-	}
-	else{
-	  target->kill(target, cur_map);
-	}
+	creature_kill(target, cur_map);
       }
     }
     else{
       if(attacker == player){
-	msg_addf("You miss the %s.", target->name);
+	msg_addf("You miss the %s.", creature_get_name(target));
       }
       else if(target == player){
-	msg_addf("The %s misses you.", attacker->name);
+	msg_addf("The %s misses you.", creature_get_name(attacker));
       }
       else{
-	msg_addf("The %s misses the %s.", attacker->name, target->name);
+	msg_addf("The %s misses the %s.", creature_get_name(attacker),
+		 creature_get_name(target));
       }
     }
     return true; //Return that the attack is done
@@ -911,7 +911,9 @@ bool damage_body_part(int *choice, struct creature_t *attacker,
       msg_addf("Your %s is broken!", str_lowercase(part->name));
     }
     else if(part->damage == DAMAGE_BROKEN){
-      msg_addf("The %s's %s is broken!",target->name,str_lowercase(part->name));
+      msg_addf("The %s's %s is broken!",
+	       creature_get_name(target),
+	       str_lowercase(part->name));
     }
 
     return true;
@@ -1000,7 +1002,8 @@ void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
 }
 bool target_attack(){
   int dir = msg_promptchar("Target which direction?");
-  int x = player->x, y = player->y;
+  int x, y;
+  creature_get_coord(player, &x, &y);
   if(dir == cmd_data[CMD_UP] || dir == KEY_UP){
     y -= 1;}
   else if(dir == cmd_data[CMD_DOWN] || dir == KEY_DOWN){
@@ -1023,22 +1026,23 @@ bool target_attack(){
   }
 
   clist_t *creatures = map_get_creatures(cur_map);
-  struct creature_t *target = get_creature_at_position(x,y, creatures);
-  if(target != NULL && target->body != NULL){
+  creature_t *target = get_creature_at_position(x,y, creatures);
+  body_part_t *body = creature_get_body(target);
+  if(target != NULL && body != NULL){
     int choice = -1;
     int selector = 0;
 
     clear();
     draw_borders();
     int num_lines = draw_body_image(target, true);
-    int padding = (TERMINAL_WIDTH/2 - target->body->image_width - 4)/2;
+    int padding = (TERMINAL_WIDTH/2 - body->image_width - 4)/2;
       
     //Info
     mvaddstr(4 + num_lines,
-	     padding + (4 + target->body->image_width - strlen(target->name))/2,
-	     target->name);
+	     padding + (4 + body->image_width - strlen(body->name))/2,
+	     body->name);
     mvaddstr(5 + num_lines,
-	     padding + (4+ target->body->image_width
+	     padding + (4+ body->image_width
 			- strlen("Pick your target"))/2,
 	     "Pick your target.");
     
@@ -1046,8 +1050,8 @@ bool target_attack(){
     while(choice == -1){
       //List of limbs
       int lines = 0;
-      limb_list_helper(target, 0, &lines, target->body,
-		       selector, target->body->size);
+      limb_list_helper(target, 0, &lines, body,
+		       selector, body->size);
       
       //Get user input
       int ch = Getch();
@@ -1062,7 +1066,7 @@ bool target_attack(){
       }
     }
     //TODO: Implement damage type
-    damage_body_part(&choice, player, target, target->body,
+    damage_body_part(&choice, player, target, body,
 		     creature_get_damage(player),0);
 
     return true;
@@ -1071,16 +1075,18 @@ bool target_attack(){
   return false;
 }
 
-int body_part_chance_to_hit(struct creature_t *attacker,
-			    struct creature_t *target,
+int body_part_chance_to_hit(creature_t *attacker,
+			    creature_t *target,
 			    body_part_t *part){
-  if(attacker == NULL || target == NULL || part == NULL){
+  body_part_t *tbody;
+  if(attacker == NULL || target == NULL || part == NULL
+     || (tbody = creature_get_body(target)) == NULL){
     return 0;
   }
 
-  int largest_size = target->body->size;
+  int largest_size = tbody->size;
   int result = 0;
-  int cur_wep_skill = get_cur_weapon_skill();
+  int cur_wep_skill = creature_get_skill_with_weapon(attacker);
   result += cur_wep_skill > 10 ? 30 : cur_wep_skill * 3;
 
   int diff = largest_size - part->size;
@@ -1100,7 +1106,7 @@ int body_part_chance_to_hit(struct creature_t *attacker,
     result += 10 + ((4-diff) * 3);
   }
 
-  if(target->is_immobile && result < 80){
+  if(creature_is_immobile(target) && result < 80){
     result = 80;
   }
   

@@ -4,6 +4,7 @@
 #include "creature_callbacks.h"
 #include "items.h"
 #include "inventory.h"
+#include "macros.h"
 #include "map.h"
 #include "player.h"
 #include "status.h"
@@ -17,6 +18,61 @@ struct creaturelist_t{
   struct creature_t *creature;
   struct creaturelist_t *next;
 };
+
+//the most recent command given by the player
+int cmd;
+
+struct creature_t{
+  int strength;  int perception;    int endurance;
+  int charisma;  int intelligence;  int agility;
+  int dexterity; int luck;
+  int health;    int hunger;        int gold;
+  int level;     int max_hunger;    int max_health;
+  
+  /* This is how hunger works:
+   * You have a max_hunger. This represents how much food can be in your stomach
+   * at one time. Above this, and the stomach will purge to 20% of its max. You 
+   * also have a hunger integer that represents how much food is in your stomach
+   * right now. Hunger is a large number, in the hundreds, and decrements once
+   * every turn cycle.
+   */
+
+  int turn_tokens;
+  int turn_tokens_reset_amount;
+  
+  int were_type;
+  int class;
+  int creature_id;
+  int display;
+  int type;
+  int x; int y;
+  int last_position; //As in keys on a numpad
+
+  char *name;
+  char *exam_text;
+  
+  bool is_asleep;
+  bool is_immobile;
+  bool is_flying;
+  bool is_blind;
+  bool is_telepathic;
+
+  struct intlist_t *breathables;
+  struct intlist_t *consumables;
+  struct intlist_t *intrinsics;
+  struct intlist_t *resistances;
+
+  inventory_t *inventory;
+  creatureTakeTurnCallback takeTurn;
+  creaturePathfindCallback pathfind;
+  creatureKillCallback kill;
+
+  struct body_part_t *body;
+};
+
+//This is all the default kinds of creatures that can be created
+creature_t creature_data[CREATURE_TYPE_MAX+1];
+
 
 /* Initializes all the possible default creatures. Certain fields will not be
  * initialized, because we can't know what they'll be in advance, such as level,
@@ -76,7 +132,7 @@ void creature_data_init(){
     .display = 'M',
     .name = "Mindflayer",
     .exam_text = "This is a mindflayer.",
-    .can_fly = true,
+    .is_flying = true,
     .max_health = 120,
     .strength = 15,
     .takeTurn = &defaultTakeTurnCallback,
@@ -132,7 +188,7 @@ void creature_data_init(){
     .name = "Hornet",
     .exam_text = "This is a hornet.",
     .max_health = 5,
-    .can_fly = true,
+    .is_flying = true,
     .strength = 2,
     .perception = 2,
     .charisma = -1,
@@ -196,7 +252,7 @@ void creature_data_init(){
     .display = 'e',
     .name = "Floating Eye",
     .exam_text = "This is an eyball floating over the floor.",
-    .can_fly = true,
+    .is_flying = true,
     .max_health = 120,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback,
@@ -208,7 +264,7 @@ void creature_data_init(){
     .display = 'E',
     .name = "Demon",
     .exam_text = "This is a demon.",
-    .can_fly = true,
+    .is_flying = true,
     .max_health = 200,
     .strength = 18,
     .takeTurn = &defaultTakeTurnCallback,
@@ -233,7 +289,7 @@ void creature_data_init(){
     .display = 'G',
     .name = "Griffon",
     .exam_text = "This is a griffon.",
-    .can_fly = true,
+    .is_flying = true,
     .max_health = 80,
     .strength = 5,
     .takeTurn = &defaultTakeTurnCallback,
@@ -245,7 +301,7 @@ void creature_data_init(){
     .display = (((int)' ') | COLOR_PAIR(CP_BLACK_WHITE)),
     .name = "Fog",
     .exam_text = "It is fog. Something about it seems strange.",
-    .can_fly = true,
+    .is_flying = true,
     .max_health = 10,
     .strength = 1,
     .takeTurn = &defaultTakeTurnCallback,
@@ -384,8 +440,9 @@ creature_t *creature_spawn(int creature_id, struct map_t *map){
   creature_t *c = creature_create_from_data(creature_id);
   set_level(c, 1);
   set_health(c, get_max_health(c));
-  creature_place_on_map(c, map);
+  creature_place_randomly_on_map(c, map);
   map_add_creature(map, c);
+  c->inventory = inventory_new();
 
   switch(c->creature_id){
   case CREATURE_TYPE_AVIAN :
@@ -422,18 +479,117 @@ bool creatures_equal(creature_t *first, creature_t *second){
     && !strcmp(first->name, second->name);
 }
 
+/* Returns whether the creature is alseep or not. If the creature is NULL,
+ * returns false.
+ */
+bool creature_is_asleep(creature_t *c){
+  if(c == NULL){
+    return false;
+  }
+  return c->is_asleep;
+}
+
+/* Returns whether the creature is blind or not. If the creature is NULL,
+ * returns false.
+ */
+bool creature_is_blind(creature_t *c){
+  if(c == NULL){
+    return false;
+  }
+  return c->is_blind;
+}
+
+/* Returns whether the creature is flying or not. If the creature is NULL,
+ * returns false.
+ */
+bool creature_is_flying(creature_t *c){
+  if(c == NULL){
+    return false;
+  }
+  return c->is_flying;
+}
+
+/* Returns whether the creature is capable of moving or not. If the creature
+ * is NULL, return false.
+ */
+bool creature_is_immobile(creature_t *c){
+  if(c == NULL || c->body == NULL){
+    return false;
+  }
+  return c->is_immobile;
+}
+
+bool creature_is_out_of_turns(creature_t *c){
+  return c == NULL || c->turn_tokens <= 0;
+}
+
+/* Returns whether the creature is telepathic of moving or not. If the creature
+ * is NULL, return false.
+ */
+bool creature_is_telepathic(creature_t *c){
+  if(c == NULL || c->body == NULL){
+    return false;
+  }
+  return c->is_telepathic;
+}
+
+/* This method returns true if the given target creature can be seen by the seer
+ * creature and false otherwise. Assumes that both creatures are on the same map
+ */
+bool creature_is_visible(creature_t *target, creature_t *seer){
+  if(target == NULL || seer == NULL){
+    quit("ERROR: Cannot get visibility of NULL creature.");
+  }
+
+  //Check if the target is in the seer's visible range
+  if(!in_range(target, seer)){
+    return false;}
+
+  //If the seer is the player, do a wall-check. Return true otherwise.
+  return map_tile_is_visible(cur_map, target->x, target->y, seer);
+}
+
+body_part_t *creature_get_body(creature_t *c){
+  return c == NULL ? NULL : c->body;
+}
+
+/* Returns the class of the given creature. If the creature does not exist,
+ * returns the UNKNOWN class.
+ */
+class_t creature_get_class(creature_t *c){
+  return class_data[c == NULL ? CLASS_UNKNOWN : c->class];
+}
+
+/* Sets the given x and y integers to the x and y coordinate pair that the
+ * given creature is at. Returns -1, -1 if the creature is NULL.
+ */
+void creature_get_coord(creature_t *c, int *x, int *y){
+  if(c == NULL){
+    *x = -1;
+    *y = -1;
+  }
+  else{
+    *x = c->x;
+    *y = c->y;
+  }
+}
+
 /* If there is a creature at a given position in a given list of creatures,
  * return that creature. Otherwise, return NULL.
  */
 struct creature_t *get_creature_at_position(int x, int y, clist_t *l){
-  for(clist_t *cur = l; cur != NULL; cur = clist_next(l)){
+  for(clist_t *cur = l; cur != NULL; cur = clist_next(cur)){
     creature_t *creature = clist_get_creature(cur);
     
-    if(creature->x == x && creature->y == y){
+    if(creature != NULL && creature->x == x && creature->y == y){
       return creature;
     }
   }
   return NULL;
+}
+
+bool creature_add_item_to_inventory(creature_t *c, item_t *item){
+  return inventory_add(c->inventory, item);
 }
 
 /* This method handles how a creature takes damage.
@@ -462,25 +618,124 @@ void damage_creature(struct creature_t *target, char *source, int dmg){
     qckmv = false;}
 }
 
+void creature_display_inventory(creature_t *c){
+  if(c != NULL){
+    display_inventory(c->inventory);
+  }
+  else{
+    msg_add("No items.");
+  }
+}
+
+/* Attempts to examine the given creature. If the creature could not be
+ * examined for some reason, gives the message "Unknown".
+ */
+void creature_examine(creature_t *c){
+  msg_add(c == NULL || c->exam_text == NULL ? "Unknown" : c->exam_text);
+}
+
+/* Attempts to free the given creature. If the creature is NULL, does nothing.
+ * Returns the creature's body.
+ */
+body_part_t *creature_free(creature_t *c){
+  body_part_t *to_return;
+  if(c != NULL){
+    to_return = c->body;
+    intlist_free(c->breathables);
+    intlist_free(c->consumables);
+    intlist_free(c->intrinsics);
+    intlist_free(c->resistances);
+    free(c);
+  }
+  return to_return;
+}
+
+/* Kills the given creature. Does nothing if the creature is NULL.
+ */
+void creature_kill(creature_t *c, map_t *map){
+  if(c != NULL){
+    if(c->kill == NULL){
+      defaultKillCallback(c, map);
+    }
+    else{
+      c->kill(c, map);
+    }
+  }
+}
+
+/* Lets the given creature pathfind for a turn. Does nothing if the creature
+ * is NULL.
+ */
+void creature_pathfind(creature_t *c, map_t *map){
+  if(c != NULL){
+    if(c->pathfind == NULL){
+      defaultPathfindCallback(c, map);
+    }
+    else{
+      c->pathfind(c, map);
+    }
+  }
+}
+
+void creature_place_randomly_helper(creature_t *c, map_t *map, bool passable){
+  int w = map_get_width(map),
+    h = map_get_height(map),
+    x = rand() % w,
+    y = rand() % h;
+  
+  //Keep searching for a tile that the creature can pass through
+  while(tile_data[map_get_tile(map, x, y)].passable != passable){
+    x = rand()%w;
+    y = rand()%h;
+  }
+  c->x = x; 
+  c->y = y;
+}
+
+void creature_place_at_coord(creature_t *c, map_t *map, int x, int y){
+  if(c != NULL){
+    c->x = x;
+    c->y = y;
+  }
+}
+
 /* This method places the given creature on the given map
  * randomly if it was placed for the first time,
  * at the stairs otherwise.
  */
-void creature_place_on_map(creature_t *creature, map_t *map){
-    int w = map_get_width(map),
-      h = map_get_height(map),
-      x = rand() % w,
-      y = rand() % h;
-
-    //Keep searching for a tile that the creature can pass through
-    while(!tile_data[map_get_tile(map, x, y)].passable){
-      x = rand()%w;
-      y = rand()%h;
-    }
-    creature->x = x; 
-    creature->y = y;
+void creature_place_randomly_on_map(creature_t *creature, map_t *map){
+  creature_place_randomly_helper(creature, map, true);
 }
 
+void creature_place_randomly_in_walls(creature_t *creature, map_t *map){
+  creature_place_randomly_helper(creature, map, false);
+}
+
+/* Records the direction that the creature's last known position was in, using
+ * the numpad directional system. 
+ * move_x is how much the creature moved to the right. 
+ * move_y is how much the creature moved downward.
+ */
+void creature_record_movement(creature_t *c, int move_x, int move_y){
+  if(move_y < 0){
+    c->last_position = 2;
+  }
+  else if(move_y == 0){
+    c->last_position = 5;
+  }
+  else if(move_y > 0){
+    c->last_position = 8;
+  }
+  
+  if(move_x < 0){
+    move_x = -1;
+  }
+  else if(move_x > 0){
+    move_x = 1;
+  }
+  
+  c->last_position -= move_x;
+}
 
 /* This method will return a value that determines how far a given creature is
    currently able to see. This value is determined by their perception,
@@ -501,20 +756,25 @@ int creature_see_distance(struct creature_t* creature){
   return to_return;
 }
 
-/* This method returns true if the given target creature can be seen by the seer
- * creature and false otherwise. Assumes that both creatures are on the same map
+void creature_take_break(creature_t *c){
+  c->turn_tokens +=
+    c->turn_tokens_reset_amount <= 0 ? 1 : c->turn_tokens_reset_amount;
+}
+
+/* Lets the given creature take its turn. Does nothing if the creature is NULL
+ * or if the creature is exhausted.
  */
-bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
-  if(target == NULL || seer == NULL){
-    quit("ERROR: Cannot get visibility of NULL creature.");
+void creature_take_turn(creature_t *c, map_t *map){
+  if(c != NULL && c->turn_tokens > 0){
+    if(c->takeTurn == NULL){
+      defaultTakeTurnCallback(c, map);
+    }
+    else{
+      c->takeTurn(c, map);
+    }
+
+    c->turn_tokens--;
   }
-
-  //Check if the target is in the seer's visible range
-  if(!in_range(target, seer)){
-    return false;}
-
-  //If the seer is the player, do a wall-check. Return true otherwise.
-  return map_tile_is_visible(cur_map, target->x, target->y, seer);
 }
 
 /* This method returns true if a given creature can move to a given tile, not
@@ -592,10 +852,11 @@ int creature_get_damage(struct creature_t* creature){
     quit("ERROR: Cannot get damage of NULL creature.");
   }
   double to_return = 0;
-  if(creature->inventory != NULL && creature->inventory->wield != NULL){
+  item_t *weapon = get_weapon(creature->body);
+  if(weapon != NULL){
     /* Base weapon damage is a function of strength, health, and weapon damage
      */
-    to_return += creature->inventory->wield->damage * 
+    to_return += weapon->damage * 
       (creature->strength / 2) *
       (((double)creature->health
 	/ (double)get_max_health(creature) < .5) ? 1 : .8);
@@ -610,6 +871,46 @@ int creature_get_damage(struct creature_t* creature){
   return (int)to_return;
 }
 
+/* Returns the symbol associated with the given creature. If the creature does
+ * not have one, or the creature is NULL, returns '?'.
+ */
+int creature_get_display(creature_t *c){
+  return c == NULL || c->display == 0 ? '?' : c->display;
+}
+
+/* Returns the direction that the creature was last in, using the numpad
+ * directional system. For example, 8 is up, 1 is down to the left, etc.
+ * Returns -1 if completely unknown.
+ */
+int creature_get_last_position(creature_t *c){
+  return c == NULL ? -1 : c->last_position;
+}
+
+/* Returns the name associated with the given creature. If the creature does not
+ * have one, or the creature is NULL, returns "Unknown".
+ */
+char *creature_get_name(creature_t *c){
+  return c == NULL || c->name == NULL ? "Unknown" : c->name;
+}
+
+int creature_get_skill_with_weapon(creature_t *c){
+  return get_dexterity(c);
+}
+
+/* Returns the given creature's type. If the creature is NULL, returns 
+ * CREATURE_TYPE_UNKNOWN.
+ */
+int creature_get_type(creature_t *c){
+  return c == NULL ? CREATURE_TYPE_UNKNOWN : c->creature_id;
+}
+
+/* Sets the given creature's display to the given display value.
+ */
+void creature_set_display(creature_t *c, int disp){
+  if(c != NULL){
+    c->display = disp;
+  }
+}
 
 void set_level(struct creature_t* c, int l){
   if(c != NULL){
@@ -719,11 +1020,6 @@ void set_hunger(struct creature_t* c, int h){
     c->hunger = h;}
 }
 
-char* get_name(struct creature_t* c){
-  if(c == NULL){quit("Error: Cannot get name of NULL Creature.");}
-  return c->name;
-}
-
 int get_class(struct creature_t *c){
   if(c == NULL){quit("Error: Cannot get class of NULL Creature.");}
   return c->class;
@@ -761,11 +1057,6 @@ bool is_blind(struct creature_t *c){
 bool is_asleep(struct creature_t *c){
   if(c == NULL){quit("Cannot get status of NULL Creature");}
   return c->is_asleep;
-}
-
-bool is_immobile(struct creature_t *c){
-  if(c == NULL){quit("Cannot get status of NULL Creature");}
-  return c->is_immobile;
 }
 
 bool is_telepathic(struct creature_t *c){
@@ -875,4 +1166,140 @@ void remove_resistance(struct creature_t* creature, int type){
   if(creature != NULL){
     intlist_remove(creature->resistances, type);
   }
+}
+
+
+/*
+ * PLAYER INFORMATION BELOW THIS LINE
+ */
+
+void playerTakeTurnCallback(struct creature_t* creature,
+			    struct map_t* map){
+  map_reveal(map, creature_see_distance(player));
+  draw_map(map);
+  draw_status(map, creature);
+
+  int plr_mv_to_x = player->x,
+    plr_mv_to_y = player->y;
+
+  //Use timeout so that we can get the mouse movement
+  timeout(1);
+  do{
+    /* If the player is quickmoving, keep doing that. 
+     * Else, look for keyboard input.
+     */
+    if(qckmv){
+      cmd = qckmv_cmd;
+    }
+    //Handle macro playback
+    else if(playing_macro){
+      cmd = get_next_cmd();
+    }else{
+      cmd = getch();
+      if(cmd != ERR){
+	record_cmd(cmd);
+      }
+    }
+
+    display_mouse();
+    
+  }while(cmd == 27
+	 || !analyze_cmd(cmd, &plr_mv_to_x, &plr_mv_to_y));
+  timeout(-1);
+  
+  /* Ensure that the player is light enough to pass through corners,
+       that they are not behind a closed door.
+  */
+  if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
+    //Now we check to see if they're moving into a creature
+    struct creature_t *creature_in_way = NULL;
+    for(clist_t *cur = map_get_creatures(cur_map);
+	cur != NULL && creature_in_way == NULL;
+	cur = clist_next(cur)){
+      creature_t *cur_creature = clist_get_creature(cur);
+      if(cur_creature->x == plr_mv_to_x && cur_creature->y == plr_mv_to_y
+	 && cur_creature != player){
+	creature_in_way = cur_creature;}
+    }
+
+    //And attacking if so
+    if(creature_in_way){
+      int temp = 0;
+      damage_body_part(&temp, player, creature_in_way,
+		       creature_in_way->body,
+		       creature_get_damage(player),
+		       DMG_BLUNT);
+    }
+    else{
+      //If no creature in way, just move there.
+      player->x=plr_mv_to_x;
+      player->y=plr_mv_to_y;
+    }
+    //Maybe increment turn counter
+    player->turn_tokens--;
+    if(player->turn_tokens == 0){num_turns++;}
+  }
+  else{
+    qckmv = false;
+    int tile = map_get_tile(map, plr_mv_to_x, plr_mv_to_y);
+    //If the creature couldn't move to that spot, see if it's a door and open it
+    if(tile == TILE_DOOR_CLOSE){
+      open_tile(map, player->x, player->y, cmd);
+      //Maybe increment turn counter
+      player->turn_tokens--;
+      if(player->turn_tokens == 0){num_turns++;}
+    }
+    //If it's otherwise not passable, they should choose to do something else
+    else if(!tile_data[tile].passable){
+      playerTakeTurnCallback(creature, map);
+    }
+  }
+
+  if(qckmv){
+    qckmv = qckmv_continue(cur_map, plr_mv_to_x, plr_mv_to_y, qckmv_cmd);}
+}
+
+void player_init(){
+  player = Calloc(1, sizeof(struct creature_t));
+  player->display = '@' | COLOR_PAIR(CP_YELLOW_BLACK);
+  player->exam_text = "This is you!";
+  
+  //Get player's name
+  player->name = (char*)calloc(PLAYER_NAME_SIZE+1, sizeof(char));
+  strncpy(player->name, msg_prompt("What is your name? "), PLAYER_NAME_SIZE);
+  if(!strcmp(player->name, "")){
+    player->name = "Lan";}
+
+  player->class = CLASS_NEWB;
+  set_strength(player, 1);
+  set_perception(player, 1);
+  set_endurance(player, 1);
+  set_charisma(player, 1);
+  set_intelligence(player, 1);
+  set_luck(player, 1);
+  set_dexterity(player, 1);
+  set_health(player, 10);
+  set_max_health(player, get_health(player));
+  set_max_hunger(player, 200);
+  set_hunger(player, player->max_hunger);
+  set_gold(player, 5);
+  set_level(player, 1);
+  
+  add_breathable(player, BREATHE_AIR);
+  add_consumable(player, CONSUME_ANIMAL);
+  add_consumable(player, CONSUME_INSECT);
+  add_consumable(player, CONSUME_FOOD);
+  add_consumable(player, CONSUME_DRUG);
+  add_consumable(player, CONSUME_WATER);
+  add_consumable(player, CONSUME_ALCOHOL);
+  add_consumable(player, CONSUME_POTION);
+  player->takeTurn = &playerTakeTurnCallback;
+  player->kill = &game_over;
+
+  player->turn_tokens = class_data[player->class].turn_tokens_starting_amount;
+  player->turn_tokens_reset_amount = player->turn_tokens;
+
+  player->body = gen_human();
+  
+  cmd = 0;
 }

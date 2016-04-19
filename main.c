@@ -41,12 +41,12 @@ int main(int argc, char** argv){
 	creature_t *creature = clist_get_creature(cur);
 	if(creature != NULL){
 	  //If this creature is not out of move tokens, take turn.
-	  if(creature->turn_tokens > 0){
-	    creature->takeTurn(creature, cur_map);
+	  if(!creature_is_out_of_turns(creature)){
+	    creature_take_turn(creature, cur_map);
 	  }
 	  //Otherwise, skip the turn to reset them
 	  else{
-	    creature->turn_tokens = creature->turn_tokens_reset_amount;
+	    creature_take_break(creature);
 	  }
 	}
       }

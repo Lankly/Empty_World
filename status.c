@@ -46,12 +46,13 @@ void draw_status(map_t *map, struct creature_t *c){
   
   //Line one of info (always at least player_name, class_name)
   char *name_and_class = Calloc(TERMINAL_WIDTH, sizeof(char));
-  sprintf(name_and_class, "%s, %s", c->name, class_data[c->class].name);
-  strncat(output,name_and_class,(int)(TERMINAL_WIDTH - strlen(output)));
+  sprintf(name_and_class, "%s, %s",
+	  creature_get_name(c), creature_get_class(c).name);
+  strncat(output, name_and_class, (int)(TERMINAL_WIDTH - strlen(output)));
   
   ////Contains information about what is in the left and right hand
   char *left_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
-  body_part_t *lh = get_body_part_by_name(c->body, "Left hand");
+  body_part_t *lh = get_body_part_by_name(creature_get_body(c), "Left hand");
   strncat(left_hand, "  LeftHand:", TERMINAL_WIDTH);
   strncat(left_hand, lh == NULL ? "Gone" : lh->held == NULL ? "None"
 	  : lh->held->name, TERMINAL_WIDTH - strlen(left_hand));
@@ -61,7 +62,7 @@ void draw_status(map_t *map, struct creature_t *c){
   }
 
   char *right_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
-  body_part_t *rh = get_body_part_by_name(c->body, "Right hand");
+  body_part_t *rh = get_body_part_by_name(creature_get_body(c), "Right hand");
   strncat(right_hand, " RightHand:", TERMINAL_WIDTH);
   strncat(right_hand, rh == NULL ? "Gone" : rh->held == NULL ? "None"
 	  : rh->held->name, TERMINAL_WIDTH - strlen(right_hand));
@@ -155,6 +156,7 @@ void msg_add(char *new_msg){
       //Add "..." to existing unread message
       strcat(last_msg->msg, "...");
       //Display the message (sets newmsg to false)
+      draw_map(cur_map);
       draw_status(cur_map, player);
       //Wait for a key
       Getch();
@@ -315,27 +317,27 @@ void display_stats(struct creature_t *creature){
 
   //Non-numbered stats
   int cur = num_stats - possible_nonnumbered_stats;
-  if(creature->is_asleep){
+  if(creature_is_asleep(creature)){
     sprintf(format, "Is asleep");
     output[cur] = str_to_ints(format, max_stat_length);
     cur++;
   }
-  if(creature->is_immobile){
+  if(creature_is_immobile(creature)){
     sprintf(format, "Is immobile");
     output[cur] = str_to_ints(format, max_stat_length);
     cur++;
   }
-  if(creature->can_fly){
+  if(creature_is_flying(creature)){
     sprintf(format,"Is flying");
     output[cur] = str_to_ints(format, max_stat_length);
     cur++;
   }
-  if(creature->is_blind){
+  if(creature_is_blind(creature)){
     sprintf(format, "Is blind");
     output[cur] = str_to_ints(format, max_stat_length);
     cur++;
   }
-  if(creature->is_telepathic){
+  if(creature_is_telepathic(creature)){
     sprintf(format, "Sees with their mind");
     output[cur] = str_to_ints(format, max_stat_length);
     cur++;
@@ -345,7 +347,7 @@ void display_stats(struct creature_t *creature){
   char *instr = Calloc(TERMINAL_WIDTH+1, sizeof(char));
   snprintf(instr, TERMINAL_WIDTH,
 	   "Viewing stats for %s    ESC to quit",
-	   creature->name);
+	   creature_get_name(creature));
   display_list(instr, output, num_stats, max_stat_length);
 
   free(instr);
@@ -358,7 +360,7 @@ void display_stats(struct creature_t *creature){
 
 void status_init(){
   char welcome_msg[MAX_MSG_LEN];
-  sprintf(welcome_msg, "Welcome to the game, %s!", get_name(player));
+  sprintf(welcome_msg, "Welcome to the game, %s!", creature_get_name(player));
   msg_add(welcome_msg);
 }
 

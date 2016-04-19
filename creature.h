@@ -1,15 +1,27 @@
-#include <stdbool.h>
-
 #ifndef CREATURE_H
 #define CREATURE_H
 
 typedef struct creaturelist_t clist_t;
 typedef struct creature_t creature_t;
 
+#include <stdbool.h>
 #include "bodies.h"
+#include "classes.h"
+#include "creature_callbacks.h"
+#include "inventory.h"
 #include "items.h"
 #include "map.h"
-#include "creature_callbacks.h"
+
+typedef void (*creatureTakeTurnCallback)(struct creature_t *creature,
+					 map_t *map);
+typedef void (*creaturePathfindCallback)(struct creature_t *creature,
+					 map_t *map);
+typedef void (*creatureKillCallback)(struct creature_t *creature,
+				     map_t *map);
+
+creature_t* player;
+
+#define PLAYER_NAME_SIZE 12
 
 //DEFINE CREATURE TYPES
 #define CREATURE_TYPE_UNKNOWN  0
@@ -74,68 +86,6 @@ typedef struct creature_t creature_t;
 #define BREATHE_LAVA 4
 #define BREATHE_MAX 4
 
-struct creature_t; struct map_t; struct item_map_t;
-typedef void (*creatureTakeTurnCallback)(struct creature_t *creature,
-					 struct map_t *map);
-typedef void (*creaturePathfindCallback)(struct creature_t *creature,
-					 struct map_t *map);
-typedef void (*creatureKillCallback)(struct creature_t *creature,
-				     struct map_t *map);
-
-struct body_part_t;
-
-#include "inventory.h"
-struct creature_t{
-  int strength;  int perception;    int endurance;
-  int charisma;  int intelligence;  int agility;
-  int dexterity; int luck;
-  int health;    int hunger;        int gold;
-  int level;     int max_hunger;    int max_health;
-  
-  /* This is how hunger works:
-   * You have a max_hunger. This represents how much food can be in your stomach
-   * at one time. Above this, and the stomach will purge to 20% of its max. You 
-   * also have a hunger integer that represents how much food is in your stomach
-   * right now. Hunger is a large number, in the hundreds, and decrements once
-   * every turn cycle.
-   */
-
-  int turn_tokens;
-  int turn_tokens_reset_amount;
-  
-  int were_type;
-  int class;
-  int creature_id;
-  int display;
-  int type;
-  int x; int y;
-  int last_position; //As in keys on a numpad
-
-  char *name;
-  char *exam_text;
-  
-  bool is_asleep;
-  bool is_immobile;
-  bool can_fly;
-  bool is_blind;
-  bool is_telepathic;
-
-  struct intlist_t *breathables;
-  struct intlist_t *consumables;
-  struct intlist_t *intrinsics;
-  struct intlist_t *resistances;
-
-  inventory_t *inventory;
-  creatureTakeTurnCallback takeTurn;
-  creaturePathfindCallback pathfind;
-  creatureKillCallback kill;
-
-  struct body_part_t *body;
-};
-
-//This is all the default kinds of creatures that can be created
-struct creature_t creature_data[CREATURE_TYPE_MAX+1];
-
 clist_t *clist_new(creature_t *creature);
 void clist_add(clist_t *list, clist_t *next);
 clist_t *clist_next(clist_t *list);
@@ -145,78 +95,103 @@ creature_t *clist_remove_by_creature(clist_t *list, creature_t *creature);
 
 void creature_data_init();
 creature_t *creature_create_from_data(int index);
-creature_t *creature_spawn(int creature_id, struct map_t *map);
+creature_t *creature_spawn(int creature_id, map_t *map);
+
+bool creature_can_move_to(creature_t *creature, int x, int y, int cmd);
 bool creatures_equal(creature_t *first, creature_t *second);
+bool creature_is_asleep(creature_t *c);
+bool creature_is_blind(creature_t *c);
+bool creature_is_flying(creature_t *c);
+bool creature_is_immobile(creature_t *c);
+bool creature_is_out_of_turns(creature_t *c);
+bool creature_is_telepathic(creature_t *c);
+bool creature_is_visible(creature_t *target, creature_t *seer);
 
-struct creature_t *get_creature_at_position(int x, int y, clist_t *l);
-void damage_creature(struct creature_t *target, char *source, int dmg);
-void creature_place_on_map(struct creature_t *creature, map_t *map);
-int creature_see_distance(struct creature_t *creature);
-bool creature_is_visible(struct creature_t *target, struct creature_t *seer);
-bool creature_can_move_to(struct creature_t *creature, int x, int y, int cmd);
-int creature_get_damage(struct creature_t *creature);
+bool creature_add_item_to_inventory(creature_t *c, item_t *item);
+void damage_creature(creature_t *target, char *source, int dmg);
+void creature_display_inventory(creature_t *c);
+void creature_examine(creature_t *c);
+body_part_t *creature_free(creature_t *c);
+void creature_kill(creature_t *c, map_t *map);
+void creature_pathfind(creature_t *c, map_t *map);
+void creature_place_at_coord(creature_t *c, map_t *map, int x, int y);
+void creature_place_randomly_on_map(creature_t *c, map_t *map);
+void creature_place_randomly_in_walls(creature_t *c, map_t *map);
+void creature_record_movement(creature_t *c, int move_x, int move_y);
+int creature_see_distance(creature_t *c);
+void creature_take_break(creature_t *c);
+void creature_take_turn(creature_t *c, map_t *map);
 
-void set_blindness(struct creature_t *c, bool b);
-void set_unconscious(struct creature_t *c, bool b);
-void set_immobile(struct creature_t *c, bool b);
-void set_telepathic(struct creature_t *c, bool b);
-void set_level(struct creature_t *c, int l);
-void set_dlevel(struct creature_t *c, int d);
-void set_name(struct creature_t *c, char *n);
-void set_exam_text(struct creature_t *c, char *e);
-void set_class(struct creature_t *c, int class);
-void set_gold(struct creature_t *c, int g);
+body_part_t *creature_get_body(creature_t *c);
+class_t creature_get_class(creature_t *c);
+void creature_get_coord(creature_t *c, int *x, int *y);
+creature_t *get_creature_at_position(int x, int y, clist_t *l);
+int creature_get_damage(creature_t *c);
+int creature_get_display(creature_t *c);
+int creature_get_last_position(creature_t *c);
+char *creature_get_name(creature_t *c);
+int creature_get_skill_with_weapon(creature_t *c);
+int creature_get_type(creature_t *c);
 
-void set_strength(struct creature_t *c, int s);
-void set_perception(struct creature_t *c, int p);
-void set_endurance(struct creature_t *c, int e);
-void set_charisma(struct creature_t *c, int ch);
-void set_intelligence(struct creature_t *c, int i);
-void set_agility(struct creature_t *c, int a);
-void set_luck(struct creature_t *c, int l);
-void set_dexterity(struct creature_t *c, int d);
+void creature_set_display(creature_t *c, int disp);
 
-void set_health(struct creature_t *c, int h);
-void set_max_health(struct creature_t *c, int mh);
-void set_max_hunger(struct creature_t *c, int m);
-void set_hunger(struct creature_t *c, int h);
+void set_blindness(creature_t *c, bool b);
+void set_unconscious(creature_t *c, bool b);
+void set_immobile(creature_t *c, bool b);
+void set_telepathic(creature_t *c, bool b);
+void set_level(creature_t *c, int l);
+void set_name(creature_t *c, char *n);
+void set_exam_text(creature_t *c, char *e);
+void set_class(creature_t *c, int class);
+void set_gold(creature_t *c, int g);
 
-char *get_name(struct creature_t *c);
-int get_class(struct creature_t *c);
-int get_level(struct creature_t *c);
-int get_dlevel(struct creature_t *c);
-int get_weight(struct creature_t *c);
-int get_gold(struct creature_t *c);
+void set_strength(creature_t *c, int s);
+void set_perception(creature_t *c, int p);
+void set_endurance(creature_t *c, int e);
+void set_charisma(creature_t *c, int ch);
+void set_intelligence(creature_t *c, int i);
+void set_agility(creature_t *c, int a);
+void set_luck(creature_t *c, int l);
+void set_dexterity(creature_t *c, int d);
 
-int get_health(struct creature_t *c);
-int get_max_health(struct creature_t *c);
-int get_hunger(struct creature_t *c);
-int get_max_hunger(struct creature_t *c);
+void set_health(creature_t *c, int h);
+void set_max_health(creature_t *c, int mh);
+void set_max_hunger(creature_t *c, int m);
+void set_hunger(creature_t *c, int h);
 
-bool is_blind(struct creature_t *c);
-bool is_unconscious(struct creature_t *c);
-bool is_immobile(struct creature_t *c);
-bool is_telepathic(struct creature_t *c);
+int get_level(creature_t *c);
+int get_dlevel(creature_t *c);
+int get_weight(creature_t *c);
+int get_gold(creature_t *c);
 
-int get_strength(struct creature_t *c);
-int get_perception(struct creature_t *c);
-int get_endurance(struct creature_t *c);
-int get_charisma(struct creature_t *c);
-int get_intelligence(struct creature_t *c);
-int get_agility(struct creature_t *c);
-int get_luck(struct creature_t *c);
-int get_dexterity(struct creature_t *c);
+int get_health(creature_t *c);
+int get_max_health(creature_t *c);
+int get_hunger(creature_t *c);
+int get_max_hunger(creature_t *c);
 
-void add_health(struct creature_t *c, int h);
+bool is_unconscious(creature_t *c);
 
-void add_breathable(struct creature_t *creature, int type);
-void add_consumable(struct creature_t *creature, int type);
-void add_intrinsic(struct creature_t *creature, int type);
-void add_resistance(struct creature_t *creature, int type);
+int get_strength(creature_t *c);
+int get_perception(creature_t *c);
+int get_endurance(creature_t *c);
+int get_charisma(creature_t *c);
+int get_intelligence(creature_t *c);
+int get_agility(creature_t *c);
+int get_luck(creature_t *c);
+int get_dexterity(creature_t *c);
 
-void remove_breathable(struct creature_t *creature, int type);
-void remove_consumable(struct creature_t *creature, int type);
-void remove_intrinsic(struct creature_t *creature, int type);
-void remove_resistance(struct creature_t *creature, int type);
+void add_health(creature_t *c, int h);
+
+void add_breathable(creature_t *creature, int type);
+void add_consumable(creature_t *creature, int type);
+void add_intrinsic(creature_t *creature, int type);
+void add_resistance(creature_t *creature, int type);
+
+void remove_breathable(creature_t *creature, int type);
+void remove_consumable(creature_t *creature, int type);
+void remove_intrinsic(creature_t *creature, int type);
+void remove_resistance(creature_t *creature, int type);
+
+void player_init();
 
 #endif
