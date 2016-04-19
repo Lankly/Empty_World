@@ -15,8 +15,12 @@
 void defaultPathfindCallback(struct creature_t* creature, 
 			     map_t* map){
   //Make sure everything is right before starting
-  if(creature==NULL){quit("ERROR: Cannot move NULL Creature");}
-  if(map==NULL){quit("Error: Cannot move Creature on NULL Map");}
+  if(creature == NULL){
+    quit("ERROR: Cannot move NULL Creature");
+  }
+  if(map == NULL){
+    quit("Error: Cannot move Creature on NULL Map");
+  }
   int x, y, px, py;
   creature_get_coord(creature, &x, &y);
   creature_get_coord(player, &px, &py);

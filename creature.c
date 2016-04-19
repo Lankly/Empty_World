@@ -369,7 +369,7 @@ creature_t *clist_remove_by_index(clist_t *list, int index){
       free(temp);
     }
   }
-  else if(index == 1){
+  else if(index == 1 && list->next != NULL && list->next->next == NULL){
     removed = clist_remove_by_index(list->next, 0);
     list->next = NULL;
   }
@@ -394,7 +394,8 @@ creature_t *clist_remove_by_creature(clist_t *list, creature_t *creature){
   if(creatures_equal(list->creature, creature)){
     removed = clist_remove_by_index(list, 0);
   }
-  else if(list->next !=NULL && creatures_equal(list->next->creature, creature)){
+  else if(list->next !=NULL && creatures_equal(list->next->creature, creature)
+	  && list->next->next == NULL){
     removed = clist_remove_by_index(list->next, 0);
     list->next = NULL;
   }
