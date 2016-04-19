@@ -11,7 +11,6 @@
 #include "macros.h"
 #include "map.h"
 #include "creature.h"
-#include "player.h"
 
 bool newmsg;
 int num_msgs, prev_msg;

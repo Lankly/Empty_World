@@ -11,7 +11,6 @@
 #include "macros.h"
 #include "map.h"
 #include "status.h"
-#include "player.h"
 
 body_part_t *generate_part(char *name, int health, int blood, int size, bool v){
   body_part_t *to_ret = Calloc(1, sizeof(body_part_t));

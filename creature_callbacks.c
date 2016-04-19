@@ -2,7 +2,6 @@
 #include "classes.h"
 #include "creature_callbacks.h"
 #include "creature.h"
-#include "player.h"
 #include "map.h"
 #include "items.h"
 #include "status.h"

@@ -1,7 +1,6 @@
 #include "item_callbacks.h"
 #include "status.h"
 #include "creature.h"
-#include "player.h"
 
 void defaultUseCallback(struct item_use_t* data){
   msg_add("Nothing happened!");}

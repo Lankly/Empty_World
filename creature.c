@@ -6,7 +6,6 @@
 #include "inventory.h"
 #include "macros.h"
 #include "map.h"
-#include "player.h"
 #include "status.h"
 #include "tiles.h"
 #include <math.h>

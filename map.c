@@ -6,7 +6,6 @@
 #include "map.h"
 #include "helpers.h"
 #include "creature.h"
-#include "player.h"
 #include "status.h"
 #include "tiles.h"
 

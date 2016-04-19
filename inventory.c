@@ -2,7 +2,6 @@
 #include "colors.h"
 #include "inventory.h"
 #include "helpers.h"
-#include "player.h"
 #include "status.h"
 
 /* Initializes the player's inventory equip slots

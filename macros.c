@@ -1,7 +1,6 @@
 #include "macros.h"
 #include "status.h"
 #include "helpers.h"
-#include "player.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>

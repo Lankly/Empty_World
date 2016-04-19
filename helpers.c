@@ -7,7 +7,6 @@
 #include "inventory.h"
 #include "items.h"
 #include "map.h"
-#include "player.h"
 #include "status.h"
 #include "tiles.h"
 #include <ctype.h>

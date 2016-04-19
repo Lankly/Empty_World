@@ -10,7 +10,6 @@
 #include "inventory.h"
 #include "map.h"
 #include "helpers.h"
-#include "player.h"
 
 void item_data_init(){
   item_data[ITEM_UNKNOWN] = (item_t){
