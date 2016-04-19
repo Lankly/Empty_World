@@ -3,9 +3,13 @@
 #ifndef CREATURE_H
 #define CREATURE_H
 
+typedef struct creaturelist_t clist_t;
+typedef struct creature_t creature_t;
+
 #include "bodies.h"
 #include "items.h"
 #include "map.h"
+#include "creature_callbacks.h"
 
 //DEFINE CREATURE TYPES
 #define CREATURE_TYPE_UNKNOWN  0
@@ -103,7 +107,6 @@ struct creature_t{
   int class;
   int creature_id;
   int display;
-  int dlevel;
   int type;
   int x; int y;
   int last_position; //As in keys on a numpad
@@ -130,24 +133,22 @@ struct creature_t{
   struct body_part_t *body;
 };
 
-#include "creature_callbacks.h"
-
-//This is a list of creatures
-typedef struct creature_list_node_t{
-  struct creature_t *creature;
-  struct creature_list_node_t *next;
-}creature_list_node_t;
-typedef struct creature_list_t{
-  struct creature_list_node_t *first;
-}creature_list_t;
-
 //This is all the default kinds of creatures that can be created
 struct creature_t creature_data[CREATURE_TYPE_MAX+1];
 
+clist_t *clist_new(creature_t *creature);
+void clist_add(clist_t *list, clist_t *next);
+clist_t *clist_next(clist_t *list);
+creature_t *clist_get_creature(clist_t *list);
+creature_t *clist_remove_by_index(clist_t *list, int index);
+creature_t *clist_remove_by_creature(clist_t *list, creature_t *creature);
+
 void creature_data_init();
-struct creature_t *creature_create_from_data(int index);
-struct creature_t *creature_spawn(int creature_id, struct map_t *map);
-struct creature_t *get_creature_at_position(int x, int y, creature_list_t *l);
+creature_t *creature_create_from_data(int index);
+creature_t *creature_spawn(int creature_id, struct map_t *map);
+bool creatures_equal(creature_t *first, creature_t *second);
+
+struct creature_t *get_creature_at_position(int x, int y, clist_t *l);
 void damage_creature(struct creature_t *target, char *source, int dmg);
 void creature_place_on_map(struct creature_t *creature, map_t *map);
 int creature_see_distance(struct creature_t *creature);

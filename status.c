@@ -272,12 +272,7 @@ int msg_promptchar(char* prompt){
   timeout(1);
   int to_ret = ERR;
   while(1){
-    //Handle macro being played back
-    if(playing_macro){
-      to_ret = get_next_cmd();
-    }
-    else{
-      to_ret = getch();}
+    to_ret = Getch();
     if(to_ret == 27 && getch() == ERR){
       return ERR;
     }

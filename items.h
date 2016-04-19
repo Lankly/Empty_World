@@ -5,6 +5,9 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
+typedef struct itemlist_t itemlist_t;
+typedef struct item_map_t item_map_t;
+
 #define ITEM_UNKNOWN  0
 #define ITEM_UP_STAIR 1
 #define ITEM_DOWN_STAIR 2
@@ -87,7 +90,7 @@ typedef struct item_consume_t{
   struct creature_t* creature;
 }item_consume_t;
 
-//This givest he callbacks information about how to zap an item
+//This gives the callbacks information about how to zap an item
 typedef struct item_zap_t{
   int type;
   struct creature_list_t* creatures;
@@ -127,30 +130,30 @@ typedef struct item_zap_t{
 
 item_t item_data[ITEM_MAX+1];
 
-//The Item Map Data Type
-typedef struct item_map_node_t{
-  item_t* item;
-  struct item_map_node_t* next;
-}item_map_node_t;
+//Simple item list
+struct itemlist_t{
+  item_t *item;
+  struct itemlist_t *next;
+};
 
 /* This represents a stack of items on a given coordinate on the floor. Next and
  * Prev help cycle through the list of item stacks.
  */
-typedef struct item_map_t{
+struct item_map_t{
   struct item_map_t* next;
-  struct item_map_t* prev;
-  item_map_node_t* first;
+  itemlist_t* first;
   int x; int y;
   int size;//This is the current size of the item stack
-}item_map_t;
+};
 
 #include "map.h"
 
 void item_data_init();
 void item_map_init(struct item_map_t* items, int w, int h);
+void item_map_add(item_map_t *items, item_t *item);
 
 bool add_item(struct map_t* map, int x, int y, struct item_t* i, bool reveal);
-item_t* remove_item(struct map_t* map, int x, int y, int index);
+item_t* remove_item(item_map_t* map, int x, int y, int index);
 int count_items(struct map_t* map,int x,int y);
 void destroy_item(item_t* item);
 

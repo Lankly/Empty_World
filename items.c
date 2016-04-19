@@ -67,23 +67,67 @@ void item_data_init(){
   //    ¡À£¤¥Þ¦ª¨©ß«Ñ×ÅÒÔÙÕÉÏÐûýüÁÓÄÆÇÈÊËÌº¢ÚØÃÖÂÎÍ¼¾¿
 }
 
-void item_map_init(struct item_map_t *items, int x, int y){
-  items->x=x;
-  items->y=y;
+void item_map_init(item_map_t *items, int x, int y){
+  if(items == NULL){
+    items = Calloc(1, sizeof(item_map_t *));
+  }
+  items->x = x;
+  items->y = y;
+}
+
+/* Adds an item to a given item_map_t. Assumes that there's enough room on the
+ * stack for the item. Adds the item as the last element, since that's
+ * considered the top of the pile.
+ */
+void item_map_add(item_map_t *items, item_t *item){
+  if(items != NULL && item != NULL){
+    //Create the itemlist node for the item
+    itemlist_t *new = Calloc(1, sizeof(itemlist_t));
+    new->item = item;
+
+    //Find its place
+    itemlist_t *cur = items->first;
+    if(cur == NULL){
+      //If first, add it to the beginning
+      items->first = new;
+    }
+    else{
+      //Otherwise, find the end
+      while(cur->next != NULL){
+	cur = cur->next;
+      }
+      //And add it there
+      cur->next = new;
+    }
+  }
+}
+
+/* This function returns the top item in a given item stack. If there is no
+ * such item, returns a NULL-terminator.
+ */
+int get_top_item_sym_from_stack(item_map_t* items){
+  if(items != NULL){
+    for(itemlist_t *cur = items->first; cur != NULL; cur = cur->next){
+      if(cur->next == NULL){
+	return cur->item->display;
+      }
+    }
+  }
+  return 0;
 }
 
 int count_items(struct map_t *map, int x, int y){
-  if(x < 0 || y < 0 || get_coord(x, y, map->width) > map->width*map->height){
-    quit("Error: count_items Index Out of Bounds");
+  if(map == NULL){
+    return 0;
   }
 
   //We will loop through the list of items stacks until we find the one we want
-  for(item_map_t *i = map->items; i != NULL; i = i->next){
+  for(item_map_t *i = map_get_items(map); i != NULL; i = i->next){
     if(i->y == y && i->x == x){
       int to_return = 0;
 
       //Once found, we loop through that stack and count it
-      for(struct item_map_node_t *cur = i->first; cur != NULL; cur = cur->next){
+      for(struct itemlist_t *cur = i->first; cur != NULL; cur = cur->next){
 	to_return += !cur->item->immovable;}
       return to_return;
     }
@@ -91,126 +135,45 @@ int count_items(struct map_t *map, int x, int y){
   return 0;
 }
 
-/* Adds an item to the given map at the given coordinates. reveal is to tell
- * if we are adding this to the list of known items or not.
+/* Removes the indexth item from the pile at (x,y). 0-indexed.
  */
-bool add_item(struct map_t* map, int x, int y, struct item_t* item, bool reveal){
-  if(map==NULL){quit("Error: NULL map");}
-  if(item->size > map->max_item_height){return false;}
-  item_map_t *cur = NULL;
-  if(x<0 || y<0 || get_coord(x,y,map->width) > map->width*map->height){
-    return false;
+item_t *remove_item(item_map_t *map, int x, int y, int index){
+  if(map == NULL || map->y > y){
+    return NULL;
   }
-
-  //Case where no items exist yet
-  if((!reveal && map->items == NULL) || (reveal && map->known_items == NULL)){
-    item_map_t* items = (item_map_t*)Calloc(1, sizeof(item_map_t));
-    item_map_init(items, x, y);
-    if(reveal){
-      map->known_items = items;}
-    else{
-      map->items = items;}
-
-    items->first = Calloc(1,sizeof(item_map_node_t));
-    items->first->item = item;
-    items->size += item->size;
-    return true;
-  }
-  //Now we loop through to find where to insert our data
-  else{
-    item_map_t* last;
-    for(item_map_t* i = reveal ? map->known_items : map->items;
-	i != NULL;
-	i = i->next){
-      last = i;
-      //If we've gone too far, create a new spot for our data
-      if(i->y > y || (i->y == y && i->x > x)){
-	item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
-	item_map_init(items, x, y);
-
-	//Need to make sure this isn't first element
-	if(i->prev != NULL){
-	  i->prev->next=items;}
-	else if(reveal){
-	  map->known_items = items;}
-	else{
-	  map->items = items;}
-
-	items->prev = i->prev;
-	items->next = i;
-	i->prev = items;
-	cur = items; 
-	break;
-      }
-      //Linked List already exists at x,y
-      else if(i->y==y && i->x==x){
-	cur=i;break;
-      }
-    }
-    //Case where it is inserted last
-    if(cur == NULL){
-      item_map_t* items = (item_map_t*)Calloc(1,sizeof(item_map_t));
-      item_map_init(items, x, y);
-      last->next = items;
-      items->prev = last;
-      cur = items;
-    }
-  }
-  //If there is no more room in this stack or it cannot fit
-  if(cur->size+item->size > map->max_item_height){
-    return false;
-  }
-  //Finally, add the item
-  item_map_node_t* insert = (item_map_node_t*)Calloc(1,sizeof(item_map_node_t));
-  insert->item = item;
-  insert->next = cur->first;
-  cur->first = insert;
   
-  //If the item can't be moved, don't bother adding it to the stack size
-  if(!item->immovable){
-    cur->size += item->size;}
-  return true;
-}
+  if(map->y == y && map->x == x){
+    item_t *found = NULL;
+    //If we're removing from the front
+    if(index == 0){
+      //Attempt to remove the first item
+      if(map->first != NULL){
+	found = map->first->item;
+	itemlist_t *temp = map->first;
+	map->first = map->first->next;
+	free(temp);
+      }
+      return found;
+    }
 
-//Removes an item from the map
-item_t* remove_item(struct map_t* map,int x,int y,int index){
-  if(get_coord(x,y,map->width)>map->width*map->height){
-    quit("Error: Items Index Out of Bounds");
+    //Otherwise, loop to find the one (before the one) to remove
+    itemlist_t *cur = map->first;
+    for(int i = 0; i < index - 1; i++){
+      if(cur->next == NULL){
+	return NULL;
+      }
+      cur = cur->next;
+    }
+    
+    //Then remove it
+    itemlist_t *temp = cur->next;
+    cur->next = cur->next->next;
+    found = temp->item;
+    free(temp);
+    return found;
   }
 
-  //Find the specific item stack on the map
-  item_map_t* cur=NULL;
-  for(item_map_t* i=map->items;i!=NULL;i=i->next){
-    if(i->y>y || (i->y==y && i->x>x)){break;}
-    cur=i;
-    if(i->y==y && i->x==x){break;}
-  }
-  if(cur==NULL){quit("Error: NULL item stack");}
-
-  //Navigate to the correct item on the stack
-  item_map_node_t* last = NULL;
-  item_map_node_t* cur_node = cur->first;
-  for(int i=0;i<index;i++){
-    last=cur_node;
-    cur_node=cur_node->next;    
-    if(cur==NULL){quit("Error: Stack Index out of bounds");}
-  }
-  //Grab the item off it, remove its node from the stack
-  item_t* to_return=cur_node->item;
-  if(last==NULL){
-    cur->first=cur_node->next;
-  }
-  else{
-    last->next=cur_node->next;
-  }
-
-  /* If item is immovable, it couldn't have been picked up, so we don't have to
-   * worry about it here.
-   */
-  cur->size -= to_return->size;
-
-  free(cur_node);
-  return to_return;
+  return remove_item(map->next, x, y, index);
 }
 
 /* This function unequips the given item if it can,
@@ -227,52 +190,6 @@ void destroy_item(struct item_t* item){
  */
 char *get_dmg_verb(item_t *weapon){
   return weapon == NULL || weapon->dmg_verb == NULL ? "hit" : weapon->dmg_verb;
-}
-
-/* This function returns a char representing the item at the given index on
- * the item stack at the given coordinates in the given map.
- */
-int get_item_sym(struct map_t* map,int x,int y,int index){
-  if(get_coord(x, y, map->width) > map->width*map->height){
-    quit("Error: Items Index Out of Bounds");
-  }
-
-  //Navigate to the correct item-stack on the map
-  item_map_t *cur=NULL;
-  for(item_map_t *i = map->items; i != NULL; i = i->next){
-    if(i->y > y || (i->y == y && i->x > x)){
-      break;}
-    if(i->y == y && i->x == x){
-      cur = i;}
-  }
-  if(cur==NULL){return -1;}
-
-  //Navigate to the correct item on the stack
-  item_map_node_t* cur_node = cur->first;
-  for(int i=0;i<index;i++){
-    cur_node=cur_node->next;
-    if(cur==NULL){quit("Error: Stack Index out of bounds");}
-  }
-  //Return the symbol from here
-  char to_return = cur_node->item->display;
-  return to_return;  
-}
-
-/* This function returns the top item in an item stack by calling
- * get_item_sym() with the index=0.
- */
-int get_top_item_sym(struct map_t* map,int x,int y){
-  return get_item_sym(map,x,y,0);
-}
-
-/* This function returns the top item in a given item stack. It 
- * checks to make sure it can first, though.
- */
-int get_top_item_sym_from_stack(struct item_map_t* items){
-  if(items==NULL){quit("Error: NULL items stack");}
-  if(items->first==NULL){quit("Error: No first item");}
-  
-  return items->first->item->display;
 }
 
 /* This item creates a deep copy of an item from the item_data array

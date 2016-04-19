@@ -12,6 +12,12 @@
 #include <stdbool.h>
 #include <string.h>
 
+//This is a list of creatures
+struct creaturelist_t{
+  struct creature_t *creature;
+  struct creaturelist_t *next;
+};
+
 /* Initializes all the possible default creatures. Certain fields will not be
  * initialized, because we can't know what they'll be in advance, such as level,
  * since that will be determined by the floor number and the player's level.
@@ -262,7 +268,97 @@ void creature_data_init(){
   };
 }
 
-struct creature_t *creature_create_from_data(int index){
+clist_t *clist_new(creature_t *creature){
+  clist_t *to_return = Calloc(1, sizeof(struct creaturelist_t));
+  to_return->creature = creature;
+  
+  return to_return;
+}
+
+/* Add next to the end of the given list. If list is NULL, attempts to set the
+ * pointer to next.
+ */
+void clist_add(clist_t *list, clist_t *next){
+  if(list == NULL){
+    quit("Can't Creature to NULL clist");
+  }
+  else if(list->next == NULL){
+    list->next = next;
+  }
+  else{
+    clist_add(list->next, next);
+  }
+}
+
+/* Removes the indexth creature from a given clist. If index is negative, it is
+ * treated as zero. Returns the removed creature.
+ */
+creature_t *clist_remove_by_index(clist_t *list, int index){
+  if(list == NULL){
+    return NULL;
+  }
+  creature_t *removed = NULL;
+  if(index <= 0){
+    removed = list->creature;
+    //If it's the only element left
+    if(list->next == NULL){
+      list->creature = NULL;
+      free(list);
+      list = NULL;
+    }
+    //Otherwise, make its data the next node's
+    else{
+      clist_t *temp = list->next;
+      list->creature = temp->creature;
+      list->next = list->next->next;
+      free(temp);
+    }
+  }
+  else if(index == 1){
+    removed = clist_remove_by_index(list->next, 0);
+    list->next = NULL;
+  }
+  else{
+    removed = clist_remove_by_index(list->next, index-1);
+  }
+  
+  return removed;
+}
+
+/* Removes the given creature from a given clist. Returns the removed 
+ * creature. If the given creature could not be found, returns NULL.
+ */
+creature_t *clist_remove_by_creature(clist_t *list, creature_t *creature){
+  if(list == NULL){
+    return NULL;
+  }
+
+  creature_t *removed = NULL;
+  
+  //If we've found the node to remove
+  if(creatures_equal(list->creature, creature)){
+    removed = clist_remove_by_index(list, 0);
+  }
+  else if(list->next !=NULL && creatures_equal(list->next->creature, creature)){
+    removed = clist_remove_by_index(list->next, 0);
+    list->next = NULL;
+  }
+  else{
+    removed = clist_remove_by_creature(list->next, creature);
+  }
+
+  return removed;
+}
+
+creature_t *clist_get_creature(clist_t *list){
+  return list->creature;
+}
+
+clist_t *clist_next(clist_t *list){
+  return list->next;
+}
+
+creature_t *creature_create_from_data(int index){
   //Error checking
   if(index < 0 || index > CREATURE_TYPE_MAX){
     quit("Error: Cannot create creature with unknown id");}
@@ -279,15 +375,14 @@ struct creature_t *creature_create_from_data(int index){
 /* Creates a creature with the given id, sets up its stats, and places it 
  * randomly on the map.
  */
-struct creature_t *creature_spawn(int creature_id, struct map_t *map){
+creature_t *creature_spawn(int creature_id, struct map_t *map){
   if(map == NULL){
     quit("Error: Cannot spawn creature on NULL Map");}
   if(creature_id < 0 || creature_id > CREATURE_TYPE_MAX){
     quit("Error: Cannot spawn creature with unknown id");}
 
-  struct creature_t *c = creature_create_from_data(creature_id);
-  set_dlevel(c, map->dlevel);
-  set_level(c, map->dlevel);
+  creature_t *c = creature_create_from_data(creature_id);
+  set_level(c, 1);
   set_health(c, get_max_health(c));
   creature_place_on_map(c, map);
   map_add_creature(map, c);
@@ -315,15 +410,27 @@ struct creature_t *creature_spawn(int creature_id, struct map_t *map){
   return c;
 }
 
+bool creatures_equal(creature_t *first, creature_t *second){
+  if(first == NULL || second == NULL){
+    return false;
+  }
+  if(first == second){
+    return true;
+  }
+
+  return first->x == second->x && first->y == second->y
+    && !strcmp(first->name, second->name);
+}
+
 /* If there is a creature at a given position in a given list of creatures,
  * return that creature. Otherwise, return NULL.
  */
-struct creature_t *get_creature_at_position(int x, int y, creature_list_t *l){
-  if(l == NULL){
-    return NULL;}
-  for(creature_list_node_t *cur = l->first; cur != NULL; cur = cur->next){
-    if(cur->creature->x == x && cur->creature->y == y){
-      return cur->creature;
+struct creature_t *get_creature_at_position(int x, int y, clist_t *l){
+  for(clist_t *cur = l; cur != NULL; cur = clist_next(l)){
+    creature_t *creature = clist_get_creature(cur);
+    
+    if(creature->x == x && creature->y == y){
+      return creature;
     }
   }
   return NULL;
@@ -359,20 +466,19 @@ void damage_creature(struct creature_t *target, char *source, int dmg){
  * randomly if it was placed for the first time,
  * at the stairs otherwise.
  */
-void creature_place_on_map(struct creature_t* creature, map_t* map){
-  /* If the creature is on the same dlevel in which it is being placed,
-   * then we will place it randomly
-   */
-  if(creature->dlevel == map->dlevel){
-    int x=rand()%map->width, y=rand()%map->height;
-    while(!tile_data[map->tiles[get_coord(x,y,map->width)]].passable){
-      x= rand()%map->width;
-      y= rand()%map->height;
+void creature_place_on_map(creature_t *creature, map_t *map){
+    int w = map_get_width(map),
+      h = map_get_height(map),
+      x = rand() % w,
+      y = rand() % h;
+
+    //Keep searching for a tile that the creature can pass through
+    while(!tile_data[map_get_tile(map, x, y)].passable){
+      x = rand()%w;
+      y = rand()%h;
     }
-    creature->x=x; 
-    creature->y=y;
-  }
-    creature->dlevel=map->dlevel;
+    creature->x = x; 
+    creature->y = y;
 }
 
 
@@ -396,16 +502,12 @@ int creature_see_distance(struct creature_t* creature){
 }
 
 /* This method returns true if the given target creature can be seen by the seer
- * creature and false otherwise.
+ * creature and false otherwise. Assumes that both creatures are on the same map
  */
 bool creature_is_visible(struct creature_t *target, struct creature_t *seer){
   if(target == NULL || seer == NULL){
     quit("ERROR: Cannot get visibility of NULL creature.");
   }
-
-  //If on different floors, return false
-  if(target->dlevel != seer->dlevel){
-    return false;}
 
   //Check if the target is in the seer's visible range
   if(!in_range(target, seer)){
@@ -427,15 +529,15 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
   }
 
   //Get the tile we're looking at moving to
-  tile_t move_tile = tile_data[cur_map->tiles[y * cur_map->width + x]];
+  tile_t move_tile = tile_data[map_get_tile(cur_map, x, y)];
   //Quick check to see if the tile allows passing
   if(!move_tile.passable){return false;}
 
   //Get all the tiles surrounding the one we're looking at
-  tile_t u = tile_data[cur_map->tiles[(y-1) * cur_map->width + x]];
-  tile_t d = tile_data[cur_map->tiles[(y+1) * cur_map->width + x]];
-  tile_t r = tile_data[cur_map->tiles[y * cur_map->width + x+1]];
-  tile_t l = tile_data[cur_map->tiles[y * cur_map->width + x-1]];
+  tile_t u = tile_data[map_get_tile(cur_map, x, y-1)];
+  tile_t d = tile_data[map_get_tile(cur_map, x, y+1)];
+  tile_t r = tile_data[map_get_tile(cur_map, x+1, y)];
+  tile_t l = tile_data[map_get_tile(cur_map, x-1, y)];
 
   // Also cannot pass through closed door.
   if((cmd==cmd_data[CMD_UP_LEFT] && ((map_tile_is_door(d.id)
@@ -512,11 +614,6 @@ int creature_get_damage(struct creature_t* creature){
 void set_level(struct creature_t* c, int l){
   if(c != NULL){
     c->level = l;}
-}
-
-void set_dlevel(struct creature_t* c, int d){
-  if(c != NULL){
-    c->dlevel = d;}
 }
 
 void set_name(struct creature_t* c, char* n){
@@ -680,12 +777,6 @@ int get_level(struct creature_t* c){
   if(c == NULL){quit("Cannot get status of NULL Creature");}
   return c-> level;
 }
-
-int get_dlevel(struct creature_t* c){
-  if(c == NULL){quit("Cannot get status of NULL Creature");}
-  return c-> dlevel;
-}
-
 
 int get_strength(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}

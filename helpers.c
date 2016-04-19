@@ -169,7 +169,7 @@ int *str_to_ints(char *str, int len){
   return to_ret;
 }
 
-void* Calloc(int items, int size)
+void *Calloc(size_t items, size_t size)
 {
   void* ret = calloc(items, size);
   if (ret == 0)
@@ -324,7 +324,7 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
    * beneath the player.
    */
   else if(count == 1){
-    to_add = remove_item(map, creature->x, creature->y, 0);
+    to_add = remove_item(map_get_items(map), creature->x, creature->y, 0);
   }
 
   /* This is the case where there are multiple items on the ground 
@@ -332,7 +332,7 @@ void pickup_tile(struct creature_t* creature, struct map_t* map){
    * can select which item it is that they're trying to pick up.
    */
   else if(creature == player){
-    to_add = remove_item(map,
+    to_add = remove_item(map_get_items(map),
 			 creature->x,
 			 creature->y,
 			 items_display(map, creature->x, creature->y));
@@ -402,10 +402,10 @@ void debug(){
       debug_cmd_lower=str_lowercase(debug_cmd);
 
       if(str_is_num(debug_cmd_lower)){
-	add_item(cur_map,
-		 place_x,
-		 place_y,
-		 (struct item_t*)item_create_from_data(atoi(debug_cmd)),
+	map_add_item(cur_map,
+		     place_x,
+		     place_y,
+		     item_create_from_data(atoi(debug_cmd)),
 		 false);
 	//msg_add("Done");
       }
@@ -414,9 +414,11 @@ void debug(){
     free(debug_cmd);
   }else if(!strcmp(debug_cmd_lower,"print items")){
     endwin();
-    struct item_map_t* cur_items = cur_map->items;
-    for(int j=0; j<cur_map->height; j++){
-      for(int i=0; i<cur_map->width; i++){
+    struct item_map_t* cur_items = map_get_items(cur_map);
+    int h = map_get_height(cur_map),
+      w = map_get_width(cur_map);
+    for(int j = 0; j < h; j++){
+      for(int i = 0; i < w; i++){
 	if(cur_items!=NULL 
 	   && cur_items->size!=0 
 	   && cur_items->x==i 
@@ -430,20 +432,19 @@ void debug(){
     }
     exit(0);
   }else if(!strcmp(debug_cmd_lower,"reveal")){
-    cur_map->known_map = cur_map;
+    debug_reveal_map(cur_map);
   }else if(!strcmp(debug_cmd_lower,"kill")){
     int k_x = player->x;
     int k_y = player->y;
     get_coord_via_cursor(&k_y,&k_x);
 
-    if(cur_map->creatures != NULL){
-      for(struct creature_list_node_t *cur = cur_map->creatures->first;
-	  cur != NULL;
-	  cur = cur->next){
-	if(cur->creature->x == k_x && cur->creature->y == k_y){
-	  damage_creature(cur->creature, "GOD", 10000);
-	  break;
-	}
+    for(clist_t *cur = map_get_creatures(cur_map);
+	cur != NULL;
+	cur = clist_next(cur)){
+      creature_t *cur_creature = clist_get_creature(cur);
+      if(cur_creature->x == k_x && cur_creature->y == k_y){
+	damage_creature(cur_creature, "GOD", 10000);
+	break;
       }
     }
   }else if(!strcmp(debug_cmd_lower,"toomuchhealth")){
@@ -511,11 +512,11 @@ void xscend(int id){
   int y = player->y;
   struct map_t* m = cur_map;
 
-  for(struct item_map_t* items = m->items;
+  for(item_map_t* items = map_get_items(m);
       items != NULL;
       items = items->next){
     if(x == items->x && y == items->y){
-      for(struct item_map_node_t* i = items->first;
+      for(struct itemlist_t* i = items->first;
 	  i != NULL;
 	  i = i->next){
 	if(i->item->id == id){
@@ -918,15 +919,15 @@ bool in_range(struct creature_t *target, struct creature_t *seer){
 }
 
 bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
-  int cur_tile = map->tiles[y*map->width+x];
-  int ul=map->tiles[(y-1)*map->width+x-1];
-  int ur=map->tiles[(y-1)*map->width+x+1];
-  int dl=map->tiles[(y+1)*map->width+x-1];
-  int dr=map->tiles[(y+1)*map->width+x+1];
-  int u=map->tiles[(y-1)*map->width+x];
-  int d=map->tiles[(y+1)*map->width+x];
-  int l=map->tiles[y*map->width+x-1];
-  int r=map->tiles[y*map->width+x+1];
+  int cur_tile = map_get_tile(map, x,y);
+  int ul = map_get_tile(map, x-1, y-1);
+  int ur = map_get_tile(map, x+1, y-1);
+  int dl = map_get_tile(map, x-1, y+1);
+  int dr = map_get_tile(map, x+1, y+1);
+  int u = map_get_tile(map, x, y-1);
+  int d = map_get_tile(map, x, y+1);
+  int l = map_get_tile(map, x-1, y);
+  int r = map_get_tile(map, x+1, y);
 
   //Check for at-corner in corridor
   if(cur_tile == TILE_CORRIDOR){
@@ -1133,7 +1134,7 @@ void game_init(int seed){
   mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, NULL);
   
   //Setup floor
-  cur_map = (map_t*)Calloc(1,sizeof(map_t));
+  cur_map = map_new();
   map_init(cur_map,
 	   TERMINAL_WIDTH,
 	   TERMINAL_HEIGHT-3,
@@ -1148,9 +1149,11 @@ void game_init(int seed){
   map_place_spawners(cur_map);  
 
   //Place character randomly
-  while(cur_map->tiles[player->y*cur_map->width+player->x]!=TILE_FLOOR){
-    player->x=rand() % cur_map->width;
-    player->y=rand() % cur_map->height;
+  int h = map_get_height(cur_map),
+    w = map_get_width(cur_map);
+  while(map_get_tile(cur_map, player->x, player->y) != TILE_FLOOR){
+    player->x = rand() % w;
+    player->y = rand() % h;
   }
 }
 

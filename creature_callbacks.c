@@ -93,14 +93,14 @@ void defaultTakeTurnCallback(struct creature_t* c,
 
 /* Callback used for killing a creature by default
  */
-void defaultKillCallback(struct creature_t *a, struct map_t *map){
+void defaultKillCallback(creature_t *a, map_t *map){
   if(a == NULL){quit("Error: Cannot kill NULL Animal.");}
   if(map == NULL){quit("Error: Cannot kill Animal on NULL Map.");}
 
   item_t *corpse = create_corpse(a);
 
   if(corpse != NULL){
-    add_item(map, a->x, a->y, corpse, false);
+    map_add_item(map, a->x, a->y, corpse, false);
   }
     
   map_remove_creature(map, a);
@@ -113,7 +113,7 @@ void defaultKillCallback(struct creature_t *a, struct map_t *map){
 
 /* Pathfinding for rats.
  */
-void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
+void ratPathfindCallback(creature_t *creature, struct map_t *map){
   if(creature == NULL){
     quit("Error: ratPathfindCallback() passed NULL Creature.");}
   if(map == NULL){
@@ -130,15 +130,17 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
   /* Check to see if we're running away from something first */
   int closest_distance = INT_MAX;
   struct creature_t *closest_creature = NULL;
-  for(struct creature_list_node_t *cur = map->creatures->first; cur != NULL;
-      cur = cur->next){
+  for(clist_t *cur = map_get_creatures(map);
+      cur != NULL;
+      cur = clist_next(cur)){
+    creature_t *cur_creature = clist_get_creature(cur);
     int dist = get_distance(creature->x, creature->y,
-			    cur->creature->x, cur->creature->y);
+			    cur_creature->x, cur_creature->y);
     //Compare distances, make sure we're not comparing with the same type
     if(dist < closest_distance &&
-       cur->creature->creature_id != creature->creature_id ){
+       cur_creature->creature_id != creature->creature_id ){
       closest_distance = dist;
-      closest_creature = cur->creature;
+      closest_creature = cur_creature;
     }
   }
   //If we found something to run from
@@ -206,7 +208,7 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
   //If we didn't move previously, and we're hungry, check for food
   if(move_x == INT_MIN &&
      ((double)get_hunger(creature)) / ((double)get_max_hunger(creature)) < .8){
-    struct item_map_t *cur = map->items;
+    item_map_t *cur = map_get_items(map);
     for(int j = -creature_see_distance(creature); 
 	j < creature_see_distance(creature);
 	j++){
@@ -223,7 +225,7 @@ void ratPathfindCallback(struct creature_t *creature, struct map_t *map){
 	  if(cur->y == cur_y && cur->x == cur_x 
 	     && coord_in_range(cur_x, cur_y, creature)
 	     && map_tile_is_visible(map, cur_x, cur_y, creature)){
-	    for(struct item_map_node_t *item = cur->first;
+	    for(struct itemlist_t *item = cur->first;
 		item != NULL;
 		item = item->next){
 	      /* If any items here are edible, move towards it if it's closer
@@ -563,7 +565,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
   /* Decide what creature to spawn. Does not spawn that creature if not on the
    * proper floor range.
    */
-  switch(map->dlevel){
+  switch(map_get_dlevel(map)){
   case 0 :
     break;
   case 1 :// DLEVEL 1  ---- WEAK ANIMALS
@@ -840,5 +842,4 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
 
   //msg_addf("Spawned %s", c->name);
   set_health(c, get_max_health(c));
-  c->dlevel = map->dlevel;
 }

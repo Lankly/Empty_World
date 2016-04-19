@@ -1,9 +1,9 @@
+#ifndef HELPERS_H
+#define HELPERS_H
+
 #include <stdbool.h>
 #include "map.h"
 #include <ncurses.h>
-
-#ifndef HELPERS_H
-#define HELPERS_H
 
 #define TERMINAL_WIDTH  80
 #define TERMINAL_HEIGHT 24
@@ -69,7 +69,7 @@ typedef struct intlist_t{
   struct intlist_t *next;
 }intlist_t;
 
-void *Calloc(int items, int size);
+void *Calloc(size_t items, size_t size);
 char *str_lowercase(char *str);
 bool str_is_num(char *str);
 int *str_to_ints(char *str, int len);
@@ -88,7 +88,7 @@ bool cmd_exists(int cmd);
 
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);
-bool qckmv_continue(map_t*, int x, int y, int qckmv_cmd);
+bool qckmv_continue(map_t *map, int x, int y, int qckmv_cmd);
 
 void draw_borders();
 char display_list(char *instr, int **items, int num_items, int col_width);

@@ -10,6 +10,21 @@
 #include "status.h"
 #include "tiles.h"
 
+struct map_t{
+  int dlevel;
+  int width;
+  int height;
+  int max_item_height;
+  int *tiles;
+  item_map_t *items;
+  clist_t *creatures;
+  item_map_t *known_items;
+  struct map_t *known_map;
+};
+
+map_t *map_new(){
+  return Calloc(1, sizeof(struct map_t));
+}
 
 /* Initializes a given map. Expects the map to have already been allocated.
  */
@@ -20,8 +35,22 @@ void map_init(struct map_t* map, int w, int h, int max_item_height, int dlevel){
   map->dlevel = dlevel;
   map->max_item_height = max_item_height;
   map->tiles = (int*)Calloc(w * h,sizeof(int));
-  map->creatures = (struct creature_list_t*)
-    Calloc(1, sizeof(struct creature_list_t));
+}
+
+clist_t *map_get_creatures(map_t *map){
+  return map == NULL ? NULL : map->creatures;
+}
+
+int map_get_dlevel(map_t *map){
+  return map == NULL ? -1 : map->dlevel;
+}
+
+item_map_t *map_get_items(map_t *map){
+  return map == NULL ? NULL : map->items;
+}
+
+int map_get_max_item_height(map_t *map){
+  return map == NULL ? -1 : map->max_item_height;
 }
 
 /* This function adds a creature to a given map.
@@ -29,41 +58,167 @@ void map_init(struct map_t* map, int w, int h, int max_item_height, int dlevel){
 void map_add_creature(struct map_t *map, struct creature_t *creature){
   if(map == NULL){quit("Error: Cannot add Creature to NULL Map");}
   if(creature == NULL){quit("Error: Cannot add NULL Creature to Map");}
-  if(map->creatures == NULL){
-    map->creatures =
-      (struct creature_list_t*)Calloc(1, sizeof(struct creature_list_t));
-  }
 
-  struct creature_list_node_t *to_add =
-    (struct creature_list_node_t*)Calloc(1, sizeof(creature_list_node_t));
-  to_add->creature = creature;
-  to_add->next = map->creatures->first;
-  map->creatures->first = to_add;
+  //If there are no creatures yet, set them up
+  if(map->creatures == NULL){
+    map->creatures = clist_new(creature);
+  }
+  //)Otherwise, just add the creature
+  else{
+    clist_add(map->creatures, clist_new(creature));
+  }
 }
 
-/* This function removes a creature from a given map.
+/* This function returns a char representing the item at the given index on
+ * the item stack at the given coordinates in the given map.
  */
-void map_remove_creature(struct map_t *map, struct creature_t *creature){
-  if(map == NULL || map->creatures == NULL 
-     || map->creatures->first == NULL || creature == NULL){return;}
-  
-  struct creature_list_node_t *cur = map->creatures->first;
-  //Need to check if the thing we're removing is first in the list
-  if(cur->creature == creature){
-    map->creatures->first = cur->next;
-    free(cur);
+int map_get_item_symbol(map_t* map, int x, int y, int index){
+  if(get_coord(x, y, map->width) > map->width*map->height){
+    quit("Error: Items Index Out of Bounds");
   }
-  else{
-    //Now we check everything else
-    for(; cur->next != NULL; cur = cur->next){
-      if(cur->next->creature == creature){
-	creature_list_node_t* temp = cur->next;
-	cur->next = temp->next;
-	free(temp);
-	return;
-      }
+
+  //Navigate to the correct item-stack on the map
+  item_map_t *cur = NULL;
+  for(item_map_t *i = map->items; i != NULL; i = i->next){
+    if(i->y > y || (i->y == y && i->x > x)){
+      break;}
+    if(i->y == y && i->x == x){
+      cur = i;}
+  }
+  if(cur==NULL){return -1;}
+
+  //Navigate to the correct item on the stack
+  itemlist_t* cur_node = cur->first;
+  for(int i=0;i<index;i++){
+    cur_node=cur_node->next;
+    if(cur==NULL){quit("Error: Stack Index out of bounds");}
+  }
+  //Return the symbol from here
+  char to_return = cur_node->item->display;
+  return to_return;  
+}
+
+int map_get_top_symbol_helper(item_map_t *items, int x, int y){
+  if(items == NULL){
+    return 0;
+  }
+  if(items->x == x && items->y == y){
+    return get_top_item_sym_from_stack(items);
+  }
+  return map_get_top_symbol_helper(items->next, x, y);
+}
+/* This function returns the top item on the item stack at the given coordinates
+ * If it could not be found, returns a NULL-terminator.
+ */
+int map_get_top_symbol(map_t *map, int x, int y){
+  return map_get_top_symbol_helper(map->items, x, y);
+}
+
+int map_get_tile(struct map_t* map, int x, int y){
+  if(map == NULL){
+    endwin();
+    printf("Error: Map is null\n");
+    exit(1);
+  }
+  else if(x<0 || y<0 || x >= map->width || y >= map->height){
+    return TILE_UNKNOWN;
+  }
+  return map->tiles[y*map->width+x];
+}
+
+int map_get_height(map_t *map){
+  return map == NULL ? 0 : map->height;
+}
+
+int map_get_width(map_t *map){
+  return map == NULL ? 0 : map->width;
+}
+
+/* This function removes a creature from a given map. Returns the removed 
+ * creature.
+ */
+creature_t *map_remove_creature(map_t *map, creature_t *creature){
+  if(map == NULL){
+    return NULL;
+  }
+  return clist_remove_by_creature(map->creatures, creature);
+}
+
+/* Adds an item to the given map at the given coordinates. Reveal tell us
+ * if we are adding this to the list of known items or not. Returns false
+ * if the item could not be added.
+ */
+bool map_add_item(map_t* map, int x, int y, item_t* item, bool reveal){
+  if(map == NULL){
+    return false;
+  }
+  int h = map_get_height(map),
+    w = map_get_width(map);
+  if(item->size > map_get_max_item_height(map)
+     || x < 0 || y < 0 ||
+     get_coord(x, y, w) > w*h){
+    return false;
+  }
+
+  //Pick which map we're operating on, based on reveal
+  item_map_t *m = reveal ? map->known_items : map->items;
+  
+  //Case where no items exist yet
+  if(m == NULL){
+    m = Calloc(1, sizeof(item_map_t));
+    item_map_init(m, x, y);
+    if(reveal){
+      map->known_items = m;
+    }
+    else{
+      map->items = m;
     }
   }
+
+  //Case where need to insert new item_map_t at the beginning
+  if(m->y > y || (m->y == y && m->x > x)){
+    item_map_t *new = Calloc(1, sizeof(item_map_t));
+    item_map_init(new, x, y);
+    new->next = m;
+    m = new;
+    if(reveal){
+      map->known_items = m;
+    }
+    else{
+      map->items = m;
+    }
+  }
+  
+  //Now we loop through to find where to insert our data
+  //Data is sorted left->right, up->down
+  for(item_map_t *cur = m; cur != NULL; cur = cur->next){
+    //If we've found the correct location, add it
+    if(cur->y == y && cur->x == x){
+      item_map_add(cur, item);
+      return true;
+    }
+    /* If it goes in the next spot, add it
+     * Conditions for next spot:
+     * 1 - We're at the end of the list
+     * 2 - It goes in-between cur and the next node
+     */
+    if(cur->next == NULL
+       ||
+       (cur->next != NULL
+	&& (cur->next->y > y
+	    || (cur->next->y == y && cur->next->x > x)))){
+      
+      item_map_t *add = Calloc(1, sizeof(item_map_t));
+      item_map_init(add, x, y);
+      item_map_add(add, item);
+      add->next = cur->next;
+      cur->next = add;
+      return true;
+    }
+  }
+
+  //If we somehow get here, then we didn't add anything, so return false
+  return false;
 }
 
 void map_set_tile(struct map_t* map, int x, int y, int tile){
@@ -84,18 +239,6 @@ void map_set_tile(struct map_t* map, int x, int y, int tile){
   }
 
   map->tiles[y*map->width+x] = tile;
-}
-
-int map_get_tile(struct map_t* map, int x, int y){
-  if(map == NULL){
-    endwin();
-    printf("Error: Map is null\n");
-    exit(1);
-  }
-  else if(x<0 || y<0 || x >= map->width || y >= map->height){
-    return TILE_UNKNOWN;
-  }
-  return map->tiles[y*map->width+x];
 }
 
 void map_draw_rect(struct map_t* map, int x, int y, int w, int h, int tile){
@@ -276,7 +419,7 @@ bool tile_has_stair(struct map_t* map, int x, int y){
       items != NULL;
       items = items->next){
     if(items->x == x && items->y == y){
-      for(struct item_map_node_t* i = items->first;
+      for(struct itemlist_t* i = items->first;
 	  items != NULL;
 	  items = items->next){
 	if(i->item->id == ITEM_UP_STAIR
@@ -299,7 +442,7 @@ void map_place_up_stair(struct map_t* map,
   }
   item_t* stair = item_create_from_data(ITEM_UP_STAIR);
   stair->go_to_map = go_to_map;
-  add_item(map, x, y, stair, false);
+  map_add_item(map, x, y, stair, false);
 }
 
 void map_place_down_stair_randomly(struct map_t* map){
@@ -330,7 +473,7 @@ void map_place_down_stair_randomly(struct map_t* map){
       }
       //If we're done, add the down stair to the map
       if(done){
-	add_item(map, x, y, item_create_from_data(ITEM_DOWN_STAIR), false);
+	map_add_item(map, x, y, item_create_from_data(ITEM_DOWN_STAIR), false);
       }
     }
   }
@@ -344,7 +487,6 @@ void map_place_spawners(struct map_t* map){
   for(int i = 0; i < ((map->dlevel/10) + 1); i++){
     struct creature_t *spawner = 
       creature_create_from_data(CREATURE_TYPE_SPAWNER);
-    spawner->dlevel = map->dlevel;
 
     /* Must be placed on an unknown tile. This makes it possible for it to be 
      * seen from a corridor, but that does not matter since it cannot be killed
@@ -386,13 +528,12 @@ void map_examine_tile(struct map_t* map){
   
   //First loop through creatures
   if(map->creatures != NULL){
-    for(struct creature_list_node_t* cur = map->creatures->first;
-	cur != NULL;
-	cur = cur->next){
-      if(cur->creature->x == x && cur->creature->y == y 
-	 && (in_range(cur->creature, player)
+    for(clist_t* cur = map->creatures; cur != NULL; cur = clist_next(cur)){
+      creature_t *cur_creature = clist_get_creature(cur);
+      if(cur_creature != NULL && cur_creature->x == x && cur_creature->y == y
+	 && (in_range(cur_creature, player)
 	     || is_telepathic(player))){
-	msg_addf("%s", cur->creature->exam_text);
+	msg_addf("%s", cur_creature->exam_text);
 	return;
       }
     }
@@ -418,10 +559,7 @@ void map_examine_tile(struct map_t* map){
  *                                 *
  * It has the monsters x and y     *
  * coords as parameters            */
-bool map_tile_is_visible(struct map_t* map, int check_x, int check_y, 
-			 struct creature_t *c){
-  //Initial checks
-  if(map->dlevel != c->dlevel){return false;}
+bool map_tile_is_visible(map_t* map, int check_x, int check_y, creature_t *c){
   if(c->x == check_x && c->y == check_y){return true;}
   //Check to see if it's in the possible radius of the creature's sight
   if(!coord_in_range(check_x, check_y, c)){
@@ -513,13 +651,13 @@ bool map_tile_stopme(struct map_t *map, int x, int y){
   
   //Find the item stack at the given coordinates
   item_map_t *i = map->items;
-  while(i != NULL && i->x < x && i->y < y){
+  while(i != NULL && (i->x < x || i->y < y)){
     i = i->next;}
   if(i == NULL || i->x != x || i->y != y){return false;}
 
   //If any item on the stack stops the player, return
   
-  for(item_map_node_t *cur = i->first; cur != NULL; cur = cur->next){
+  for(itemlist_t *cur = i->first; cur != NULL; cur = cur->next){
     if(cur->item->stopme){
       return true;}
   }
@@ -558,11 +696,11 @@ void map_reveal(struct map_t *map, int rev_dist){
 	  map->tiles[get_coord(i, j, TERMINAL_WIDTH)];
 	
 	//Remove items already revealed
-	for(struct item_map_t *k_items = map->known_items;
+	for(item_map_t *k_items = map->known_items;
 	    k_items != NULL;
 	    k_items = k_items->next){
 	  if(k_items->y == j && k_items->x == i){
-	    struct item_map_node_t *prev;
+	    struct itemlist_t *prev;
 	    while(k_items->first != NULL){
 	      prev = k_items->first;
 	      k_items->first = k_items->first->next;
@@ -575,10 +713,10 @@ void map_reveal(struct map_t *map, int rev_dist){
 	//Reveal the items (if they exist)
 	if(items != NULL && items->y == j && items->x == i){
 	  //Add the new items
-	  for(struct item_map_node_t *item = items->first;
+	  for(itemlist_t *item = items->first;
 	      item != NULL;
 	      item = item->next){
-	    add_item(map, i, j, item->item, true);
+	    map_add_item(map, i, j, item->item, true);
 	  }
 	  items = items->next;
 	}
@@ -961,6 +1099,7 @@ void draw_map(struct map_t* map){
 				 : CP_DARK_GREY_BLACK));
     }
   }
+  
   //Now items
   for(struct item_map_t *known = map->known_items;
       known != NULL; 
@@ -970,11 +1109,17 @@ void draw_map(struct map_t* map){
   }
 
   //Now creatures
-  for(struct creature_list_node_t* cur = map->creatures->first;
-      cur != NULL;
-      cur = cur->next){
+  for(clist_t* cur = map_get_creatures(map);
+      cur != NULL; cur = clist_next(cur)){
+    creature_t *cur_creature = clist_get_creature(cur);
     //Show creature if it's visible to the player
-    if(is_telepathic(player) || (creature_is_visible(cur->creature, player))){
-      mvaddch(cur->creature->y, cur->creature->x, cur->creature->display);}
+    if(is_telepathic(player) || (creature_is_visible(cur_creature, player))){
+      mvaddch(cur_creature->y, cur_creature->x, cur_creature->display);}
+  }
+}
+
+void debug_reveal_map(map_t *map){
+  if(map != NULL){
+    map->known_map = map;
   }
 }

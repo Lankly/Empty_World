@@ -33,7 +33,9 @@ void playerTakeTurnCallback(struct creature_t* creature,
       cmd = get_next_cmd();
     }else{
       cmd = getch();
-      record_cmd(cmd);
+      if(cmd != ERR){
+	record_cmd(cmd);
+      }
     }
 
     display_mouse();
@@ -48,12 +50,13 @@ void playerTakeTurnCallback(struct creature_t* creature,
   if(creature_can_move_to(player, plr_mv_to_x, plr_mv_to_y, cmd)){
     //Now we check to see if they're moving into a creature
     struct creature_t *creature_in_way = NULL;
-    for(struct creature_list_node_t *cur = cur_map->creatures->first; 
+    for(clist_t *cur = map_get_creatures(cur_map);
 	cur != NULL && creature_in_way == NULL;
-	cur = cur->next){
-      if(cur->creature->x == plr_mv_to_x && cur->creature->y == plr_mv_to_y
-	 && cur->creature != player){
-	creature_in_way = cur->creature;}
+	cur = clist_next(cur)){
+      creature_t *cur_creature = clist_get_creature(cur);
+      if(cur_creature->x == plr_mv_to_x && cur_creature->y == plr_mv_to_y
+	 && cur_creature != player){
+	creature_in_way = cur_creature;}
     }
 
     //And attacking if so
@@ -122,7 +125,6 @@ void player_init(char* name){
   set_hunger(player, player->max_hunger);
   set_gold(player, 5);
   set_level(player, 1);
-  set_dlevel(player, 1);
   
   add_breathable(player, BREATHE_AIR);
   add_consumable(player, CONSUME_ANIMAL);

@@ -74,7 +74,8 @@ void stop_recording(){
     msg_addf("Nothing recorded.");
   }
   else{
-    msg_addf("Finished recording. Bound to %c",macros->bind);}
+    msg_addf("Finished recording. Bound to %c", macros->bind);
+  }
 }
 
 int usleep();

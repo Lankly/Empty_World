@@ -16,13 +16,13 @@ void downStairUseCallback(struct item_use_t* data){
   }
   //If there's no map to go down to, make a new one.
   if(data->item->go_to_map == NULL){
-    data->item->go_to_map = (struct map_t*)Calloc(1, sizeof(struct map_t));
+    data->item->go_to_map = map_new();
     //map initialization
     map_init(data->item->go_to_map, 
-	     cur_map->width, 
-	     cur_map->height,
-	     cur_map->max_item_height,
-	     cur_map->dlevel+1);
+	     map_get_width(cur_map), 
+	     map_get_height(cur_map),
+	     map_get_max_item_height(cur_map),
+	     map_get_dlevel(cur_map) + 1);
     //Map draw
     map_draw_random_rooms(data->item->go_to_map, player->x, player->y);
     map_cleanup(data->item->go_to_map);
@@ -46,7 +46,6 @@ void downStairUseCallback(struct item_use_t* data){
   }
   //Make the actual change of map
   cur_map = data->item->go_to_map;
-  player->dlevel++;
 }
 
 void upStairUseCallback(struct item_use_t* data){
@@ -56,7 +55,6 @@ void upStairUseCallback(struct item_use_t* data){
   map_add_creature(data->item->go_to_map, player);
   map_remove_creature(cur_map, player);
   cur_map = data->item->go_to_map;
-  player->dlevel--;
 }
 
 void ironSwordUseCallback(struct item_use_t* data){

@@ -46,12 +46,6 @@ typedef struct inventory_node_t{
   struct inventory_node_t* next;
 }inventory_node_t;
 
-//Simple item list
-typedef struct itemlist_t{
-  item_t *item;
-  struct itemlist_t *next;
-} itemlist_t;
-
 typedef struct{
   equipment_head_t* head;
   equipment_chest_t* chest;

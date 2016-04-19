@@ -4,14 +4,13 @@
 #include "items.h"
 #include "helpers.h"
 
+void defaultUseCallback(item_use_t* data);
+void defaultConsumeCallback(item_consume_t* data);
+void defaultZapCallback(item_zap_t* data);
 
-void defaultUseCallback(struct item_use_t* data);
-void defaultConsumeCallback(struct item_consume_t* data);
-void defaultZapCallback(struct item_zap_t* data);
-
-void upStairUseCallback(struct item_use_t* data);
-void downStairUseCallback(struct item_use_t* data);
-void ironSwordUseCallback(struct item_use_t* data);
+void upStairUseCallback(item_use_t* data);
+void downStairUseCallback(item_use_t* data);
+void ironSwordUseCallback(item_use_t* data);
 
 #define CALLBACK_TYPE_PLAYER    0
 #define CALLBACK_TYPE_CREATURE  1

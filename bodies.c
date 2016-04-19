@@ -630,6 +630,9 @@ item_t *create_corpse(struct creature_t *c){
   corpse->edible = true;
   corpse->curse_lvl = !(rand()%100) ? BUC_CURSED : BUC_UNCURSED;
   corpse->display = COLOR_PAIR(CP_CORPSE) | (char)c->display;
+  corpse->exam_text = Calloc(MAX_MSG_LEN, sizeof(char));
+  sprintf(corpse->exam_text, "This is the corpse of a %s.",
+	  str_lowercase(c->body->name));
   
   return corpse;
 }
@@ -1019,7 +1022,8 @@ bool target_attack(){
     return false;
   }
 
-  struct creature_t *target = get_creature_at_position(x,y, cur_map->creatures);
+  clist_t *creatures = map_get_creatures(cur_map);
+  struct creature_t *target = get_creature_at_position(x,y, creatures);
   if(target != NULL && target->body != NULL){
     int choice = -1;
     int selector = 0;

@@ -31,20 +31,25 @@ int main(int argc, char** argv){
   while(true){
 
     refresh();
-
-    //Let each creature take its turn
-    for(creature_list_node_t* cur = cur_map->creatures->first; 
-	cur != NULL; cur = cur->next){
-      //If this creature is not out of move tokens, take turn.
-      if(cur->creature->turn_tokens > 0){
-	cur->creature->takeTurn(cur->creature, cur_map);
+    
+    /* Let each creature take its turn.
+     */
+    for(clist_t* cur = map_get_creatures(cur_map);
+	cur != NULL;
+	cur = clist_next(cur))
+      {
+	creature_t *creature = clist_get_creature(cur);
+	if(creature != NULL){
+	  //If this creature is not out of move tokens, take turn.
+	  if(creature->turn_tokens > 0){
+	    creature->takeTurn(creature, cur_map);
+	  }
+	  //Otherwise, skip the turn to reset them
+	  else{
+	    creature->turn_tokens = creature->turn_tokens_reset_amount;
+	  }
+	}
       }
-      //Otherwise, skip the turn to reset them
-      else{
-	cur->creature->turn_tokens = cur->creature->turn_tokens_reset_amount;
-      }
-    }
-    //num_turns++;
   }
 
   endwin();
