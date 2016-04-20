@@ -832,7 +832,7 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
   /* For the creature to be able to pass, if they're trying to pass through a
    * corner, they cannot be caryying too much.
    */
-  if(creature->inventory->cur_weight > PASS_WEIGHT 
+  if(inv_current_weight(creature->inventory) > PASS_WEIGHT 
      && ((cmd==KEY_HOME && !d.passable && !r.passable) 
 	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
 	 || (cmd==KEY_END && !u.passable && !r.passable) 

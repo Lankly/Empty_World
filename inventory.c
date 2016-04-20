@@ -4,6 +4,23 @@
 #include "helpers.h"
 #include "status.h"
 
+struct inventory_node_t{
+  item_t* item;
+  int id;//the order in which items were added
+  
+  struct inventory_node_t* next;
+};
+
+struct inventory_t{
+  int max_weight;
+  int cur_weight;
+  int num_items;
+
+  inventory_node_t* first;
+  inventory_node_t* last;
+  int last_inventory_id;
+};
+
 /* Initializes the player's inventory equip slots
  */
 void inventory_init(inventory_t *inv){
@@ -133,6 +150,10 @@ item_t* inventory_remove_by_id(inventory_t *inv, int inventory_id){
     cur=cur->next;
   }
   return NULL;
+}
+
+int inv_current_weight(inventory_t *inv){
+  return inv == NULL ? 0 : inv->cur_weight;
 }
 
 /* Displays to the player the list of all items in their inventory. Since items
