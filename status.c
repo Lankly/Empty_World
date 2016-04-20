@@ -46,7 +46,7 @@ void draw_status(map_t *map, struct creature_t *c){
   //Line one of info (always at least player_name, class_name)
   char *name_and_class = Calloc(TERMINAL_WIDTH, sizeof(char));
   sprintf(name_and_class, "%s, %s",
-	  creature_get_name(c), creature_get_class(c).name);
+	  creature_get_name(c), class_name(creature_get_class(c)));
   strncat(output, name_and_class, (int)(TERMINAL_WIDTH - strlen(output)));
   
   ////Contains information about what is in the left and right hand

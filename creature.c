@@ -553,11 +553,9 @@ body_part_t *creature_get_body(creature_t *c){
   return c == NULL ? NULL : c->body;
 }
 
-/* Returns the class of the given creature. If the creature does not exist,
- * returns the UNKNOWN class.
- */
-class_t creature_get_class(creature_t *c){
-  return class_data[c == NULL ? CLASS_UNKNOWN : c->class];
+int creature_get_class(creature_t *c){
+  if(c == NULL){quit("Error: Cannot get class of NULL Creature.");}
+  return c->class;
 }
 
 /* Sets the given x and y integers to the x and y coordinate pair that the
@@ -1020,11 +1018,6 @@ void set_hunger(struct creature_t* c, int h){
     c->hunger = h;}
 }
 
-int get_class(struct creature_t *c){
-  if(c == NULL){quit("Error: Cannot get class of NULL Creature.");}
-  return c->class;
-}
-
 int get_health(struct creature_t* c){
   if(c == NULL || c->body == NULL){
     return 0;}
@@ -1071,42 +1064,42 @@ int get_level(struct creature_t* c){
 
 int get_strength(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
- return c->strength + class_data[c->class].strength_bonus;
+  return c->strength + class_str_bonus(c->class);
 }
 
 int get_perception(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->perception + class_data[c->class].perception_bonus;
+  return c->perception + class_per_bonus(c->class);
 }
 
 int get_endurance(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->endurance + class_data[c->class].endurance_bonus;
+  return c->endurance + class_end_bonus(c->class);
 }
 
 int get_charisma(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->charisma + class_data[c->class].charisma_bonus;
+  return c->charisma + class_cha_bonus(c->class);
 }
 
 int get_intelligence(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->intelligence + class_data[c->class].intelligence_bonus;
+  return c->intelligence + class_int_bonus(c->class);
 }
 
 int get_agility(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->agility + class_data[c->class].agility_bonus;
+  return c->agility + class_agi_bonus(c->class);
 }
 
 int get_luck(struct creature_t* c){
   if(c == NULL){quit("Error: Cannot get values of NULL Creature.");}
-  return c->luck + class_data[c->class].luck_bonus;
+  return c->luck + class_luc_bonus(c->class);
 }
 
 int get_dexterity(struct creature_t *c){
   if(c == NULL){return 0;}
-  return c->dexterity + class_data[c->class].dex_bonus;
+  return c->dexterity + class_dex_bonus(c->class);
 }
 
 int get_gold(struct creature_t* c){
@@ -1296,7 +1289,7 @@ void player_init(){
   player->takeTurn = &playerTakeTurnCallback;
   player->kill = &game_over;
 
-  player->turn_tokens = class_data[player->class].turn_tokens_starting_amount;
+  player->turn_tokens = class_stamina(player->class);
   player->turn_tokens_reset_amount = player->turn_tokens;
 
   player->body = gen_human();

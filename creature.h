@@ -123,7 +123,7 @@ void creature_take_break(creature_t *c);
 void creature_take_turn(creature_t *c, map_t *map);
 
 body_part_t *creature_get_body(creature_t *c);
-class_t creature_get_class(creature_t *c);
+int creature_get_class(creature_t *c);
 void creature_get_coord(creature_t *c, int *x, int *y);
 creature_t *get_creature_at_position(int x, int y, clist_t *l);
 int creature_get_damage(creature_t *c);

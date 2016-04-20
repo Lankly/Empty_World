@@ -11,25 +11,18 @@ typedef struct class_t class_t;
 
 #include "creature.h"
 
-struct class_t{
-  int id;
-  int display_color;
-  char *name;
-  
-  int strength_bonus;
-  int perception_bonus;
-  int endurance_bonus;
-  int charisma_bonus;
-  int intelligence_bonus;
-  int agility_bonus;
-  int luck_bonus;
-  int dex_bonus;
-  
-  int turn_tokens_starting_amount;
-};
-
-class_t class_data[CLASS_MAX+1];
-
 void classes_data_init();
+
+char *class_name(int class_id);
+int class_stamina(int class_id); // AKA turn_tokens
+
+int class_str_bonus(int class_id);
+int class_per_bonus(int class_id);
+int class_end_bonus(int class_id);
+int class_cha_bonus(int class_id);
+int class_int_bonus(int class_id);
+int class_agi_bonus(int class_id);
+int class_luc_bonus(int class_id);
+int class_dex_bonus(int class_id);
 
 #endif
