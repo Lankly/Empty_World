@@ -5,6 +5,24 @@
 #include <stdio.h>
 #include <unistd.h>
 
+/* Holds a command from a given recording and the next command */
+typedef struct rec_t {
+  int cmd;
+  struct rec_t *next;
+} rec_t;
+
+/* Holds a recording and the next recording in our list of recordings */
+typedef struct reclist_t {
+  rec_t *recording;
+  int bind;
+  struct reclist_t *next;
+} reclist_t;
+
+//Private variables
+rec_t *next_cmd;
+reclist_t *macros;
+
+rec_t *get_macro_by_cmd(int cmd);
 /* Begins recording a new macro. If we're currently playing one back, 
  * or already recording another one, then this does nothing.
  */
