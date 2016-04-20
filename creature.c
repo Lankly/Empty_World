@@ -1021,7 +1021,7 @@ void set_hunger(struct creature_t* c, int h){
 int get_health(struct creature_t* c){
   if(c == NULL || c->body == NULL){
     return 0;}
-  return c->body->health;
+  return body_part_health(c->body);
 }
 
 int get_max_health(struct creature_t* c){

@@ -2,6 +2,7 @@
 #define BODIES_H
 
 typedef struct body_part_t body_part_t;
+typedef struct bodylist_t bodylist_t;
 
 #include <stdbool.h>
 #include "inventory.h"
@@ -25,43 +26,6 @@ typedef struct body_part_t body_part_t;
 #define DAMAGE_CRIPPLED 2
 #define DAMAGE_BROKEN 3
 #define DAMAGE_SEVERED 4
-
-struct bodylist_t;
-struct body_part_t{
-  char *name;
-  char *image;
-  int image_width;
-  bool bleeding;
-  int blood_remaining;
-  int health; //For HP
-  int damage; //For wounds
-  int health_max;
-  int size;
-  itemlist_t *armor;
-  item_t *held;
-  itemlist_t *stuck;
-
-  bool vital;
-  char *blunt_message;
-  char *cold_message;
-  char *crush_message;
-  char *explode_message;
-  char *fire_message;
-  char *infect_message;
-  char *pierce_message;
-  char *psychic_message;
-  char *slash_message;
-  
-  struct body_part_t *attached_to;
-  struct bodylist_t *attached;
-  struct bodylist_t *organs;
-};
-
-typedef struct bodylist_t{
-  body_part_t *part;
-  struct bodylist_t *next;
-  int num_parts;
-}bodylist_t;
 
 body_part_t *generate_part(char *name, int h, int b, int s, bool v);
 
@@ -88,13 +52,13 @@ void bodylist_remove_by_name(bodylist_t *list, char *name);
 
 int draw_body_image(struct creature_t *c, bool left);
 
-bool damage_body_part(int *choice, struct creature_t *attacker,
-		      struct creature_t *target,
+bool damage_body_part(int *choice, creature_t *attacker, creature_t *target,
 		      body_part_t *part, int dmg, int dmg_type);
 body_part_t *get_body_part_by_name(body_part_t *part, char *name);
-int body_part_chance_to_hit(struct creature_t *attacker,
-			    struct creature_t *target,
+item_t *body_part_get_held_item(body_part_t *part);
+int body_part_chance_to_hit(creature_t *attacker, creature_t *target,
 			    body_part_t *part);
+int body_part_health(body_part_t *part);
 
 void body_part_free(body_part_t *part);
 void bodylist_free(bodylist_t *list);

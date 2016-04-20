@@ -12,6 +12,43 @@
 #include "map.h"
 #include "status.h"
 
+struct bodylist_t;
+struct body_part_t{
+  char *name;
+  char *image;
+  int image_width;
+  bool bleeding;
+  int blood_remaining;
+  int health; //For HP
+  int damage; //For wounds
+  int health_max;
+  int size;
+  itemlist_t *armor;
+  item_t *held;
+  itemlist_t *stuck;
+
+  bool vital;
+  char *blunt_message;
+  char *cold_message;
+  char *crush_message;
+  char *explode_message;
+  char *fire_message;
+  char *infect_message;
+  char *pierce_message;
+  char *psychic_message;
+  char *slash_message;
+  
+  struct body_part_t *attached_to;
+  struct bodylist_t *attached;
+  struct bodylist_t *organs;
+};
+
+struct bodylist_t{
+  body_part_t *part;
+  struct bodylist_t *next;
+  int num_parts;
+};
+
 body_part_t *generate_part(char *name, int health, int blood, int size, bool v){
   body_part_t *to_ret = Calloc(1, sizeof(body_part_t));
 
@@ -962,6 +999,14 @@ body_part_t *get_body_part_by_name(body_part_t *part, char *name){
   return NULL;
 }
 
+/* Returns the item that's being held by the given body part. If the given
+ * part does not hold an item, even if there is an item being held by a
+ * sub-part, returns NULL.
+ */
+item_t *body_part_get_held_item(body_part_t *part){
+  return part == NULL ? NULL : part->held;
+}
+
 void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
 		      body_part_t* body, int select, int largest_size){
   if(body == NULL){
@@ -1072,6 +1117,16 @@ bool target_attack(){
   }
 
   return false;
+}
+
+/* Returns an integer amount representing how healthy a given body part is.
+ * If this part is the topmost part, you'll get an indication of how well
+ * the creature is doing overall, though that could change quickly with
+ * damage to a vital part.
+ * If the given part is NULL, returns -1.
+ */
+int body_part_health(body_part_t *part){
+  return part == NULL ? -1 : part->health;
 }
 
 int body_part_chance_to_hit(creature_t *attacker,

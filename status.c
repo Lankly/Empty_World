@@ -53,8 +53,9 @@ void draw_status(map_t *map, struct creature_t *c){
   char *left_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
   body_part_t *lh = get_body_part_by_name(creature_get_body(c), "Left hand");
   strncat(left_hand, "  LeftHand:", TERMINAL_WIDTH);
-  strncat(left_hand, lh == NULL ? "Gone" : lh->held == NULL ? "None"
-	  : lh->held->name, TERMINAL_WIDTH - strlen(left_hand));
+  item_t *lh_held = body_part_get_held_item(lh);
+  strncat(left_hand, lh == NULL ? "Gone" : lh_held == NULL ? "None"
+	  : get_item_name(lh_held), TERMINAL_WIDTH - strlen(left_hand));
 
   if((strlen(output) + strlen(left_hand)) < TERMINAL_WIDTH){
     strcat(output, left_hand);
@@ -62,9 +63,10 @@ void draw_status(map_t *map, struct creature_t *c){
 
   char *right_hand = Calloc(TERMINAL_WIDTH, sizeof(char));
   body_part_t *rh = get_body_part_by_name(creature_get_body(c), "Right hand");
+  item_t *rh_held = body_part_get_held_item(rh);
   strncat(right_hand, " RightHand:", TERMINAL_WIDTH);
-  strncat(right_hand, rh == NULL ? "Gone" : rh->held == NULL ? "None"
-	  : rh->held->name, TERMINAL_WIDTH - strlen(right_hand));
+  strncat(right_hand, rh == NULL ? "Gone" : rh_held == NULL ? "None"
+	  : get_item_name(rh_held), TERMINAL_WIDTH - strlen(right_hand));
 
   if((strlen(output) + strlen(right_hand)) < TERMINAL_WIDTH){
     strcat(output, right_hand);

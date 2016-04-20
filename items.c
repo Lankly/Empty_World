@@ -182,6 +182,13 @@ char *get_dmg_verb(item_t *weapon){
   return weapon == NULL || weapon->dmg_verb == NULL ? "hit" : weapon->dmg_verb;
 }
 
+/* Returns the name of the given item. If the item is NULL or has no name,
+ * "Unknown" is returned.
+ */
+char *get_item_name(item_t *item){
+  return item == NULL || item->name == NULL ? "Unknown" : item->name;
+}
+
 /* This item creates a deep copy of an item from the item_data array
  * using the given index to determine which item it will copy.
  */
