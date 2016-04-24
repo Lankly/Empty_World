@@ -206,6 +206,7 @@ void cmd_init(){
   cmd_data[CMD_MACRO] = 'm';
   cmd_data[CMD_TARGET_ATTK] = 'A';
   cmd_data[CMD_PREV_MSG] = 16; //Ctrl+p
+  cmd_data[CMD_NEXT_MSG] = 14; //Ctrl+n
 
   cmd_data_extended[EXT_UNKNOWN] = "";
   cmd_data_extended[EXT_NUM_LOCK] = "num-lock";
@@ -314,9 +315,10 @@ void close_tile(struct map_t *map, int x, int y, int direction){
 /* This function handles picking an item up off of the floor.
  */
 void pickup_tile(creature_t* creature, map_t* map){
-  if(creature == NULL){quit("Error: Cannot give item to NULL Creature");}
-  if(map == NULL){quit("Error: Cannot get item of NULL Map");}
-
+  if(creature == NULL || map == NULL){
+    return;
+  }
+  
   int x, y;
   creature_get_coord(creature, &x, &y);
   
@@ -627,13 +629,7 @@ void manual(){
     //Add quick nav information
     mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
 
-    if(recording_macro || (ch = get_next_cmd()) == 0){
-      ESCDELAY = 25;
-      timeout(1);
-      ch = getch();
-      if(ch != ERR){
-	record_cmd(ch);}
-    }
+    ch = Getch();
 
     //Handle ESC
     if(ch == 27 && getch() == ERR){
@@ -892,6 +888,9 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = target_attack();
   }else if(cmd == cmd_data[CMD_PREV_MSG]){
     prev_message();
+    to_return = false;
+  }else if(cmd == cmd_data[CMD_NEXT_MSG]){
+    next_message();
     to_return = false;
   }else if(cmd == cmd_data[CMD_DEBUG]){
     debug();

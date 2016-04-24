@@ -12,8 +12,6 @@ struct inventory_node_t{
 };
 
 struct inventory_t{
-  int max_weight;
-  int cur_weight;
   int num_items;
 
   inventory_node_t* first;
@@ -42,11 +40,6 @@ bool inventory_add(inventory_t *inv, item_t *item){
     return false;
   }
   
-  //First, checks if there is room in the inventory
-  if(inv->cur_weight + item->weight > inv->max_weight){
-    return false;
-  }
-
   //Actually create the spot in the inventory
   inventory_node_t *new = Calloc(1, sizeof(inventory_node_t));
   new->item = item;
@@ -64,8 +57,7 @@ bool inventory_add(inventory_t *inv, item_t *item){
     inv->last = new;
   }
   
-  //Update weight, add an inventory id, increment count
-  inv->cur_weight += item->weight;
+  //Add an inventory id, increment count
   inv->last->id = ++inv->last_inventory_id;
   inv->num_items++;
   
@@ -150,10 +142,6 @@ item_t* inventory_remove_by_id(inventory_t *inv, int inventory_id){
     cur=cur->next;
   }
   return NULL;
-}
-
-int inv_current_weight(inventory_t *inv){
-  return inv == NULL ? 0 : inv->cur_weight;
 }
 
 /* Displays to the player the list of all items in their inventory. Since items

@@ -37,7 +37,8 @@
 #define CMD_MACRO 22
 #define CMD_TARGET_ATTK 23
 #define CMD_PREV_MSG 24
-#define CMD_MAX 24
+#define CMD_NEXT_MSG 25
+#define CMD_MAX 25
 
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0

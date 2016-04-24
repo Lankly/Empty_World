@@ -27,6 +27,7 @@ struct creature_t{
   int dexterity; int luck;
   int health;    int hunger;        int gold;
   int level;     int max_hunger;    int max_health;
+  int cur_carry_weight;
   
   /* This is how hunger works:
    * You have a max_hunger. This represents how much food can be in your stomach
@@ -591,7 +592,15 @@ struct creature_t *get_creature_at_position(int x, int y, clist_t *l){
 }
 
 bool creature_add_item_to_inventory(creature_t *c, item_t *item){
-  return inventory_add(c->inventory, item);
+  if(item->weight > creature_get_max_carry_weight(c) - c->cur_carry_weight){
+    return false;
+  }
+  
+  if(inventory_add(c->inventory, item)){
+    c->cur_carry_weight += item->weight;
+    return true;
+  }
+  return false;
 }
 
 /* This method handles how a creature takes damage.
@@ -834,7 +843,7 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
   /* For the creature to be able to pass, if they're trying to pass through a
    * corner, they cannot be caryying too much.
    */
-  if(inv_current_weight(creature->inventory) > PASS_WEIGHT 
+  if(creature->cur_carry_weight > PASS_WEIGHT 
      && ((cmd==KEY_HOME && !d.passable && !r.passable) 
 	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
 	 || (cmd==KEY_END && !u.passable && !r.passable) 
@@ -886,6 +895,16 @@ int creature_get_display(creature_t *c){
  */
 int creature_get_last_position(creature_t *c){
   return c == NULL ? -1 : c->last_position;
+}
+
+/* Returns an integer representing how much the given creature can carry.
+ * If the creature is NULL, returns -1.
+ */
+int creature_get_max_carry_weight(creature_t *c){
+  if(c == NULL){
+    return -1;
+  }
+  return c->strength > 0 ? c->strength * 5 : 1;
 }
 
 /* Returns the name associated with the given creature. If the creature does not
@@ -1297,6 +1316,7 @@ void player_init(){
   player->turn_tokens_reset_amount = player->turn_tokens;
 
   player->body = gen_human();
+  player->inventory = inventory_new();
   
   cmd = 0;
 }

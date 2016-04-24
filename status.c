@@ -12,18 +12,35 @@
 #include "map.h"
 #include "creature.h"
 
-bool newmsg;
+bool newmsg, was_prev_msg;
 int num_msgs, prev_msg;
 msg_t *first_msg, *last_msg;
 
+/* Draws the message bar and two stat bars on screen. Requires map and c to be
+ * not-NULL.
+ */
+void draw_status(map_t *map, creature_t *c){
+  if(map == NULL || c == NULL){
+    quit("Can't draw status bar!");
+  }
+  
+  char* output = Calloc(TERMINAL_WIDTH + 1, sizeof(char));
 
-void draw_status(map_t *map, struct creature_t *c){
-  char* output = (char*)Calloc(TERMINAL_WIDTH + 1,sizeof(char));
-
+  /* If the user displayed a previous message, we will want it to go away when
+   * they perform another action, so we let a tiny bit of buffer time happen
+   * before we stop displaying the previous message.
+   */
+  if(!was_prev_msg){
+    prev_msg = 0;
+  }
+  else{
+    was_prev_msg = false;
+  }
+  
   //Status bar
   if(newmsg){
     //If too many messages, "..." will be displayed, so +3
-    sprintf(output,"%-*s",MAX_MSG_LEN + 3, last_msg->msg);
+    sprintf(output,"%-*s", MAX_MSG_LEN + 3, last_msg->msg);
     newmsg = false;
     qckmv = false;
     prev_msg = 0;
@@ -34,11 +51,9 @@ void draw_status(map_t *map, struct creature_t *c){
     }
   }
   
-  move(MSG_ROW,0);
-  //now color the output while addch-ing
-  for(int i = 0; i < TERMINAL_WIDTH && output[i] != '\0'; i++){
-    addch(output[i] | COLOR_PAIR(CP_GREEN_BLACK));
-  }
+  attron(COLOR_PAIR(CP_GREEN_BLACK));
+  mvaddstr(MSG_ROW, 0, output);
+  attroff(COLOR_PAIR(CP_GREEN_BLACK));
 
   free(output);
   output = Calloc(TERMINAL_WIDTH + 1, sizeof(char));
@@ -78,7 +93,7 @@ void draw_status(map_t *map, struct creature_t *c){
   strncat(output, padding, ((int)(TERMINAL_WIDTH - strlen(output))));
 
   ////print out the string
-  move(TERMINAL_HEIGHT - 2,0);
+  move(MSG_ROW + 1, 0);
   attron(A_BOLD);
   for(int i = 0; i < TERMINAL_WIDTH; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
@@ -101,10 +116,9 @@ void draw_status(map_t *map, struct creature_t *c){
   strncat(output, padding, ((int)(TERMINAL_WIDTH - strlen(output))));
 
   ////print out the string
-  move(TERMINAL_HEIGHT - 1, 0);
-  for(int i = 0; i < TERMINAL_WIDTH; i++){
-    addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
-  }
+  attron(COLOR_PAIR(CP_BLACK_WHITE));
+  mvaddstr(MSG_ROW + 2, 0, output);
+  attroff(COLOR_PAIR(CP_BLACK_WHITE));
 
   free(name_and_class);
   free(padding);
@@ -113,23 +127,48 @@ void draw_status(map_t *map, struct creature_t *c){
   free(output);
 }
 
-void prev_message(){
-  prev_msg++;
-  msg_t *cur = last_msg;
-  for(int i = 0; i < prev_msg && cur != NULL; i++){
-    cur = cur->prev;
-  }
-  //If it was NULL, then we need to loop back to the start
-  if(cur == NULL){
-    cur = last_msg;
+void message_nav_helper(int dir){
+  prev_msg += dir;
+
+  if(prev_msg > num_msgs){
     prev_msg = 0;
   }
+  else if(prev_msg < 0){
+    prev_msg = num_msgs;
+  }
+
+  /* When we're at 0, nothing should be printed, so that the player
+   * knows that we're about to loop.
+   */
+  if(prev_msg == 0){
+    return;
+  }
+  
+  msg_t *cur = first_msg;
+  for(int i = 1; i < prev_msg && cur != NULL; i++){
+    cur = cur->next;
+  }
+  
   attron(COLOR_PAIR(CP_GREEN_BLACK));
-  mvaddstr(MSG_ROW, 1, cur->msg);
+  mvaddstr(MSG_ROW, 0, cur->msg);
   for(int i = strlen(cur->msg); i < TERMINAL_WIDTH; i++){
     addch(' ');
   }
   attroff(COLOR_PAIR(CP_GREEN_BLACK));
+
+  was_prev_msg = true;
+}
+
+/* Moves back one message, for displaying on-screen.
+ */
+void prev_message(){
+  message_nav_helper(-1);
+}
+
+/* Moves forward one message, for displaying on-screen.
+ */
+void next_message(){
+  message_nav_helper(1);
 }
 
 void msg_add(char *new_msg){
@@ -181,9 +220,9 @@ void msg_add(char *new_msg){
     free(first_msg->prev->msg);
     free(first_msg->prev);
     first_msg->prev = NULL;
+    num_msgs--;
 
     //call this function again
-    num_msgs--;
     msg_add(new_msg);
   }
   newmsg = true;
@@ -196,6 +235,7 @@ void msg_addf(char* msg, ...){
   char* new_msg = (char*)Calloc(MAX_MSG_LEN+1,sizeof(char*));
   vsprintf(new_msg,msg,args);
   va_end(args);
+
   msg_add(new_msg);
   free(new_msg);
 }

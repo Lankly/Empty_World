@@ -22,7 +22,8 @@ Menus and Commands
     A   open the targeted Attack interface (pick with direction)
     C   Close something
     S   view your Stats
-    ^p  review a Previous message
+    ^n  review the Next message in your message history
+    ^p  review the Previous message in your message history
 
   The following is a list of Extended Commands. Extended Commands are commands that are written out in the Extended Commands Console, which is opened with '#'.
     8-colors        Toggles a more limited color palette
