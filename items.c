@@ -175,6 +175,10 @@ item_t *remove_item(item_map_t *map, int x, int y, int index){
   return remove_item(map->next, x, y, index);
 }
 
+int item_weight(item_t *item){
+  return item == NULL ? 0 : item->weight;
+}
+
 /* Returns the custom verb for a given weapon, if there is one. If there isn't,
  * simply returns the verb "hit".
  */
@@ -185,7 +189,7 @@ char *get_dmg_verb(item_t *weapon){
 /* Returns the name of the given item. If the item is NULL or has no name,
  * "Unknown" is returned.
  */
-char *get_item_name(item_t *item){
+char *item_name(item_t *item){
   return item == NULL || item->name == NULL ? "Unknown" : item->name;
 }
 
@@ -212,4 +216,17 @@ int items_display(struct map_t* map,int x,int y){
   //TODO
 
   return 0;
+}
+
+bool item_set_name(item_t *i, char *n){
+  if(i == NULL || n == NULL){
+    return false;
+  }
+  else if(i->name == NULL){
+    i->name = Calloc(MAX_NAME_LEN, sizeof(char));
+  }
+
+  strcpy(i->name, n);
+
+  return true;
 }

@@ -157,12 +157,15 @@ item_t* remove_item(item_map_t* map, int x, int y, int index);
 int count_items(struct map_t* map,int x,int y);
 void destroy_item(item_t* item);
 
+int item_weight(item_t *item);
+
 char *get_dmg_verb(item_t *weapon);
-char *get_item_name(item_t *item);
+char *item_name(item_t *item);
 int get_item_sym(struct map_t* map,int x,int y, int index);
 int get_top_item_sym(struct map_t* map,int x,int y);
 int get_top_item_sym_from_stack(struct item_map_t* items);
 
 item_t *item_create_from_data(int index);
 int items_display(struct map_t* map,int x,int y);
+bool item_set_name(item_t *item, char *name);
 #endif

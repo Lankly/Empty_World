@@ -86,18 +86,41 @@ creature_t* player;
 #define BREATHE_LAVA 4
 #define BREATHE_MAX 4
 
+/**********************************
+ *    CREATURE LIST FUNCTIONS     *
+ **********************************/\
+
+/* Creates and returns a new creature list */
 clist_t *clist_new(creature_t *creature);
+/* Appends one creature list to another */
 void clist_add(clist_t *list, clist_t *next);
+/* Returns the next node in a creature list */
 clist_t *clist_next(clist_t *list);
+/* Returns the creature stored at a given node in a creature list */
 creature_t *clist_get_creature(clist_t *list);
+/* Removes and returns the creature at the given index of a given creature list.
+ * If the index goes out of bounds, returns NULL.
+ */
 creature_t *clist_remove_by_index(clist_t *list, int index);
+/**/
 creature_t *clist_remove_by_creature(clist_t *list, creature_t *creature);
 
-void creature_data_init();
-creature_t *creature_create_from_data(int index);
-creature_t *creature_spawn(int creature_id, map_t *map);
 
+
+/**********************************
+ *      CREATURE FUNCTIONS        *
+ **********************************/
+
+/* Initializes all the default creatures. */
+void creature_data_init();
+/* Creates and returns one of the default creatures. Takes
+   in a creature id from the enumeration of CREATURE_TYPEs.
+ */
+creature_t *creature_create_from_data(int id);
+
+/* Returns true if a creature is allowed to exist at a given coordinate */
 bool creature_can_move_to(creature_t *creature, int x, int y, int cmd);
+/* Returns true if the two given creatures are the same creature */
 bool creatures_equal(creature_t *first, creature_t *second);
 bool creature_is_asleep(creature_t *c);
 bool creature_is_blind(creature_t *c);
@@ -105,22 +128,64 @@ bool creature_is_flying(creature_t *c);
 bool creature_is_immobile(creature_t *c);
 bool creature_is_out_of_turns(creature_t *c);
 bool creature_is_telepathic(creature_t *c);
+
+/* Returns true if the target creature is visible to the seeing creature */
 bool creature_is_visible(creature_t *target, creature_t *seer);
 
+/* Add an item to the creature's inventory. Returns true if successful */
 bool creature_add_item_to_inventory(creature_t *c, item_t *item);
-void damage_creature(creature_t *target, char *source, int dmg);
+
+/* Damages a creature. Meant for use by non-creature sources */
+void damage_creature(creature_t *target, char *source, int dmg, int type);
+
+/* Displays the inventory of a given creature */
 void creature_display_inventory(creature_t *c);
+
+/* Displays the examine-text of a creature */
 void creature_examine(creature_t *c);
+
+/* Free's the memory of a given creature. */
 body_part_t *creature_free(creature_t *c);
+
+bool creature_inv_empty(creature_t *c);
+
+/* Handles how a creature dies on its given map. */
 void creature_kill(creature_t *c, map_t *map);
+
+/* Activate's the given creature's pathfinding algorithm on the given map */
 void creature_pathfind(creature_t *c, map_t *map);
+
+/* Places the given creature on the given map on the given coordinates */
 void creature_place_at_coord(creature_t *c, map_t *map, int x, int y);
+
+/* Places the given creature on a random walkable tile on the given map */
 void creature_place_randomly_on_map(creature_t *c, map_t *map);
+
+/* Places the given creature on a random non-walkable tile on the given map */
 void creature_place_randomly_in_walls(creature_t *c, map_t *map);
+
+/* Records the direction of the last known position of the given creature */
 void creature_record_movement(creature_t *c, int move_x, int move_y);
+
+/* Returns how far into the fog of war that the given creature can see */
 int creature_see_distance(creature_t *c);
+
+bool creature_set_name(creature_t *c, char *n);
+
+/* Creates, returns, and places a creature on
+   a given map based on the given creature id.
+ */
+creature_t *creature_spawn(int creature_id, map_t *map);
+
+/* Replentishes the given creature's stamina */
 void creature_take_break(creature_t *c);
+
+/* Activate's the given creature's turn algorithm */
 void creature_take_turn(creature_t *c, map_t *map);
+
+
+
+/*------ GETTERS AND SETTERS ------*/
 
 body_part_t *creature_get_body(creature_t *c);
 int   creature_get_class(creature_t *c);
@@ -141,7 +206,6 @@ void set_unconscious(creature_t *c, bool b);
 void set_immobile(creature_t *c, bool b);
 void set_telepathic(creature_t *c, bool b);
 void set_level(creature_t *c, int l);
-void set_name(creature_t *c, char *n);
 void set_exam_text(creature_t *c, char *e);
 void set_class(creature_t *c, int class);
 void set_gold(creature_t *c, int g);
@@ -192,6 +256,8 @@ void remove_breathable(creature_t *creature, int type);
 void remove_consumable(creature_t *creature, int type);
 void remove_intrinsic(creature_t *creature, int type);
 void remove_resistance(creature_t *creature, int type);
+
+/*------ PLAYER FUNCTIONS ------*/
 
 void player_init();
 

@@ -33,10 +33,11 @@ inventory_t *inventory_new(){
 }
 
 /* This method handles adding an item into the given creature's inventory.
- * If the item could not be added, returns false.
+ * If the item could not be added, returns false. Does not check weight
+ * limitations or whether the item itself is valid or not.
  */
 bool inventory_add(inventory_t *inv, item_t *item){
-  if(inv == NULL || item == NULL){
+  if(inv == NULL){
     return false;
   }
   
@@ -62,6 +63,52 @@ bool inventory_add(inventory_t *inv, item_t *item){
   inv->num_items++;
   
   return true;
+}
+
+bool inventory_empty(inventory_t *inv){
+  return inv == NULL || inv->num_items == 0;
+}
+
+/* Removes all NULL items from the given inventory.
+ */
+void inventory_purge(inventory_t *inv){
+  if(inv == NULL || inv->first == NULL){
+    return;
+  }
+
+  /* Remove all the NULL items from the beginning of the list
+   */
+  while(inv->first->item == NULL){
+    inventory_node_t *to_remove = inv->first;
+
+    inv->first = to_remove->next;
+    free(to_remove);
+
+    /* If the entire list was NULL items */
+    if(inv->first == NULL){
+      inv->last = NULL;
+    }
+  }
+
+  /* We will recount items in list, so set num_items to zero */
+  inv->num_items = 0;
+
+  /* Now check all the items.
+   */
+  for(inventory_node_t *cur = inv->first; cur != NULL; cur = cur->next){
+    while(cur->next != NULL && cur->next->item == NULL){
+      inventory_node_t *temp = cur->next;
+
+      cur->next = temp->next;
+      cur->item = temp->item;
+      
+      if(inv->last == temp){
+	inv->last = cur;
+      }
+      free(temp);
+    }
+    inv->num_items++;
+  }
 }
 
 /* This method handles removing an item from a given creature's inventory.

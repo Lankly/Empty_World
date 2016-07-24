@@ -100,7 +100,6 @@ void draw_map(struct map_t *map);
 
 void open_tile(struct map_t *map, int x, int y, int direction);
 void close_tile(struct map_t *map, int x, int y, int direction);
-void pickup_tile();
 void debug();
 void manual();
 void xscend();

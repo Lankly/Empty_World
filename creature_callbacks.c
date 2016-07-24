@@ -653,7 +653,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
       set_luck(c, 2 + !(rand() % 3));
       set_level(c, 2);
       if(!(rand() % 3)){
-	set_name(c, "Giant Rat");
+	creature_set_name(c, "Giant Rat");
 	set_exam_text(c, "This is a very large rat.");
 	set_strength(c, 3);
 	set_level(c, 3);
@@ -677,7 +677,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
       break;
     case 4:
       c = creature_spawn(CREATURE_TYPE_PLANT, map);
-      set_name(c, "Venus Human Trap");
+      creature_set_name(c, "Venus Human Trap");
       set_exam_text(c, "This plant will eat you alive!");
       set_strength(c, 3);
       set_perception(c, 1);
@@ -703,14 +703,14 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
     case 8:
       c = creature_spawn(CREATURE_TYPE_HUMAN, map);
       set_class(c, CLASS_WARRIOR);
-      set_name(c, "Human");
+      creature_set_name(c, "Human");
       set_exam_text(c, "This is a human warrior.");
       set_level(c, 3);
       break;
     case 9:
       c = creature_spawn(CREATURE_TYPE_HUMAN, map);
       set_class(c, CLASS_PIKEMAN);
-      set_name(c, "Human");
+      creature_set_name(c, "Human");
       set_exam_text(c, "This is a human pikeman.");
       break;
     case 10:
@@ -736,7 +736,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
 	break;
       case 2:
 	c = creature_spawn(CREATURE_TYPE_PLANT, map);
-	set_name(c, "Venus Human Trap");
+	creature_set_name(c, "Venus Human Trap");
 	set_exam_text(c, "This plant will eat you alive!");
 	set_strength(c, 3 + (rand() % 2));
 	set_perception(c, 1);
@@ -756,7 +756,7 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
 	set_luck(c, 2 + !(rand() % 3));
 	set_level(c, 2);
 	if(rand() % 2){
-	  set_name(c, "Giant Rat");
+	  creature_set_name(c, "Giant Rat");
 	  set_exam_text(c, "This is a very large rat.");
 	  set_strength(c, 3);
 	  set_level(c, 3 + (rand() % 2));
@@ -780,14 +780,14 @@ void spawnerTakeTurnCallback(struct creature_t* creature,
       case 8:
 	c = creature_spawn(CREATURE_TYPE_HUMAN, map);
 	set_class(c, CLASS_WARRIOR);
-	set_name(c, "Human");
+	creature_set_name(c, "Human");
 	set_exam_text(c, "This is a human warrior.");
 	set_level(c, 3);
 	break;
       case 9:
 	c = creature_spawn(CREATURE_TYPE_HUMAN, map);
 	set_class(c, CLASS_PIKEMAN);
-	set_name(c, "Human");
+	creature_set_name(c, "Human");
 	set_exam_text(c, "This is a human pikeman.");
 	break;
       case 10:

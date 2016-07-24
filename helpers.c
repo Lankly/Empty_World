@@ -312,53 +312,6 @@ void close_tile(struct map_t *map, int x, int y, int direction){
   }else{msg_add("That cannot be closed.");}
 }
 
-/* This function handles picking an item up off of the floor.
- */
-void pickup_tile(creature_t* creature, map_t* map){
-  if(creature == NULL || map == NULL){
-    return;
-  }
-  
-  int x, y;
-  creature_get_coord(creature, &x, &y);
-  
-  int count = count_items(map, x, y);
-  item_t* to_add;
-  /* This is the case where the player has tried to pick up an item,
-   * but there is nothing on the ground  beneath them.
-   */
-  if(count == 0){
-    if(creature == player){
-      msg_add("No items to pick up!");}
-    return;
-  }
-  
-  /* This is the case where the there is only one item on the ground
-   * beneath the player.
-   */
-  else if(count == 1){
-    to_add = remove_item(map_get_items(map), x, y, 0);
-  }
-
-  /* This is the case where there are multiple items on the ground 
-   * beneath the player. It will take the user to a screen where they
-   * can select which item it is that they're trying to pick up.
-   */
-  else if(creature == player){
-    to_add = remove_item(map_get_items(map),
-			 x,
-			 y,
-			 items_display(map, x, y));
-  }
-
-  /* TODO: Nonplayer creature picking up from many items.
-   */
-  else{
-    return;
-  }
-  creature_add_item_to_inventory(creature, to_add);
-}
-
 void debug(){
   char* debug_cmd = msg_prompt("~ ");
   char* debug_cmd_lower = str_lowercase(debug_cmd);
@@ -842,19 +795,14 @@ bool analyze_cmd(int cmd, int* x, int* y){
     open_tile(cur_map, x, y, dir);
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
-    int dir = 0;
-    if(recording_macro || (dir = get_next_cmd()) == 0){
-      dir = getch();
-      record_cmd(dir);
-    }
     int x, y;
     creature_get_coord(player, &x, &y);
-    close_tile(cur_map, x, y, dir);
-   
+    close_tile(cur_map, x, y, Getch());
   }else if(cmd == cmd_data[CMD_PICKUP]){
-    pickup_tile(player, cur_map);
+    to_return = pickup_tile(player, cur_map);
   }else if(cmd == cmd_data[CMD_INVENTORY]){
     creature_display_inventory(player);
+    draw_map(cur_map);
     to_return = false;
   }else if(cmd == cmd_data[CMD_REMAP]){
     cmd_remap();
@@ -875,6 +823,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = false;
   }else if(cmd == cmd_data[CMD_STATS]){
     display_stats(player);
+    draw_map(cur_map);
     to_return = false;
   }else if(cmd == cmd_data[CMD_MACRO]){
     if(!recording_macro){
@@ -886,6 +835,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
     to_return = false;
   }else if(cmd == cmd_data[CMD_TARGET_ATTK]){
     to_return = target_attack();
+    draw_map(cur_map);
   }else if(cmd == cmd_data[CMD_PREV_MSG]){
     prev_message();
     to_return = false;
@@ -900,8 +850,11 @@ bool analyze_cmd(int cmd, int* x, int* y){
   else{
     to_return = (cmd == cmd_data[CMD_WAIT]);}
 
+  /* If the command took no in-game time.
+   */
   if(cmd != ERR && to_return == false){
-    draw_status(cur_map, player);}
+    draw_status(cur_map, player);    
+  }
 
   return to_return;
 }
@@ -1171,7 +1124,6 @@ void game_over(){
   char res = 0;
   while(res != 'y' && res != 'Y' && res != 'n' && res != 'N'
 	&& res != '\n' && res != 'q' && res != 'Q'){
-    getch();
     res = msg_promptchar("Start a new game? (Y/n)");
   }
   

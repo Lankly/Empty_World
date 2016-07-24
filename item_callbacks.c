@@ -60,12 +60,18 @@ void ironSwordUseCallback(struct item_use_t* data){
     quit("Error: Cannot use item on NULL");
   }
   //If the item was used on a player
-  if(data->type==CALLBACK_TYPE_PLAYER){
-    damage_creature(player, data->item->name, data->item->damage);
+  if(data->type == CALLBACK_TYPE_PLAYER){
+    damage_creature(player,
+		    data->item->name,
+		    data->item->damage,
+		    2);
   }
   //If it was used on a creature
-  else if(data->type==CALLBACK_TYPE_CREATURE){
-    damage_creature(data->creature, data->item->name, data->item->damage);
+  else if(data->type == CALLBACK_TYPE_CREATURE){
+    damage_creature(data->creature,
+		    data->item->name,
+		    data->item->damage,
+		    DMG_PIERCING);
   }
   //If it was used on another item
   else if(data->type==CALLBACK_TYPE_ITEM){

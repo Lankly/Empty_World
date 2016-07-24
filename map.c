@@ -432,6 +432,61 @@ bool tile_has_stair(struct map_t* map, int x, int y){
   return false;
 }
 
+/* This function handles picking an item up off of the floor.
+ * Returns true if it was successful.
+ */
+bool pickup_tile(creature_t* creature, map_t* map){
+  if(creature == NULL || map == NULL){
+    return false;
+  }
+  
+  int x, y;
+  creature_get_coord(creature, &x, &y);
+  
+  int count = count_items(map, x, y);
+  item_t* to_add;
+
+  /* This is the case where the player has tried to pick up an item,
+   * but there is nothing on the ground  beneath them.
+   */
+  if(count == 0){
+    if(creature == player){
+      msg_add("No items to pick up!");}
+    return false;
+  }
+  
+  /* This is the case where the there is only one item on the ground
+   * beneath the player.
+   */
+  else if(count == 1){
+    to_add = remove_item(map_get_items(map), x, y, 0);
+  }
+
+  /* This is the case where there are multiple items on the ground 
+   * beneath the player. It will take the user to a screen where they
+   * can select which item it is that they're trying to pick up.
+   */
+  else if(creature == player){
+    to_add = remove_item(map_get_items(map),
+			 x,
+			 y,
+			 items_display(map, x, y));
+  }
+
+  /* TODO: Nonplayer creature picking up from many items.
+   */
+  else{
+    return false;
+  }
+
+  /* Attempt to add it to the creature's inventory */
+  if(creature_add_item_to_inventory(creature, to_add) == false){
+    map_add_item(map, x, y, to_add, false);
+    return false;
+  }
+  return true;
+}
+
 void map_place_up_stair(struct map_t* map, 
 			int x, 
 			int y,
@@ -1083,10 +1138,11 @@ void draw_map(struct map_t* map){
   struct map_t* m = map->known_map ? map->known_map : map;
   
   for(int j = 0; j < m->height; j++){
-    move(j, 0);
     for(int i = 0; i < m->width; i++){
+      move(j, i);
       int tile = map_get_tile(m,i,j);
       int display = tile_data[tile].display;
+      int cur_tile = inch();
       
       //Wall correct
       if(display == ACS_PLUS){
@@ -1101,10 +1157,18 @@ void draw_map(struct map_t* map){
       else if(use_8_colors && tile_data[tile].display_color_alt != 0){
 	color = tile_data[tile].display_color_alt;
       }
-      
-      addch(display | COLOR_PAIR(map_tile_is_visible(map, i, j, player) ? color
-		       : use_8_colors ? CP_BLUE_BLACK 
-				 : CP_DARK_GREY_BLACK));
+
+      display = display | COLOR_PAIR(map_tile_is_visible(map, i, j, player)
+				     ? color
+				     : use_8_colors ? CP_BLUE_BLACK 
+				     : CP_DARK_GREY_BLACK);
+      /* Only add the tile if it wasn't already there.
+       * This is done so that tiles that are already on-screen don't 
+       * flash occasionally.
+       */
+      if(cur_tile != display){
+	addch(display);
+      }
     }
   }
   

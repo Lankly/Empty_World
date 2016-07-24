@@ -70,7 +70,7 @@ void draw_status(map_t *map, creature_t *c){
   strncat(left_hand, "  LeftHand:", TERMINAL_WIDTH);
   item_t *lh_held = body_part_get_held_item(lh);
   strncat(left_hand, lh == NULL ? "Gone" : lh_held == NULL ? "None"
-	  : get_item_name(lh_held), TERMINAL_WIDTH - strlen(left_hand));
+	  : item_name(lh_held), TERMINAL_WIDTH - strlen(left_hand));
 
   if((strlen(output) + strlen(left_hand)) < TERMINAL_WIDTH){
     strcat(output, left_hand);
@@ -81,7 +81,7 @@ void draw_status(map_t *map, creature_t *c){
   item_t *rh_held = body_part_get_held_item(rh);
   strncat(right_hand, " RightHand:", TERMINAL_WIDTH);
   strncat(right_hand, rh == NULL ? "Gone" : rh_held == NULL ? "None"
-	  : get_item_name(rh_held), TERMINAL_WIDTH - strlen(right_hand));
+	  : item_name(rh_held), TERMINAL_WIDTH - strlen(right_hand));
 
   if((strlen(output) + strlen(right_hand)) < TERMINAL_WIDTH){
     strcat(output, right_hand);

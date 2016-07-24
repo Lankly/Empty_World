@@ -591,13 +591,33 @@ struct creature_t *get_creature_at_position(int x, int y, clist_t *l){
   return NULL;
 }
 
+/* Adds a given item to a given creature's inventory. Does nothing if the given
+ * creature is NULL.
+ */
 bool creature_add_item_to_inventory(creature_t *c, item_t *item){
-  if(item->weight > creature_get_max_carry_weight(c) - c->cur_carry_weight){
+  int weight = item_weight(item);
+  if(weight > (creature_get_max_carry_weight(c) - c->cur_carry_weight)){
+    if(creatures_equal(c, player)){
+      msg_add("You are currently carrying too much to lift this.");
+    }
     return false;
   }
   
-  if(inventory_add(c->inventory, item)){
-    c->cur_carry_weight += item->weight;
+  /*Check if the inventory is currently empty. If so, we'll be creating a
+   * temporary first item that we'll delete when done.
+   */
+  bool empty = creature_inv_empty(c);
+  if(empty){
+    inventory_add(c->inventory, NULL);
+  }
+  
+  if(c != NULL && inventory_add(c->inventory, item)){
+    c->cur_carry_weight += weight;
+
+    /* If we added one empty item, remove it now. */
+    if(empty){
+      inventory_purge(c->inventory);
+    }
     return true;
   }
   return false;
@@ -605,8 +625,13 @@ bool creature_add_item_to_inventory(creature_t *c, item_t *item){
 
 /* This method handles how a creature takes damage.
  */
-void damage_creature(struct creature_t *target, char *source, int dmg){
-  if(target == NULL){return;}
+void damage_creature(creature_t *target, char *source, int dmg, int type){
+  if(target == NULL){
+    return;
+  }
+
+  int choice = -1;
+  damage_body_part(&choice, NULL, target, target->body, dmg, type);
   
   target->health -= dmg;
   if(target->health <= 0){
@@ -659,6 +684,14 @@ body_part_t *creature_free(creature_t *c){
     free(c);
   }
   return to_return;
+}
+
+/* Returns whether or not the given creature has any items or not in its
+ * inventory. Does not count equipped items. If the creature is NULL, returns
+ * true.
+ */
+bool creature_inv_empty(creature_t *c){
+  return c == NULL || inventory_empty(c->inventory);
 }
 
 /* Kills the given creature. Does nothing if the creature is NULL.
@@ -765,6 +798,19 @@ int creature_see_distance(struct creature_t* creature){
 		   * get_perception(creature)
 		   / ((creature->max_hunger - creature->hunger) / 100 + 1));
   return to_return;
+}
+
+bool creature_set_name(creature_t* c, char* n){
+  if(c == NULL || n == NULL){
+    return false;
+  }
+  else if(c->name == NULL){
+    c->name = Calloc(MAX_NAME_LEN, sizeof(char));
+  }
+
+  strcpy(c->name, n);
+
+  return true;
 }
 
 void creature_take_break(creature_t *c){
@@ -904,7 +950,7 @@ int creature_get_max_carry_weight(creature_t *c){
   if(c == NULL){
     return -1;
   }
-  return c->strength > 0 ? c->strength * 5 : 1;
+  return c->strength > 0 ? c->strength * 10 : 10;
 }
 
 /* Returns the name associated with the given creature. If the creature does not
@@ -936,11 +982,6 @@ void creature_set_display(creature_t *c, int disp){
 void set_level(struct creature_t* c, int l){
   if(c != NULL){
     c->level = l;}
-}
-
-void set_name(struct creature_t* c, char* n){
-  if(c != NULL){
-    c->name = n;}
 }
 
 void set_exam_text(struct creature_t *c, char *e){

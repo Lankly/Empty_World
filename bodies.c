@@ -644,19 +644,19 @@ item_t *create_corpse(creature_t *c){
   corpse->corpse = part;
   switch(part->size){
   case (SIZE_TINY):
-    corpse->weight = 5;
+    corpse->weight = 1;
     break;
   case (SIZE_SMALL):
-    corpse->weight = 12;
+    corpse->weight = 5;
     break;
   case (SIZE_AVG):
-    corpse->weight = 25;
+    corpse->weight = 10;
     break;
   case (SIZE_LARGE):
-    corpse->weight = 50;
+    corpse->weight = 20;
     break;
   case (SIZE_HUGE):
-    corpse->weight = 100;
+    corpse->weight = 50;
     break;
   }
 
@@ -669,6 +669,11 @@ item_t *create_corpse(creature_t *c){
   corpse->exam_text = Calloc(MAX_MSG_LEN, sizeof(char));
   sprintf(corpse->exam_text, "This is the corpse of a %s.",
 	  str_lowercase(part->name));
+  
+  char *corpse_name = Calloc(MAX_NAME_LEN, sizeof(char));
+  sprintf(corpse_name, "%s corpse",part->name != NULL ? part->name : "Unknown");
+  item_set_name(corpse, corpse_name);
+  free(corpse_name);
   
   return corpse;
 }
@@ -833,7 +838,12 @@ bool damage_body_part(int *choice, creature_t *attacker,
 	  msg_add("You deal no damage.");
 	}
 	else if(dmg == 0){
-	  msg_addf("The %s deals no damage.", creature_get_name(attacker));
+	  if(attacker == NULL){
+	    msg_add("It deals no damage.");
+	  }
+	  else{
+	    msg_addf("The %s deals no damage.", creature_get_name(attacker));
+	  }
 	}
 	else if(attacker == player){
 	  msg_addf("You %s the %s's %s.", dmg_verb, creature_get_name(target),
@@ -843,8 +853,11 @@ bool damage_body_part(int *choice, creature_t *attacker,
 	  msg_addf("The %s %ss your %s.", creature_get_name(attacker), dmg_verb,
 		   str_lowercase(part->name));
 	}
+	else if(attacker == NULL){
+	  msg_addf("It %ss the %s.", dmg_verb, creature_get_name(target));
+	}
 	else{
-	  msg_addf("The %s hits the %s.", creature_get_name(attacker),
+	  msg_addf("The %s %ss the %s.", creature_get_name(attacker), dmg_verb,
 		   creature_get_name(target));
 	}
       }
@@ -856,12 +869,16 @@ bool damage_body_part(int *choice, creature_t *attacker,
 	if(attacker == player){
 	  strcat(message, "You ");
 	}
+	else if(attacker == NULL){
+	  strcat(message, "It ");
+	}
 	else{
 	  strcat(message, "The ");
 	  strncat(message, creature_get_name(target),
 		  MAX_MSG_LEN - strlen(message));
 	  strncat(message, " ", MAX_MSG_LEN - strlen(message));
 	}
+	
 	if(dmg_type == DMG_BLUNT && part->blunt_message != NULL){
 	  strncat(message, part->blunt_message, MAX_MSG_LEN - strlen(message));
 	}
@@ -910,12 +927,25 @@ bool damage_body_part(int *choice, creature_t *attacker,
     }
     else{
       if(attacker == player){
-	msg_addf("You miss the %s.", creature_get_name(target));
+	if(!creature_is_visible(target, attacker)){
+	  msg_add("You miss it.");
+	}
+	else{
+	  msg_addf("You miss the %s.", creature_get_name(target));
+	}
       }
       else if(target == player){
-	msg_addf("The %s misses you.", creature_get_name(attacker));
+	if(!creature_is_visible(attacker, target)){
+	  msg_add("It misses you.");
+	} 
+	else{
+	  msg_addf("The %s misses you.", creature_get_name(attacker));
+	}
       }
       else{
+	if(!creature_is_visible(target, attacker)){
+	  msg_addf("It misses the %s.", creature_get_name);
+	}
 	msg_addf("The %s misses the %s.", creature_get_name(attacker),
 		 creature_get_name(target));
       }

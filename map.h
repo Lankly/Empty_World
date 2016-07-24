@@ -35,6 +35,7 @@ int map_get_top_symbol(map_t *map, int x, int y);
 void map_draw_rect(map_t *map, int x, int y, int w, int h, int tile);
 void map_draw_borders(map_t *map);
 void map_draw_random_rooms(map_t *map, int x, int y);
+bool pickup_tile();
 void map_place_up_stair(map_t *map, 
 			int x, 
 			int y, 
