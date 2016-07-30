@@ -25,10 +25,6 @@ void quit(const char* error_msg){
   exit(1);
 }
 
-int get_coord(int x,int y,int width){
-  return y*width+x;
-}
-
 int get_distance(int x_0, int y_0, int x_1, int y_1){
   return sqrt(pow(x_0 - x_1, 2) + pow(y_0 - y_1, 2));
 }
@@ -70,6 +66,10 @@ intlist_t *intlist_new(int elem){
   return intlist_add(NULL, elem);
 }
 
+
+int get_coord(int x,int y,int width){
+  return y*width+x;
+}
 /* This function gives the player a cursor to move around on-scren with. When
  * they hit enter, the pointers we were given will be updated with that location
  */
@@ -111,6 +111,28 @@ void get_coord_via_cursor(int* y, int* x){
   //Enter was pressed, so update the pointers
   *x = temp_x;
   *y = temp_y;
+}
+
+/* Returns the center of the player's screen. */
+void get_origin(int *y, int *x){
+  getmaxyx(stdscr, *y, *x);
+
+  *y = *y/2;
+  *x = *x/2;
+
+  *y = *y < 0 ? 0 : *y;
+  *x = *x < 0 ? 0 : *x;
+}
+
+/* Returns where a box should start for it to be centered on-screen */
+void get_centered_box_ul_coord(int *y, int *x, int h, int w){
+  get_origin(y, x);
+
+  *y -= h/2;
+  *x -= w/2;
+
+  *y = *y < 0 ? 0 : *y;
+  *x = *x < 0 ? 0 : *x;
 }
 
 char* str_lowercase(char* str){
@@ -571,16 +593,22 @@ void manual(){
       ar_pos++;
     }
 
+    // Now start putting everything on-screen
+
+    int y0, x0;
+    get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+    
     draw_borders();
 
     for(int j=2;  j < TERMINAL_HEIGHT-3; j++){
       if(page*(TERMINAL_HEIGHT-5)+j-2 < ar_pos){
-	mvaddstr(j,2, lines[page*(TERMINAL_HEIGHT-5)+j-2]);
+	mvaddstr(y0 + j, x0 +2, lines[page * (TERMINAL_HEIGHT-5) + j - 2]);
       }
-    } //for
+    }
 
     //Add quick nav information
-    mvaddstr(TERMINAL_HEIGHT-2, 2, "< > To navigate, 1-5 to skip, q to quit");
+    mvaddstr(y0 + TERMINAL_HEIGHT-2, x0 + 2,
+	     "< > To navigate, 1-5 to skip, q to quit");
 
     ch = Getch();
 
@@ -644,9 +672,13 @@ void analyze_cmd_extended(){
   int ch = (int)' ';
   int ret_pos = 0;
   char* ret = (char*)Calloc(MAX_MSG_LEN-1, sizeof(char));
-  
+
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+
   while(ch != '\n'){
-    move(MSG_ROW, 0);
+    move(y0 + MSG_ROW, x0);
     addch('#' | COLOR_PAIR(CP_GREEN_BLACK));
     for(int i=0; i < MAX_MSG_LEN; i++){
       if(i < strlen(ret)){
@@ -667,8 +699,8 @@ void analyze_cmd_extended(){
 	  if(cmd_data_extended[i][j] != ret[j]){break;}
 	  //If everything typed so far is equal to a command, autocomplete
 	  if(j == strlen(ret)-1){
-	    move(MSG_ROW, strlen(ret)+1);
-	    for(int k=j+1; k < strlen(cmd_data_extended[i]); k++){
+	    move(y0 + MSG_ROW, x0 + strlen(ret) + 1);
+	    for(int k = j+1; k < strlen(cmd_data_extended[i]); k++){
 	      addch(cmd_data_extended[i][k] | (use_8_colors ?
 					       COLOR_PAIR(CP_YELLOW_BLACK)
 					       : COLOR_PAIR(CP_GREY_BLACK)));
@@ -679,7 +711,7 @@ void analyze_cmd_extended(){
       }
     }
 
-    move(MSG_ROW, strlen(ret)+1);
+    move(y0 + MSG_ROW, x0 + strlen(ret) + 1);
 
     if(recording_macro || (ch = get_next_cmd()) == 0){
       ch = getch();
@@ -991,22 +1023,26 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
 }
 
 void draw_borders(){
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+
   //Top
-  mvaddch(0,0,'+');
+  mvaddch(y0, x0, '+');
   for(int i = 1; i < TERMINAL_WIDTH-1; i++){
     addch(ACS_HLINE);}
   addch('+');
 
   //Bottom
-  mvaddch(TERMINAL_HEIGHT-1, 0, '+');
+  mvaddch(y0 + TERMINAL_HEIGHT - 1, x0, '+');
   for(int i = 1; i < TERMINAL_WIDTH-1; i++){
     addch(ACS_HLINE);}
   addch('+');
 
   //Sides
   for(int j = 1; j < TERMINAL_HEIGHT-1; j++){
-    mvaddch(j, 0, ACS_VLINE); 
-    mvaddch(j, TERMINAL_WIDTH-1, ACS_VLINE);
+    mvaddch(y0 + j, x0, ACS_VLINE); 
+    mvaddch(y0 + j, x0 + TERMINAL_WIDTH-1, ACS_VLINE);
   }
 }
 
@@ -1015,8 +1051,11 @@ char display_list(char *instr, int **items, int num_items, int col_width){
   clear();
   draw_borders();
 
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+  
   //Info at bottom
-  move(TERMINAL_HEIGHT-2, 2);
+  move(y0 + TERMINAL_HEIGHT-2, x0 + 2);
   addstr(instr);
 
   //Now we look for user input and display items
@@ -1032,8 +1071,8 @@ char display_list(char *instr, int **items, int num_items, int col_width){
     for(int i = prev_num;
 	i < num_items && i < (prev_num + max_items_per_page); i++){
       //Position where to put the next item
-      move(2 + (i - prev_num) % max_items_per_col,
-	   3 + (((i - prev_num) / max_items_per_col)
+      move(y0 + 2 + (i - prev_num) % max_items_per_col,
+	   x0 + 3 + (((i - prev_num) / max_items_per_col)
 		* col_width));
       for(int j = 0; items[i][j] != 0; j++){
 	addch(items[i][j]);
@@ -1042,7 +1081,7 @@ char display_list(char *instr, int **items, int num_items, int col_width){
 
     ESCDELAY = 25;
     timeout(1);
-    move(TERMINAL_HEIGHT-1,TERMINAL_WIDTH);
+    move(y0 + TERMINAL_HEIGHT - 1, x0 + TERMINAL_WIDTH);
     int ch = (playing_macro ? get_next_cmd() : getch());
 
     if(recording_macro && ch != ERR){

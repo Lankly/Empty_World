@@ -1136,10 +1136,13 @@ int wall_correct(struct map_t *m, int i, int j){
 void draw_map(struct map_t* map){
   if(map == NULL){quit("Error: Cannot draw NULL Map");}
   struct map_t* m = map->known_map ? map->known_map : map;
+
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
   
   for(int j = 0; j < m->height; j++){
     for(int i = 0; i < m->width; i++){
-      move(j, i);
+      move(y0 + j, x0 + i);
       int tile = map_get_tile(m,i,j);
       int display = tile_data[tile].display;
       int cur_tile = inch();
@@ -1177,7 +1180,7 @@ void draw_map(struct map_t* map){
       known != NULL; 
       known = known->next){
     if(known != NULL && known->first != NULL){
-      mvaddch(known->y, known->x, known->first->item->display);}
+      mvaddch(y0 + known->y, x0 + known->x, known->first->item->display);}
   }
 
   //Now creatures
@@ -1191,7 +1194,7 @@ void draw_map(struct map_t* map){
       //Show creature if it's visible to the player
       if(creature_is_telepathic(player)
 	 || (creature_is_visible(cur_creature, player))){
-	mvaddch(cur_y, cur_x, creature_get_display(cur_creature));}
+	mvaddch(y0 + cur_y, x0 + cur_x, creature_get_display(cur_creature));}
     }
   }
 }

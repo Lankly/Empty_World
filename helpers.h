@@ -75,17 +75,23 @@ char *str_lowercase(char *str);
 bool str_is_num(char *str);
 int *str_to_ints(char *str, int len);
 char *ints_to_str(int *ints, int len);
-int get_coord(int x,int y,int width);
 int get_distance(int x_0, int y_0, int x_1, int y_1);
+
 intlist_t *intlist_add(intlist_t *list, int elem);
 void intlist_remove(intlist_t *list, int elem);
 void intlist_free(intlist_t *list);
 intlist_t *intlist_new(int elem);
+
+int get_coord(int x,int y,int width);
 void get_coord_via_cursor(int* y, int* x);
+void get_origin(int *y, int *x);
+void get_centered_box_ul_coord(int *y, int *x, int h, int w);
+
 void quit(const char* error_msg);
+
+bool cmd_exists(int cmd);
 void cmd_init();
 void cmd_remap();
-bool cmd_exists(int cmd);
 
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
 bool in_range(struct creature_t *target, struct creature_t *seer);

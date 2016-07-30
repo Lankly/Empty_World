@@ -12,13 +12,27 @@
 #include "map.h"
 #include "creature.h"
 
+/**********************
+ * THE MESSAGE STRUCT *
+ **********************/
+typedef struct msg_t {
+  struct msg_t* prev;
+  struct msg_t* next;
+  char* msg;
+} msg_t;
+
+/*********************
+ * PRIVATE VARIABLES *
+ *********************/
 bool newmsg, was_prev_msg;
 int num_msgs, prev_msg;
 msg_t *first_msg, *last_msg;
 
-/* Draws the message bar and two stat bars on screen. Requires map and c to be
- * not-NULL.
- */
+
+/********************
+ * PUBLIC FUNCTIONS *
+ ********************/
+
 void draw_status(map_t *map, creature_t *c){
   if(map == NULL || c == NULL){
     quit("Can't draw status bar!");
@@ -50,9 +64,13 @@ void draw_status(map_t *map, creature_t *c){
       sprintf(output,"%-*s", TERMINAL_WIDTH, " ");
     }
   }
+
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
   
   attron(COLOR_PAIR(CP_GREEN_BLACK));
-  mvaddstr(MSG_ROW, 0, output);
+  mvaddstr(y0 + MSG_ROW, x0 + 0, output);
   attroff(COLOR_PAIR(CP_GREEN_BLACK));
 
   free(output);
@@ -93,7 +111,7 @@ void draw_status(map_t *map, creature_t *c){
   strncat(output, padding, ((int)(TERMINAL_WIDTH - strlen(output))));
 
   ////print out the string
-  move(MSG_ROW + 1, 0);
+  move(y0 + MSG_ROW + 1, x0 + 0);
   attron(A_BOLD);
   for(int i = 0; i < TERMINAL_WIDTH; i++){
     addch(output[i] | COLOR_PAIR(CP_BLACK_WHITE));
@@ -117,7 +135,7 @@ void draw_status(map_t *map, creature_t *c){
 
   ////print out the string
   attron(COLOR_PAIR(CP_BLACK_WHITE));
-  mvaddstr(MSG_ROW + 2, 0, output);
+  mvaddstr(y0 + MSG_ROW + 2, x0 + 0, output);
   attroff(COLOR_PAIR(CP_BLACK_WHITE));
 
   free(name_and_class);
@@ -127,49 +145,23 @@ void draw_status(map_t *map, creature_t *c){
   free(output);
 }
 
-void message_nav_helper(int dir){
-  prev_msg += dir;
 
-  if(prev_msg > num_msgs){
-    prev_msg = 0;
-  }
-  else if(prev_msg < 0){
-    prev_msg = num_msgs;
-  }
-
-  /* When we're at 0, nothing should be printed, so that the player
-   * knows that we're about to loop.
-   */
-  if(prev_msg == 0){
-    return;
-  }
-  
-  msg_t *cur = first_msg;
-  for(int i = 1; i < prev_msg && cur != NULL; i++){
-    cur = cur->next;
-  }
-  
-  attron(COLOR_PAIR(CP_GREEN_BLACK));
-  mvaddstr(MSG_ROW, 0, cur->msg);
-  for(int i = strlen(cur->msg); i < TERMINAL_WIDTH; i++){
-    addch(' ');
-  }
-  attroff(COLOR_PAIR(CP_GREEN_BLACK));
-
-  was_prev_msg = true;
-}
-
+void message_nav_helper(int dir);
 /* Moves back one message, for displaying on-screen.
  */
 void prev_message(){
   message_nav_helper(-1);
 }
 
+
+
 /* Moves forward one message, for displaying on-screen.
  */
 void next_message(){
   message_nav_helper(1);
 }
+
+
 
 void msg_add(char *new_msg){
   if(new_msg == NULL){new_msg = "Bad message";}
@@ -240,6 +232,8 @@ void msg_addf(char* msg, ...){
   free(new_msg);
 }
 
+
+
 /* Uses the message bar to ask the user a question and return their response.
  * Will not leave the message there once the function completes.
  */
@@ -249,14 +243,18 @@ char* msg_prompt(char* prompt){
   }
   curs_set(1);
 
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+  
   int ch = (int)' ';
   int ret_pos=0;
   char* ret = (char*)Calloc(81-strlen(prompt),sizeof(char));
   while(ch!='\n'){
     //clear message bar
-    move(MSG_ROW,0);
+    move(y0 + MSG_ROW, x0 + 0);
     for(int i=0;i<MAX_MSG_LEN;i++){addch(' ');}
-    move(MSG_ROW,0);
+    move(y0 + MSG_ROW, x0 + 0);
     
     //print out the prompt first
     for(int i=0; i<strlen(prompt); i++){
@@ -297,7 +295,11 @@ int msg_promptchar(char* prompt){
     quit("Error: NULL prompt or prompt too large");
   }
   curs_set(1);
-  move(MSG_ROW,0);
+
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+  move(y0 + MSG_ROW, x0 + 0);
 
   //Print out the prompt
   for(int i=0 ; i < MAX_MSG_LEN; i++){
@@ -399,10 +401,58 @@ void display_stats(struct creature_t *creature){
   free(output);
 }
 
+
+
 void status_init(){
   char welcome_msg[MAX_MSG_LEN];
   sprintf(welcome_msg, "Welcome to the game, %s!", creature_get_name(player));
   msg_add(welcome_msg);
 }
 
-char* get_cur_msg(){return last_msg == NULL ? "" : last_msg->msg;}
+
+
+/*********************
+ * PRIVATE FUNCTIONS *
+ *********************/
+
+char* get_cur_msg(){
+  return last_msg == NULL ? "" : last_msg->msg;
+}
+
+
+
+void message_nav_helper(int dir){
+  prev_msg += dir;
+
+  if(prev_msg > num_msgs){
+    prev_msg = 0;
+  }
+  else if(prev_msg < 0){
+    prev_msg = num_msgs;
+  }
+
+  /* When we're at 0, nothing should be printed, so that the player
+   * knows that we're about to loop.
+   */
+  if(prev_msg == 0){
+    return;
+  }
+  
+  msg_t *cur = first_msg;
+  for(int i = 1; i < prev_msg && cur != NULL; i++){
+    cur = cur->next;
+  }
+
+  //Get coordinates for centering
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+  
+  attron(COLOR_PAIR(CP_GREEN_BLACK));
+  mvaddstr(y0 + MSG_ROW, x0 + 0, cur->msg);
+  for(int i = strlen(cur->msg); i < TERMINAL_WIDTH; i++){
+    addch(' ');
+  }
+  attroff(COLOR_PAIR(CP_GREEN_BLACK));
+
+  was_prev_msg = true;
+}

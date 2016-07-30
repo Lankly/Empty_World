@@ -747,14 +747,17 @@ int draw_body_image(creature_t *creature, bool left){
   
   int padding = left ? 0 : TERMINAL_WIDTH/2;
   padding += (TERMINAL_WIDTH/2 - body->image_width - 4)/2;
-  
+
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+
   //Draw the top of the bounding box for the image
-  mvaddch(1, padding,'+');
+  mvaddch(y0 + 1, x0 + padding,'+');
   for(int i = 0; i < body->image_width+2; i++){
     addch(ACS_HLINE);
   }
   addch('+');
-  mvaddch(2, padding, ACS_VLINE); addch(' ');
+  mvaddch(y0 + 2, x0 + padding, ACS_VLINE); addch(' ');
   
   int num_lines = 0;
   int len = strlen(body->image);
@@ -762,19 +765,21 @@ int draw_body_image(creature_t *creature, bool left){
   //Now draw the image
   for(int i = 0; i < len; i++){
     if(body->image[i] == '\n'){
-      mvaddch(2+num_lines,
-	      1 + padding + body->image_width + 2,
+      mvaddch(y0 + 2 + num_lines,
+	      x0 + 1 + padding + body->image_width + 2,
 	      ACS_VLINE);
       num_lines++;
-      mvaddch(2+num_lines, padding, ACS_VLINE); addch(' ');
+      mvaddch(y0 + 2 + num_lines, x0 + padding, ACS_VLINE); addch(' ');
       i++;
     }
     addch(body->image[i]);
   }
   
   //Finish the bounding box
-  mvaddch(2+num_lines, 1 + padding + body->image_width + 2,ACS_VLINE);
-  mvaddch(3+num_lines, padding, '+');
+  mvaddch(y0 + 2 + num_lines,
+	  x0 + 1 + padding + body->image_width + 2,
+	  ACS_VLINE);
+  mvaddch(y0 + 3 + num_lines, x0 + padding, '+');
   for(int i = 0; i < body->image_width+2; i++){
     addch(ACS_HLINE);
   }
@@ -1042,6 +1047,9 @@ void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
   if(body == NULL){
     return;
   }
+
+  int y0, x0;
+  get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
   
   if(*lines_used == select){
     int odds = body_part_chance_to_hit(player, target, body);
@@ -1058,12 +1066,12 @@ void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
     }
     char *odds_str = Calloc(TERMINAL_WIDTH/2, sizeof(char));
     sprintf(odds_str, "%d%% chance to hit", odds);
-    mvaddstr(TERMINAL_HEIGHT - 2,
-	     (TERMINAL_WIDTH/2 - strlen(odds_str) + 2)/2,
+    mvaddstr(y0 + TERMINAL_HEIGHT - 2,
+	     x0 + (TERMINAL_WIDTH/2 - strlen(odds_str) + 2)/2,
 	     odds_str);
     free(odds_str);
   }
-  mvaddstr(2 + *lines_used, TERMINAL_WIDTH/2 + depth, body->name);
+  mvaddstr(y0 + 2 + *lines_used, x0 + TERMINAL_WIDTH/2 + depth, body->name);
   (*lines_used)++;
   //Turn off the colors
   attroff(COLOR_PAIR(CP_BLACK_GREEN));
@@ -1110,13 +1118,16 @@ bool target_attack(){
     draw_borders();
     int num_lines = draw_body_image(target, true);
     int padding = (TERMINAL_WIDTH/2 - body->image_width - 4)/2;
-      
+
+    int y0, x0;
+    get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+    
     //Info
-    mvaddstr(4 + num_lines,
-	     padding + (4 + body->image_width - strlen(body->name))/2,
+    mvaddstr(y0 + 4 + num_lines,
+	     x0 + padding + (4 + body->image_width - strlen(body->name))/2,
 	     body->name);
-    mvaddstr(5 + num_lines,
-	     padding + (4+ body->image_width
+    mvaddstr(y0 + 5 + num_lines,
+	     x0 + padding + (4+ body->image_width
 			- strlen("Pick your target"))/2,
 	     "Pick your target.");
     
