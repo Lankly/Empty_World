@@ -13,6 +13,7 @@ add_executable(EmptyWorld
 	item_callbacks.c
 	items.c
 	map.c
+	overworld.c
 	status.c
 	tiles.c
 	classes.c

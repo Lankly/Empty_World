@@ -8,7 +8,10 @@ void color_init(){
   //Create colors
   //init_color(COLOR_GREY,745,745,745);
   //init_color(COLOR_DARK_GREY,519,519,519);
-
+  init_color(COLOR_ORANGE, 945, 812, 230);
+  init_color(COLOR_ORANGE2, 945, 683, 230);
+  init_color(COLOR_DARK_ORANGE, 500, 425, 121);
+  
   //Create pairs
   init_pair(CP_YELLOW_BLACK, COLOR_YELLOW, COLOR_BLACK);
   init_pair(CP_GREY_BLACK, COLOR_GREY, COLOR_BLACK);
@@ -19,5 +22,7 @@ void color_init(){
   init_pair(CP_BLACK_YELLOW, COLOR_BLACK, COLOR_YELLOW);
   init_pair(CP_DARK_GREY_BLACK, COLOR_DARK_GREY, COLOR_BLACK);
   init_pair(CP_BLUE_BLACK, COLOR_BLUE, COLOR_BLACK);
+  init_pair(CP_SAND_1, COLOR_DARK_ORANGE, COLOR_ORANGE2);
+  init_pair(CP_SAND_2, COLOR_DARK_ORANGE, COLOR_ORANGE);
 }
 

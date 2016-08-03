@@ -225,13 +225,12 @@ void msg_addf(char* msg, ...){
   va_list args;
   va_start(args,msg);
   char* new_msg = (char*)Calloc(MAX_MSG_LEN+1,sizeof(char*));
-  vsprintf(new_msg,msg,args);
+  vsprintf(new_msg, msg, args);
   va_end(args);
 
   msg_add(new_msg);
   free(new_msg);
 }
-
 
 
 /* Uses the message bar to ask the user a question and return their response.

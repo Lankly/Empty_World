@@ -11,9 +11,14 @@
 #define CP_BLACK_YELLOW 7
 #define CP_DARK_GREY_BLACK 8
 #define CP_BLUE_BLACK 9
+#define CP_SAND_1 10
+#define CP_SAND_2 11
 
 #define COLOR_GREY 7
 #define COLOR_DARK_GREY 8
+#define COLOR_ORANGE 16
+#define COLOR_ORANGE2 17
+#define COLOR_DARK_ORANGE 18
 
 #define CP_CORPSE CP_DARK_GREY_BLACK
 

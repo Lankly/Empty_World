@@ -4,10 +4,13 @@
 #include "colors.h"
 #include "creature.h"
 #include "map.h"
+#include "overworld.h"
 #include "helpers.h"
 #include "creature.h"
 #include "status.h"
 #include "tiles.h"
+
+/* Structs */
 
 struct map_t{
   int dlevel;
@@ -21,19 +24,96 @@ struct map_t{
   struct map_t *known_map;
 };
 
-map_t *map_new(){
-  return Calloc(1, sizeof(struct map_t));
+/* Private Variables */
+
+map_t *halls;
+map_t *caves;
+int num_halls;
+int num_caves;
+int halls_start;
+int caves_start;
+
+
+/********************
+ * PUBLIC FUNCTIONS *
+ ********************/
+
+void map_init(){
+  cur_map_index = 0;
+  halls_start = 0;
+  num_halls = rand() % 3 + 1;
+  caves_start = rand() % num_halls;
+  num_caves = 5 + rand() % 3 + 1;
+  num_halls += 10;
+  
+  // Generate every floor at the start
+  halls = Calloc(num_halls, sizeof(map_t));
+  caves = Calloc(num_caves, sizeof(map_t));
+  for(int i = 0; i < num_halls; i++){
+    halls[i] = map_new(TERMINAL_WIDTH,
+		       TERMINAL_HEIGHT,
+		       DEFAULT_ITEM_STACK_SIZE,
+		       -1 - i);
+  }
+  for(int i = 0; i < num_caves; i++){
+    caves[i] = map_new(TERMINAL_WIDTH,
+		       TERMINAL_HEIGHT,
+		       DEFAULT_ITEM_STACK_SIZE,
+		       -1 - i);
+  }
+  //Make a history of 100 turns. For halls only. Unnecessary for caves.
+  for(int i = 0; i < num_halls; i++){
+    for(int j = 0; j < 100; j++){
+      map_step(halls[i]);
+    }
+  }
 }
 
-/* Initializes a given map. Expects the map to have already been allocated.
+/* Allocates and initializes a new map.
  */
-void map_init(struct map_t* map, int w, int h, int max_item_height, int dlevel){
-  if(map == NULL){quit("Error: Cannot initialize NULL Map");}
+map_t *map_new(int w, int h, int max_item_height, int dlevel){
+  map_t *map = Calloc(1, sizeof(map_t));
+  
   map->width = w;
   map->height= h;
   map->dlevel = dlevel;
   map->max_item_height = max_item_height;
-  map->tiles = (int*)Calloc(w * h,sizeof(int));
+  map->tiles = (int *)Calloc(w * h, sizeof(int));
+  
+  map->known_map = (map_t *)Calloc(1, sizeof(map_t));
+  map->known_map->tiles = (int *)Calloc(w * h, sizeof(int));
+  
+  return map;
+}
+
+void map_step(map_t *map){
+  /* Let each creature take its turn.
+   */
+  for(clist_t* cur = map_get_creatures(map);
+      cur != NULL;
+      cur = clist_next(cur))
+    {
+      creature_t *creature = clist_get_creature(cur);
+      if(creature != NULL){
+	//If this creature is not out of move tokens, take turn.
+	if(!creature_is_out_of_turns(creature)){
+	  creature_take_turn(creature, cur_map);
+	}
+	//Otherwise, skip the turn to reset them
+	else{
+	  creature_take_break(creature);
+	}
+      }
+    }
+}
+
+void apply_to_all_maps(map_func f){
+  for(int i = 0; i < num_halls; i++){
+    f(halls[i]);
+  }
+  for(int i = 0; i < num_caves; i++){
+    f(caves[i]);
+  }
 }
 
 clist_t *map_get_creatures(map_t *map){
@@ -441,7 +521,7 @@ bool pickup_tile(creature_t* creature, map_t* map){
   }
   
   int x, y;
-  creature_get_coord(creature, &x, &y);
+  creature_get_coord(creature, &x, &y, NULL);
   
   int count = count_items(map, x, y);
   item_t* to_add;
@@ -571,7 +651,7 @@ bool map_coord_is_door(struct map_t* map, int x, int y){
 void map_examine_tile(map_t *map){
   if(map == NULL){quit("Error: Cannot examine NULL Map");}
   int x, y;
-  creature_get_coord(player, &x, &y);
+  creature_get_coord(player, &x, &y, NULL);
   get_coord_via_cursor(&y, &x);
   
   //First loop through creatures
@@ -580,7 +660,7 @@ void map_examine_tile(map_t *map){
       creature_t *cur_creature = clist_get_creature(cur);
       if(cur_creature != NULL){
 	int cur_x, cur_y;
-	creature_get_coord(cur_creature, &cur_x, &cur_y);
+	creature_get_coord(cur_creature, &cur_x, &cur_y, NULL);
 	if(cur_x == x && cur_y == y && (in_range(cur_creature, player)
 	     || creature_is_telepathic(player))){
 	  creature_examine(cur_creature);
@@ -599,7 +679,7 @@ void map_examine_tile(map_t *map){
     }
   }
   //Now the tile itself
-  msg_addf("%s", tile_data[map_get_tile(map, x, y)].exam_text);
+  msg_addf("%s", tile_get_exam_text(map_get_tile(map, x, y)));
 }
 
 /* Line of sight code              *
@@ -615,7 +695,7 @@ bool map_tile_is_visible(map_t *map, int check_x, int check_y, creature_t *c){
     return false;
   }
   int c_x, c_y;
-  creature_get_coord(c, &c_x, &c_y);
+  creature_get_coord(c, &c_x, &c_y, NULL);
   if(c_x == check_x && c_y == check_y){
     return true;
   }
@@ -674,7 +754,7 @@ bool map_tile_is_visible(map_t *map, int check_x, int check_y, creature_t *c){
       }
       /* keep looping until the monster's sight is blocked *
        * by an object at the updated x,y coord             */
-    }while(tile_data[map_get_tile(map, x, y)].transparent);
+    }while(tile_is_transparent(map_get_tile(map, x, y)));
     
     /* the loop was exited because the monster's sight was blocked *
      * return FALSE: the monster cannot see the point              */
@@ -694,7 +774,7 @@ bool map_tile_is_visible(map_t *map, int check_x, int check_y, creature_t *c){
 	if(x == c_x && y == c_y){
 	  return true;
 	}
-      }while(tile_data[map_get_tile(map, x, y)].transparent);
+      }while(tile_is_transparent(map_get_tile(map, x, y)));
       return false;
    }
 }
@@ -732,7 +812,7 @@ void map_reveal(map_t *map, int rev_dist){
   }
 
   int px, py;
-  creature_get_coord(player, &px, &py);
+  creature_get_coord(player, &px, &py, NULL);
   if(px < 0 || py <0
      || px > TERMINAL_WIDTH-1 || py > TERMINAL_HEIGHT-1){
     return;
@@ -1048,92 +1128,12 @@ void map_cleanup(struct map_t* map){
   }
 }
 
-/* This function returns the proper ASCII value for a wall tile in a given
- * location.
- */
-int wall_correct(struct map_t *m, int i, int j){
-  int r = map_get_tile(m, i+1, j);
-  int l = map_get_tile(m, i-1, j);
-  int u = map_get_tile(m, i, j-1);
-  int d = map_get_tile(m, i, j+1);
-  int ur = map_get_tile(m, i+1, j-1);
-  int ul = map_get_tile(m, i-1, j-1);
-  int dr = map_get_tile(m, i+1, j+1);
-  int dl = map_get_tile(m, i-1, j+1);
-  
-  //Three sides
-  if((u == TILE_WALL || map_tile_is_door(u))
-     && (d == TILE_WALL || map_tile_is_door(d))
-     && (l == TILE_WALL || map_tile_is_door(l))
-     && ((tile_data[ul].passable && tile_data[dl].passable)
-	 || (tile_data[r].passable && tile_data[ul].passable)
-	 || (tile_data[r].passable && tile_data[dl].passable))){
-    return ACS_RTEE;
-  }
-  if((u == TILE_WALL || map_tile_is_door(u))
-     && (d == TILE_WALL || map_tile_is_door(d))
-     && (r == TILE_WALL || map_tile_is_door(r))
-     && ((tile_data[ur].passable && tile_data[dr].passable)
-	 || (tile_data[l].passable && tile_data[ur].passable)
-	 || (tile_data[l].passable && tile_data[dr].passable))){
-    return ACS_LTEE;
-  }
-  if((u == TILE_WALL || map_tile_is_door(u))
-     && (r == TILE_WALL || map_tile_is_door(r))
-     && (l == TILE_WALL || map_tile_is_door(l))
-     && ((tile_data[ur].passable && tile_data[ul].passable)
-	 || (tile_data[d].passable && tile_data[ur].passable)
-	 || (tile_data[d].passable && tile_data[ul].passable))){
-    return ACS_BTEE;
-  }
-  if((d == TILE_WALL || map_tile_is_door(d))
-     && (r == TILE_WALL || map_tile_is_door(r))
-     && (l == TILE_WALL || map_tile_is_door(l))
-     && ((tile_data[dr].passable && tile_data[dl].passable)
-	 || (tile_data[u].passable && tile_data[dr].passable)
-	 || (tile_data[u].passable && tile_data[dl].passable))){
-    return ACS_TTEE;
-  }
-  //Two sides
-  if((u == TILE_WALL || map_tile_is_door(u)) 
-     && (l == TILE_WALL || map_tile_is_door(l))
-     && ((d != TILE_WALL && r != TILE_WALL && dr != TILE_WALL)
-	 || tile_data[ul].passable)){
-    return ACS_LRCORNER;
-  }
-  if((u == TILE_WALL || map_tile_is_door(u)) 
-     && (r == TILE_WALL || map_tile_is_door(r))
-     && ((d != TILE_WALL && l != TILE_WALL && dl != TILE_WALL)
-	 || tile_data[ur].passable)){
-    return ACS_LLCORNER;
-  }
-  if((d == TILE_WALL || map_tile_is_door(d))
-     && (l == TILE_WALL || map_tile_is_door(l))
-     && ((u != TILE_WALL && r != TILE_WALL && ur != TILE_WALL)
-	 || tile_data[dl].passable)){
-    return ACS_URCORNER;
-  }
-  if((d == TILE_WALL || map_tile_is_door(d))
-     && (r == TILE_WALL || map_tile_is_door(r))
-     && ((u != TILE_WALL && l != TILE_WALL && ul != TILE_WALL)
-	 || tile_data[dr].passable)){
-    return ACS_ULCORNER;
-  }
-  //One side
-  if((u == TILE_WALL || map_tile_is_door(u)
-      || d == TILE_WALL || map_tile_is_door(d))
-     && (tile_data[r].passable || tile_data[l].passable)){
-    return ACS_VLINE;
-  }
-  if((r == TILE_WALL || map_tile_is_door(r) 
-      || l == TILE_WALL || map_tile_is_door(l))
-     && (tile_data[u].passable || tile_data[d].passable)){
-    return ACS_HLINE;
-  }
-  return ACS_PLUS;
-}
-
 void draw_map(struct map_t* map){
+  if(cur_map_index == 0){
+    draw_overworld();
+    return;
+  }
+  
   if(map == NULL){quit("Error: Cannot draw NULL Map");}
   struct map_t* m = map->known_map ? map->known_map : map;
 
@@ -1144,27 +1144,17 @@ void draw_map(struct map_t* map){
     for(int i = 0; i < m->width; i++){
       move(y0 + j, x0 + i);
       int tile = map_get_tile(m,i,j);
-      int display = tile_data[tile].display;
       int cur_tile = inch();
+
+      int display = map_tile_is_visible(map, i, j, player) ?
+	tile_get_display(tile)
+	: tile_get_darkened_display(tile);
+
+      if(((int)((char)display)) == ACS_PLUS){
+	display = display | ((char)0);
+	display = display | wall_correct(m, i, j);
+      }
       
-      //Wall correct
-      if(display == ACS_PLUS){
-	display = wall_correct(m, i, j);
-      }
-
-      //Color correct
-      int color = 0;
-      if(!use_8_colors && tile_data[tile].display_color != 0){
-	color = tile_data[tile].display_color;
-      }
-      else if(use_8_colors && tile_data[tile].display_color_alt != 0){
-	color = tile_data[tile].display_color_alt;
-      }
-
-      display = display | COLOR_PAIR(map_tile_is_visible(map, i, j, player)
-				     ? color
-				     : use_8_colors ? CP_BLUE_BLACK 
-				     : CP_DARK_GREY_BLACK);
       /* Only add the tile if it wasn't already there.
        * This is done so that tiles that are already on-screen don't 
        * flash occasionally.
@@ -1189,7 +1179,7 @@ void draw_map(struct map_t* map){
     creature_t *cur_creature = clist_get_creature(cur);
     if(cur_creature != NULL){
       int cur_x, cur_y;
-      creature_get_coord(cur_creature, &cur_x, &cur_y);
+      creature_get_coord(cur_creature, &cur_x, &cur_y, NULL);
       
       //Show creature if it's visible to the player
       if(creature_is_telepathic(player)

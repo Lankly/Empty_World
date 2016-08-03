@@ -8,10 +8,19 @@ typedef struct map_t map_t;
 #include "creature.h"
 #include "items.h"
 
+/* Public Variables*/
 map_t *cur_map;
+int cur_map_index;
 
-map_t *map_new();
-void map_init(map_t *map, int w, int h,int max_item_height, int dlevel);
+
+/* Functions*/
+
+void map_init();
+
+map_t *map_new(int w, int h,int max_item_height, int dlevel);
+void map_sep(map_t *map);
+typedef void (*map_func)(map_t *map);
+void apply_to_all_maps(map_func f);
 
 clist_t *map_get_creatures(map_t *map);
 int map_get_dlevel(map_t *map);

@@ -15,16 +15,13 @@ void downStairUseCallback(struct item_use_t* data){
   }
   //If there's no map to go down to, make a new one.
   if(data->item->go_to_map == NULL){
-    data->item->go_to_map = map_new();
-    //map initialization
-    map_init(data->item->go_to_map, 
-	     map_get_width(cur_map), 
-	     map_get_height(cur_map),
-	     map_get_max_item_height(cur_map),
-	     map_get_dlevel(cur_map) + 1);
+    data->item->go_to_map = map_new(map_get_width(cur_map), 
+				    map_get_height(cur_map),
+				    map_get_max_item_height(cur_map),
+				    map_get_dlevel(cur_map) + 1);
     //Map draw
     int px, py;
-    creature_get_coord(player, &px, &py);
+    creature_get_coord(player, &px, &py, NULL);
     map_draw_random_rooms(data->item->go_to_map, px, py);
     map_cleanup(data->item->go_to_map);
     map_draw_borders(data->item->go_to_map);

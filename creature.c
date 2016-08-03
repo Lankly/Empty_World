@@ -45,7 +45,7 @@ struct creature_t{
   int creature_id;
   int display;
   int type;
-  int x; int y;
+  int x; int y; int z;
   int last_position; //As in keys on a numpad
 
   char *name;
@@ -564,16 +564,30 @@ int creature_get_class(creature_t *c){
 }
 
 /* Sets the given x and y integers to the x and y coordinate pair that the
- * given creature is at. Returns -1, -1 if the creature is NULL.
+ * given creature is at. Returns -1 for each if the creature is NULL. If any of
+ * x, y, or z is NULL, nothing will be done to it.
  */
-void creature_get_coord(creature_t *c, int *x, int *y){
+void creature_get_coord(creature_t *c, int *x, int *y, int *z){
+  int x_to_ret, y_to_ret, z_to_ret;
   if(c == NULL){
-    *x = -1;
-    *y = -1;
+    x_to_ret = -1;
+    y_to_ret = -1;
+    z_to_ret = -1;
   }
   else{
-    *x = c->x;
-    *y = c->y;
+    x_to_ret = c->x;
+    y_to_ret = c->y;
+    z_to_ret = c->z;
+  }
+
+  if(x != NULL){
+    *x = x_to_ret;
+  }
+  if(y != NULL){
+    *y = y_to_ret;
+  }
+  if(z != NULL){
+    *z = z_to_ret;
   }
 }
 
@@ -728,7 +742,7 @@ void creature_place_randomly_helper(creature_t *c, map_t *map, bool passable){
     y = rand() % h;
   
   //Keep searching for a tile that the creature can pass through
-  while(tile_data[map_get_tile(map, x, y)].passable != passable){
+  while(tile_is_passable(map_get_tile(map, x, y)) != passable){
     x = rand()%w;
     y = rand()%h;
   }
@@ -844,43 +858,43 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
      || y <0 || y >= TERMINAL_HEIGHT){
     return false;
   }
-
+  
   //Get the tile we're looking at moving to
-  tile_t move_tile = tile_data[map_get_tile(cur_map, x, y)];
+  int move_tile = map_get_tile(cur_map, x, y);
   //Quick check to see if the tile allows passing
-  if(!move_tile.passable){return false;}
-
+  if(!tile_is_passable(move_tile)){return false;}
+  
   //Get all the tiles surrounding the one we're looking at
-  tile_t u = tile_data[map_get_tile(cur_map, x, y-1)];
-  tile_t d = tile_data[map_get_tile(cur_map, x, y+1)];
-  tile_t r = tile_data[map_get_tile(cur_map, x+1, y)];
-  tile_t l = tile_data[map_get_tile(cur_map, x-1, y)];
+  int u = map_get_tile(cur_map, x, y-1);
+  int d = map_get_tile(cur_map, x, y+1);
+  int r = map_get_tile(cur_map, x+1, y);
+  int l = map_get_tile(cur_map, x-1, y);
 
   // Also cannot pass through closed door.
-  if((cmd==cmd_data[CMD_UP_LEFT] && ((map_tile_is_door(d.id)
-				      && !d.passable
-				      && !r.passable)
-				     ||(map_tile_is_door(r.id)
-					&& !r.passable
-					&& !d.passable)))
-     ||(cmd==cmd_data[CMD_UP_RIGHT]&&((map_tile_is_door(d.id)
-				       && !d.passable
-				       && !l.passable)
-				      ||(map_tile_is_door(l.id)
-					 && !l.passable
-					 && !d.passable)))
-     ||(cmd==cmd_data[CMD_DOWN_LEFT]&&((map_tile_is_door(u.id)
-					&& !u.passable
-					&& !r.passable)
-				       ||(map_tile_is_door(r.id)
-					  && !r.passable
-					  && !u.passable)))
-     ||(cmd==cmd_data[CMD_DOWN_RIGHT]&&((map_tile_is_door(u.id)
-					 && !u.passable
-					 && !l.passable)
-					||(map_tile_is_door(l.id)
-					   && !l.passable
-					   && !u.passable))))
+  if((cmd==cmd_data[CMD_UP_LEFT] && ((map_tile_is_door(d)
+				      && !tile_is_passable(d)
+				      && !tile_is_passable(r))
+				     ||(map_tile_is_door(r)
+					&& !tile_is_passable(r)
+					&& !tile_is_passable(d))))
+     ||(cmd==cmd_data[CMD_UP_RIGHT]&&((map_tile_is_door(d)
+				       && !tile_is_passable(d)
+				       && !tile_is_passable(l))
+				      ||(map_tile_is_door(l)
+					 && !tile_is_passable(l)
+					 && !tile_is_passable(d))))
+     ||(cmd==cmd_data[CMD_DOWN_LEFT]&&((map_tile_is_door(u)
+					&& !tile_is_passable(u)
+					&& !tile_is_passable(r))
+				       ||(map_tile_is_door(r)
+					  && !tile_is_passable(r)
+					  && !tile_is_passable(u))))
+     ||(cmd==cmd_data[CMD_DOWN_RIGHT]&&((map_tile_is_door(u)
+					 && !tile_is_passable(u)
+					 && !tile_is_passable(l))
+					||(map_tile_is_door(l)
+					   && !tile_is_passable(l)
+					   && !tile_is_passable(u)))))
     {
       return false;
     }
@@ -890,10 +904,10 @@ bool creature_can_move_to(struct creature_t* creature, int x, int y, int cmd){
    * corner, they cannot be caryying too much.
    */
   if(creature->cur_carry_weight > PASS_WEIGHT 
-     && ((cmd==KEY_HOME && !d.passable && !r.passable) 
-	 || (cmd==KEY_PPAGE && !d.passable && !l.passable) 
-	 || (cmd==KEY_END && !u.passable && !r.passable) 
-	 || (cmd==KEY_NPAGE && !u.passable && !l.passable))){
+     && ((cmd==KEY_HOME && !tile_is_passable(d) && !tile_is_passable(r)) 
+	 || (cmd==KEY_PPAGE && !tile_is_passable(d) && !tile_is_passable(l)) 
+	 || (cmd==KEY_END && !tile_is_passable(u) && !tile_is_passable(r)) 
+	 || (cmd==KEY_NPAGE && !tile_is_passable(u) && !tile_is_passable(l)))){
     //If we were trying to move the player, print out a quick alert
     if(creature == player){
       msg_add("You are too heavy to pass through.");}
@@ -1307,7 +1321,7 @@ void playerTakeTurnCallback(struct creature_t* creature,
       if(player->turn_tokens == 0){num_turns++;}
     }
     //If it's otherwise not passable, they should choose to do something else
-    else if(!tile_data[tile].passable){
+    else if(!tile_is_passable(tile)){
       playerTakeTurnCallback(creature, map);
     }
   }

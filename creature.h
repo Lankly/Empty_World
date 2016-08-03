@@ -189,7 +189,7 @@ void creature_take_turn(creature_t *c, map_t *map);
 
 body_part_t *creature_get_body(creature_t *c);
 int   creature_get_class(creature_t *c);
-void  creature_get_coord(creature_t *c, int *x, int *y);
+void  creature_get_coord(creature_t *c, int *x, int *y, int *z);
 creature_t *get_creature_at_position(int x, int y, clist_t *l);
 int   creature_get_damage(creature_t *c);
 int   creature_get_display(creature_t *c);

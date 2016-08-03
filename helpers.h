@@ -106,6 +106,7 @@ void draw_map(struct map_t *map);
 
 void open_tile(struct map_t *map, int x, int y, int direction);
 void close_tile(struct map_t *map, int x, int y, int direction);
+int wall_correct(map_t *m, int i, int j);
 void debug();
 void manual();
 void xscend();

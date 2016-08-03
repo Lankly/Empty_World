@@ -1085,7 +1085,7 @@ void limb_list_helper(struct creature_t *target, int depth, int *lines_used,
 bool target_attack(){
   int dir = msg_promptchar("Target which direction?");
   int x, y;
-  creature_get_coord(player, &x, &y);
+  creature_get_coord(player, &x, &y, NULL);
   if(dir == cmd_data[CMD_UP] || dir == KEY_UP){
     y -= 1;}
   else if(dir == cmd_data[CMD_DOWN] || dir == KEY_DOWN){

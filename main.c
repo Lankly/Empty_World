@@ -28,27 +28,10 @@ int main(int argc, char** argv){
   
   //Main Game Loop
   while(true){
-
-    refresh();
     
-    /* Let each creature take its turn.
-     */
-    for(clist_t* cur = map_get_creatures(cur_map);
-	cur != NULL;
-	cur = clist_next(cur))
-      {
-	creature_t *creature = clist_get_creature(cur);
-	if(creature != NULL){
-	  //If this creature is not out of move tokens, take turn.
-	  if(!creature_is_out_of_turns(creature)){
-	    creature_take_turn(creature, cur_map);
-	  }
-	  //Otherwise, skip the turn to reset them
-	  else{
-	    creature_take_break(creature);
-	  }
-	}
-      }
+    refresh();
+
+    apply_to_all_maps(&map_step);
   }
 
   endwin();

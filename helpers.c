@@ -7,6 +7,7 @@
 #include "inventory.h"
 #include "items.h"
 #include "map.h"
+#include "overworld.h"
 #include "status.h"
 #include "tiles.h"
 #include <ctype.h>
@@ -67,8 +68,8 @@ intlist_t *intlist_new(int elem){
 }
 
 
-int get_coord(int x,int y,int width){
-  return y*width+x;
+int get_coord(int x, int y, int width){
+  return y * width + x;
 }
 /* This function gives the player a cursor to move around on-scren with. When
  * they hit enter, the pointers we were given will be updated with that location
@@ -76,11 +77,16 @@ int get_coord(int x,int y,int width){
 void get_coord_via_cursor(int* y, int* x){
   int temp_x = x != NULL? *x : 0;
   int temp_y = y != NULL? *y : 0;
+
+  int y0 = 0, x0 = 0;
+  if(!on_overworld_large){
+    get_centered_box_ul_coord(&y0, &x0, TERMINAL_HEIGHT, TERMINAL_WIDTH);
+  }
   
   int ch = ' ';
   curs_set(2);
   while(ch != '\n'){
-    move(temp_y, temp_x);
+    move(temp_y + y0, temp_x + x0);
     if(recording_macro || (ch = get_next_cmd()) == 0){
       ch = getch();}
     if(recording_macro){
@@ -290,7 +296,7 @@ bool analyze_cmd(int cmd, int *x, int *y);
  */
 void open_tile(map_t *map, int x, int y, int direction){
   int px, py, open_x = x, open_y = y;
-  creature_get_coord(player, &px, &py);
+  creature_get_coord(player, &px, &py, NULL);
   analyze_cmd(direction, &open_x, &open_y);
   
   if(open_x == px && open_y == py){
@@ -323,7 +329,7 @@ void close_tile(struct map_t *map, int x, int y, int direction){
   analyze_cmd(direction, &close_x, &close_y);
   
   int ctile = map_get_tile(map, close_x, close_y);
-  if(tile_data[ctile].openable){
+  if(tile_is_openable(ctile)){
     if(ctile == TILE_DOOR_OPEN){
       map_set_tile(map, close_x, close_y, TILE_DOOR_CLOSE);
     }else if(ctile == TILE_DOOR_CLOSE){
@@ -334,12 +340,97 @@ void close_tile(struct map_t *map, int x, int y, int direction){
   }else{msg_add("That cannot be closed.");}
 }
 
+/* This function returns the proper ASCII value for a wall tile in a given
+ * location.
+ */
+int wall_correct(map_t *m, int i, int j){
+  int r = map_get_tile(m, i+1, j);
+  int l = map_get_tile(m, i-1, j);
+  int u = map_get_tile(m, i, j-1);
+  int d = map_get_tile(m, i, j+1);
+  int ur = map_get_tile(m, i+1, j-1);
+  int ul = map_get_tile(m, i-1, j-1);
+  int dr = map_get_tile(m, i+1, j+1);
+  int dl = map_get_tile(m, i-1, j+1);
+  
+  //Three sides
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (d == TILE_WALL || map_tile_is_door(d))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_is_passable(ul) && tile_is_passable(dl))
+	 || (tile_is_passable(r) && tile_is_passable(ul))
+	 || (tile_is_passable(r) && tile_is_passable(dl)))){
+    return ACS_RTEE;
+  }
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((tile_is_passable(ur) && tile_is_passable(dr))
+	 || (tile_is_passable(l) && tile_is_passable(ur))
+	 || (tile_is_passable(l) && tile_is_passable(dr)))){
+    return ACS_LTEE;
+  }
+  if((u == TILE_WALL || map_tile_is_door(u))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_is_passable(ur) && tile_is_passable(ul))
+	 || (tile_is_passable(d) && tile_is_passable(ur))
+	 || (tile_is_passable(d) && tile_is_passable(ul)))){
+    return ACS_BTEE;
+  }
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((tile_is_passable(dr) && tile_is_passable(dl))
+	 || (tile_is_passable(u) && tile_is_passable(dr))
+	 || (tile_is_passable(u) && tile_is_passable(dl)))){
+    return ACS_TTEE;
+  }
+  //Two sides
+  if((u == TILE_WALL || map_tile_is_door(u)) 
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((d != TILE_WALL && r != TILE_WALL && dr != TILE_WALL)
+	 || tile_is_passable(ul))){
+    return ACS_LRCORNER;
+  }
+  if((u == TILE_WALL || map_tile_is_door(u)) 
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((d != TILE_WALL && l != TILE_WALL && dl != TILE_WALL)
+	 || tile_is_passable(ur))){
+    return ACS_LLCORNER;
+  }
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (l == TILE_WALL || map_tile_is_door(l))
+     && ((u != TILE_WALL && r != TILE_WALL && ur != TILE_WALL)
+	 || tile_is_passable(dl))){
+    return ACS_URCORNER;
+  }
+  if((d == TILE_WALL || map_tile_is_door(d))
+     && (r == TILE_WALL || map_tile_is_door(r))
+     && ((u != TILE_WALL && l != TILE_WALL && ul != TILE_WALL)
+	 || tile_is_passable(dr))){
+    return ACS_ULCORNER;
+  }
+  //One side
+  if((u == TILE_WALL || map_tile_is_door(u)
+      || d == TILE_WALL || map_tile_is_door(d))
+     && (tile_is_passable(r) || tile_is_passable(l))){
+    return ACS_VLINE;
+  }
+  if((r == TILE_WALL || map_tile_is_door(r) 
+      || l == TILE_WALL || map_tile_is_door(l))
+     && (tile_is_passable(u) || tile_is_passable(d))){
+    return ACS_HLINE;
+  }
+  return ACS_PLUS;
+}
+
 void debug(){
   char* debug_cmd = msg_prompt("~ ");
   char* debug_cmd_lower = str_lowercase(debug_cmd);
 
   int px, py;
-  creature_get_coord(player, &px, &py);
+  creature_get_coord(player, &px, &py, NULL);
   
   if(!strcmp(debug_cmd_lower,"place")){
     free(debug_cmd_lower);
@@ -487,7 +578,7 @@ void toggle_numpad(){
  */
 void xscend(int id){
   int px, py;
-  creature_get_coord(player, &px, &py);
+  creature_get_coord(player, &px, &py, NULL);
 
   map_t* m = cur_map;
 
@@ -823,12 +914,12 @@ bool analyze_cmd(int cmd, int* x, int* y){
       record_cmd(dir);
     }
     int x, y;
-    creature_get_coord(player, &x, &y);
+    creature_get_coord(player, &x, &y, NULL);
     open_tile(cur_map, x, y, dir);
   }
   else if(cmd == cmd_data[CMD_CLOSE]){
     int x, y;
-    creature_get_coord(player, &x, &y);
+    creature_get_coord(player, &x, &y, NULL);
     close_tile(cur_map, x, y, Getch());
   }else if(cmd == cmd_data[CMD_PICKUP]){
     to_return = pickup_tile(player, cur_map);
@@ -898,7 +989,7 @@ bool analyze_cmd(int cmd, int* x, int* y){
  */
 bool coord_in_range(int target_x, int target_y, creature_t *seer){
   int seer_x, seer_y;
-  creature_get_coord(seer, &seer_x, &seer_y);
+  creature_get_coord(seer, &seer_x, &seer_y, NULL);
 
   return get_distance(target_x, target_y, seer_x, seer_y)
     <= creature_see_distance(seer);
@@ -909,7 +1000,7 @@ bool coord_in_range(int target_x, int target_y, creature_t *seer){
  */
 bool in_range(creature_t *target, creature_t *seer){
   int tx, ty;
-  creature_get_coord(target, &tx, &ty);
+  creature_get_coord(target, &tx, &ty, NULL);
   return coord_in_range(tx, ty, seer);
 }
 
@@ -951,8 +1042,8 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
   //Check for change in tile type during quickmove
   if(qckmv_cmd==cmd_data[CMD_UP]
      && (u!=cur_tile 
-	 || tile_data[ul].stopme 
-	 || tile_data[ur].stopme
+	 || tile_stops_quickmove(ul) 
+	 || tile_stops_quickmove(ur)
 	 || map_tile_stopme(map, x-1, y-1)
 	 || map_tile_stopme(map, x, y-1)
 	 || map_tile_stopme(map, x+1, y-1)
@@ -963,8 +1054,8 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
   }
   if(qckmv_cmd==cmd_data[CMD_DOWN]
      && (d!=cur_tile 
-	 || tile_data[dl].stopme 
-	 || tile_data[dr].stopme
+	 || tile_stops_quickmove(dl) 
+	 || tile_stops_quickmove(dr)
 	 || map_tile_stopme(map, x-1, y+1)
 	 || map_tile_stopme(map, x, y+1)
 	 || map_tile_stopme(map, x+1, y+1)
@@ -975,8 +1066,8 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
   }
   if(qckmv_cmd==cmd_data[CMD_LEFT]
      && (l!=cur_tile 
-	 || tile_data[dl].stopme 
-	 || tile_data[ul].stopme
+	 || tile_stops_quickmove(dl) 
+	 || tile_stops_quickmove(ul)
 	 || map_tile_stopme(map, x-1, y-1)
 	 || map_tile_stopme(map, x-1, y)
 	 || map_tile_stopme(map, x-1, y+1)
@@ -987,8 +1078,8 @@ bool qckmv_continue(struct map_t* map, int x, int y, int qckmv_cmd){
   }
   if(qckmv_cmd==cmd_data[CMD_RIGHT]
      && (r!=cur_tile 
-	 || tile_data[dr].stopme 
-	 || tile_data[ur].stopme
+	 || tile_stops_quickmove(dr) 
+	 || tile_stops_quickmove(ur)
 	 || map_tile_stopme(map, x+1, y-1)
 	 || map_tile_stopme(map, x+1, y)
 	 || map_tile_stopme(map, x+1, y+1)
@@ -1130,17 +1221,17 @@ void game_init(int seed){
   player_init();
   status_init();
   cmd_init();
+  overworld_init();
   num_turns = 0;
+  
   //Enable left and right click
   mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, NULL);
   
   //Setup floor
-  cur_map = map_new();
-  map_init(cur_map,
-	   TERMINAL_WIDTH,
-	   TERMINAL_HEIGHT-3,
-	   DEFAULT_ITEMS_STACK_SIZE,
-	   1);
+  cur_map = map_new(TERMINAL_WIDTH,
+		    TERMINAL_HEIGHT-3,
+		    DEFAULT_ITEMS_STACK_SIZE,
+		    1);
   map_draw_random_rooms(cur_map, -1, -1);
   map_cleanup(cur_map);
   map_draw_borders(cur_map);
@@ -1151,6 +1242,7 @@ void game_init(int seed){
 
   //Place character randomly
   creature_place_randomly_on_map(player, cur_map);
+  map_init();
 }
 
 /* This function is called whenever the player is killed. It will prompt the 
