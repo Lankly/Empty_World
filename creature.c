@@ -331,12 +331,13 @@ clist_t *clist_new(creature_t *creature){
   return to_return;
 }
 
-/* Add next to the end of the given list. If list is NULL, attempts to set the
- * pointer to next.
+/* Add next to the end of the given list. If list is NULL, works like 
+ * clist_new, so you should set the list equal to the result if you can't 
+ * guarantee that the given list is not empty.
  */
-void clist_add(clist_t *list, clist_t *next){
+clist_t clist_add(clist_t *list, clist_t *next){
   if(list == NULL){
-    quit("Can't Creature to NULL clist");
+    return next;
   }
   else if(list->next == NULL){
     list->next = next;
@@ -344,6 +345,14 @@ void clist_add(clist_t *list, clist_t *next){
   else{
     clist_add(list->next, next);
   }
+  return list;
+}
+
+clist_t clist_add_creature(clist_t *list, creature_t *c){
+  if(c == NULL){
+    return list;
+  }
+  return clist_add(list, clist_new(c));
 }
 
 /* Removes the indexth creature from a given clist. If index is negative, it is
@@ -983,6 +992,14 @@ int creature_get_skill_with_weapon(creature_t *c){
  */
 int creature_get_type(creature_t *c){
   return c == NULL ? CREATURE_TYPE_UNKNOWN : c->creature_id;
+}
+
+/* Like creature_place_at_coord, but with no checks */
+void creature_set_coord(creature_t *c, int x, int y{
+  if(c == NULL){
+    return;
+  }
+  c->x = x; c->y = y;
 }
 
 /* Sets the given creature's display to the given display value.

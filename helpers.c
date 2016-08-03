@@ -1221,28 +1221,12 @@ void game_init(int seed){
   player_init();
   status_init();
   cmd_init();
-  overworld_init();
+  map_init(); /* Creates all maps, gives them some history */
+  overworld_init(); /* Places player in overworld watstes */
   num_turns = 0;
   
   //Enable left and right click
   mousemask(BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, NULL);
-  
-  //Setup floor
-  cur_map = map_new(TERMINAL_WIDTH,
-		    TERMINAL_HEIGHT-3,
-		    DEFAULT_ITEMS_STACK_SIZE,
-		    1);
-  map_draw_random_rooms(cur_map, -1, -1);
-  map_cleanup(cur_map);
-  map_draw_borders(cur_map);
-
-  map_add_creature(cur_map, player);
-  map_place_down_stair_randomly(cur_map);
-  map_place_spawners(cur_map);  
-
-  //Place character randomly
-  creature_place_randomly_on_map(player, cur_map);
-  map_init();
 }
 
 /* This function is called whenever the player is killed. It will prompt the 

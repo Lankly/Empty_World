@@ -93,12 +93,13 @@ creature_t* player;
 /* Creates and returns a new creature list */
 clist_t *clist_new(creature_t *creature);
 /* Appends one creature list to another */
-void clist_add(clist_t *list, clist_t *next);
+clist_t *clist_add(clist_t *list, clist_t *next);
+clist_t *clist_add_creature(clist_t *list, creature_t *c);
 /* Returns the next node in a creature list */
 clist_t *clist_next(clist_t *list);
 /* Returns the creature stored at a given node in a creature list */
 creature_t *clist_get_creature(clist_t *list);
-/* Removes and returns the creature at the given index of a given creature list.
+/* Removes and returns the creature at the given index of a given creature list
  * If the index goes out of bounds, returns NULL.
  */
 creature_t *clist_remove_by_index(clist_t *list, int index);
@@ -170,8 +171,6 @@ void creature_record_movement(creature_t *c, int move_x, int move_y);
 /* Returns how far into the fog of war that the given creature can see */
 int creature_see_distance(creature_t *c);
 
-bool creature_set_name(creature_t *c, char *n);
-
 /* Creates, returns, and places a creature on
    a given map based on the given creature id.
  */
@@ -199,7 +198,10 @@ char *creature_get_name(creature_t *c);
 int   creature_get_skill_with_weapon(creature_t *c);
 int   creature_get_type(creature_t *c);
 
+/* Very similar to creature_place_at_coord, but with no checks */
+void creature_set_coord(creature_t *c, int x, int y);
 void creature_set_display(creature_t *c, int disp);
+bool creature_set_name(creature_t *c, char *n);
 
 void set_blindness(creature_t *c, bool b);
 void set_unconscious(creature_t *c, bool b);

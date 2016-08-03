@@ -9,3 +9,4 @@ Makefile
 CMakeCache.txt
 cmake_install.cmake
 *.log
+./.vscode/*

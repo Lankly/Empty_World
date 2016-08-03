@@ -26,6 +26,10 @@ void overworld_init(){
   //The 3 is because of the status bar
   wastes_height = TERMINAL_HEIGHT - 3;
   wastes_width = TERMINAL_WIDTH;
+
+  //Add player
+  clist_add_creature(creatures, player);
+  creature_set_coord(player, wastes_width/2, wastes_height/2);
 }
 
 void draw_overworld(){
@@ -36,7 +40,7 @@ void draw_overworld(){
 }
 
 void draw_overworld_coord(int x, int y, int z){
-  if(
+  
 }
 
 /***********************
@@ -186,6 +190,7 @@ void wastes_map_update(){
     }
   }
 }
+
 void wastes_map_init(){
   wastes_map = Calloc(wastes_width * wastes_height, sizeof(int));
   
@@ -202,9 +207,27 @@ void wastes_map_init(){
     wastes_map_update();
   }
 }
+void wastes_map_pan(){
+  //Assumes player is in the overworld
+  int x, y;
+  creature_get_coord(player, x, y, NULL);
+
+  if((x > 0 && x < wastes_width) || (y > 0 && y < wastes_height)){
+    //No need to pan, since we keep the player's coord in-bounds
+    return;
+  }
+}
 void draw_overworld_wastes(){
+  //Assumes player is in the overworld
+  int x, y;
+  creature_get_coord(player, x, y, NULL);
+  
   if(wastes_map == NULL){
     wastes_map_init();
+  }
+  else if(x >= wastes_width || y >= wastes_height
+          || x < 0 || y < 0 ){
+    wastes_map_pan();
   }
   else{
     wastes_map_update();
