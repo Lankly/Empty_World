@@ -1,3 +1,4 @@
+
 #include <curses.h>
 #include <math.h>
 #include <stdlib.h>
@@ -8,14 +9,41 @@
 #include "overworld.h"
 #include "tiles.h"
 
-/* Private Variables */
+/********************
+ * CHUNKLIST STRUCT *
+ ********************/
+typedef struct chunklist_t{
+  //coordinates
+  int x, y, z;
+  int *map;
+  
+  //Next chunk in list
+  struct chunklist_t *next;
+}chunklist_t;
+
+/**********************
+ * USEFUL DEFINITIONS *
+ **********************/
+#define OVERWORLD_CHUNK_WIDTH 1024
+#define SOIL_DEPTH 5
+
+/*********************
+ * Private Variables *
+ *********************/
 clist_t *creatures;
 int wastes_width, wastes_height;
+int *wastes_map;
+chunklist_t *overworld;
 
-/*Helper Functions prototypes*/
+/******************************
+ * HELPER FUNCTION PROTOTYPES *
+ ******************************/
 void draw_overworld_wastes();
-
-
+void generate_overworld_chunk_at_coord(int x, int y, int z);
+int get_3d_coord(int x, int y, int z, int width, int height);
+chunklist_t *get_chunk_at_coord(int x, int y, int z);
+bool set_chunklist_at_coord(int x, int y, int z, chunklist_t *chunk);
+  
 /********************
  * PUBLIC FUNCTIONS *
  ********************/
@@ -30,6 +58,9 @@ void overworld_init(){
   //Add player
   clist_add_creature(creatures, player);
   creature_set_coord(player, wastes_width/2, wastes_height/2);
+
+  //Generate the first chunk of the Overworld
+  generate_overworld_chunk_at_coord(0,0,0);
 }
 
 void draw_overworld(){
@@ -43,9 +74,7 @@ void draw_overworld_coord(int x, int y, int z){
   
 }
 
-/***********************
- * GETTERS AND SETTERS *
- ***********************/
+/* GETTERS AND SETTERS */
 
 void overworld_set_type(int type){
   switch(type){
@@ -67,26 +96,10 @@ void overworld_set_type(int type){
 }
 
 
-/********************
- * HELPER FUNCTIONS *
- ********************/
+/*****************************
+ * WASTES-SPECIFIC FUNCTIONS *
+ *****************************/
 
-int get_random_sand_tile(){
-  switch(rand() % 6){
-  case 0:
-  case 1:
-  case 2:
-    return TILE_SAND;
-  case 3:
-  case 4:
-    return TILE_SAND_ALT1;
-  case 5:
-  default:
-    return TILE_SAND_ALT2;
-  }
-}
-
-int *wastes_map;
 void wastes_map_update(){
   //Still all moving sand on the leftmost column
   for(int y = 0; y < wastes_height; y++){
@@ -248,4 +261,173 @@ void draw_overworld_wastes(){
       }
     }
   }
+}
+
+
+/********************************
+ * OVERWORLD-SPECIFIC FUNCTIONS *
+ ********************************/
+
+//Returns the average height -1, used for determining water level
+int water_level(int *heightmap, int length){
+  int x = 0;
+  int y = 0;
+  
+  for(int i = 0; i < length; i++){
+    x += heightmap[i] / length;
+    int b = heightmap[i] % length;
+
+    if(y >= length - b){
+      x++;
+      y -= length - b;
+    }
+    else{
+      y += b;
+    }
+  }
+
+  return y - 1;
+}
+
+int *gen_heightmap(int dimension){
+  int *hm = Calloc(dimension * dimension, sizeof(int));
+
+  for(int j = 0; j < dimension; j++){
+    for(int i = 0; i < dimension, i++){
+      int coord = get_coord(i, j, dimension);
+      hm[coord] = 100;
+    }
+  }
+}
+
+/* Generates a chunk at the specified coordinate of the overworld. Coordinates
+ * are not the kind that items, creatures, etc use, but rather where the chunk
+ * being generated fits into everything.
+ */
+void generate_overworld_chunk_at_coord(int x, int y, int z){
+  int side = OVERWORLD_CHUNK_WIDTH;
+  int square = side * side;
+  int cube = square * side;
+  int *heightmap = gen_heightmap(side);
+  int water_lvl = water_lvl(heightmap, square);
+
+  chunklist_t *new_chunk = Calloc(1, sizeof(chunklist_t));
+  int *new_map = Calloc(cube, sizeof(int));
+  new_chunk->map = new_map;
+  new_chunk->x = x;
+  new_chunk->y = y;
+  new_chunk->z = z;
+
+  //Fill in overworld from heightmap
+  for(int j = 0; j < side; j++){
+    for(int i = 0; i < side; i++){
+      int coord = get_coord(i, j, side);
+      int height = heightmap[coord];
+
+      for(int k = 0; k < side; k++){
+        int coord3d = get_3d_coord(i, j, k, side, side);
+        int tile_to_place = TILE_AIR;
+        
+        if(k <= height){
+          //Place dirt for the inital SOIL_DEPTH amount of land
+          if((height - k) < SOIL_DEPTH){
+            //Or sand if underwater
+            if(k <= water_lvl){
+              tile_to_place = get_random_sand_tile();
+            }
+            else{
+              tile_to_place = TILE_DIRT;
+            }
+          }
+          //Stone below the soil/sand
+          else{
+            tile_to_place = TILE_STONE;
+          }
+        }
+        //Above the height on the heightmap
+        else if(k <= water_lvl){
+          tile_to_place = TILE_WATER;
+        }
+
+        new_map[coord3d] = tile_to_place;
+      }
+    }
+  }
+
+  set_chunklist_at_coord(new_chunk, x, y, z);
+  free(heightmap);
+}
+
+/********************
+ * HELPER FUNCTIONS *
+ ********************/
+
+int get_random_sand_tile(){
+  switch(rand() % 6){
+  case 0:
+  case 1:
+  case 2:
+    return TILE_SAND;
+  case 3:
+  case 4:
+    return TILE_SAND_ALT1;
+  case 5:
+  default:
+    return TILE_SAND_ALT2;
+  }
+}
+
+int get_3d_coord(int x, int y, int z, int width, int height){
+  return x + (y * width) + (z * width * height);
+}
+
+/* CHUNKLIST HELPER FUNCTIONS */
+
+/* Returns the chunk at the given coordinate. If no such chunk exists, returns
+ * NULL. If it returned a chunk, that chunk gets pushed to the top of the list,
+ * making subsequent requests for it faster.
+ */
+chunklist_t *get_chunk_at_coord(int x, int y, int z){
+  chunklist_t *failed_to_find = NULL;
+  if(overworld == NULL){
+    return failed_to_find;
+  }
+  
+  //If it's at the start, simply return it
+  if(overworld->x == x && overworld->y == y && overworld->z == z){
+    return overworld;
+  }
+  
+  for(chunklist_t *cur = overworld; cur->next != NULL; cur = cur->next){
+    if(cur->next->x == x && cur->next->y == y && cur->next->z == z){
+      //Put at front of list, for easy access next time, if it's soon
+      chunklist_t *found = cur->next;
+      cur->next = cur->next->next;
+      found->next = overworld;
+      overworld = found;
+      return found;
+    }
+  }
+
+  return failed_to_find;
+}
+
+/* Updates or sets the chunk at the given coordinate. Returns true if successful
+ */
+bool set_chunklist_at_coord(chunklist_t *chunk, int x, int y, int z){
+  for(chunklist_t *cur = overworld; cur != NULL; cur = cur->next){
+    //If chunk already exists, update it
+    if(cur->x == chunk->x && cur->y == chunk->y && cur->z == chunk->z){
+      cur->map = map;
+      return true;
+    }
+    //If we've reached the end, place it at the start
+    if(cur->next == NULL){
+      chunk->next = overworld;
+      overworld = chunk;
+      return true;
+    }
+  }
+  
+  return false;
 }

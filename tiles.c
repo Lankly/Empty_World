@@ -129,6 +129,39 @@ void tile_data_init(){
     .exam_text = "It is sand.\n",
     .hardness = 1,
     .stopme = true};
+  tile_data[TILE_DIRT] = (tile_t){
+    .id = TILE_DIRT,
+    .display = '.',
+    .hardness = 1,
+    .display_color = CP_GREY_BROWN,
+    .display_color_alt = CP_WHITE_GREY,
+    .exam_text = "It's soft earth.\n"
+  };
+  tile_data[TILE_STONE] = (tile_t){
+    .id = TILE_STONE,
+    .display = '`',
+    .hardness = 3,
+    .display_color = CP_WHITE_GREY,
+    .display_color_alt = CP_WHITE_GREY,
+    .exam_text = "It's hard stone.\n"};
+  tile_data[TILE_AIR] = (tile_t){
+    .id = TILE_AIR,
+    .passable = true,
+    .display = ' ',
+    .display_color = CP_WHITE_LIGHTBLUE,
+    .display_color_alt = CP_WHITE_BLUE,
+    .exam_text = "It's fresh air, free of dust.\n",
+    .transparent = true};
+  tile_data[TILE_WATER] = (tile_t){
+    .id = TILE_WATER,
+    .display = '~',
+    .display_color = CP_BLUE_TEAL,
+    .display_color_alt = CP_WHITE_BLUE,
+    .hardness = 0,
+    .passable = true,
+    .bool transparent = true,
+    .exam_text = "It's... a pool of fresh water. Amazing."
+  };
 }
 
 /* Returns the display character, paired with its colors. Takes into account

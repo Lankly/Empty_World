@@ -11,6 +11,10 @@
 
 #define PASS_WEIGHT 50
 
+/***************
+ * DEFINITIONS *
+ ***************/
+
 //Define the keys in the game
 #define CMD_DEBUG 0
 #define CMD_UP 1    //KEY_UP will always work for this
@@ -40,6 +44,7 @@
 #define CMD_NEXT_MSG 25
 #define CMD_MAX 25
 
+//Define the extended commands
 //Please keep this sorted alphabetically (after unknown)
 #define EXT_UNKNOWN 0
 #define EXT_8_COLORS 1
@@ -47,6 +52,10 @@
 #define EXT_TOGGLE_NUMPAD 3
 #define EXT_QUIT 4
 #define EXT_MAX 4
+
+/********************
+ * PUBLIC VARIABLES *
+ ********************/
 
 int cmd_data[CMD_MAX+1];
 char* cmd_data_extended[EXT_MAX+1];
@@ -65,54 +74,64 @@ char *term;
 int qckmv_cmd;
 int num_turns;
 
+/*****************
+ * PUBLIC STRUCT *
+ *****************/
+
 typedef struct intlist_t{
   int elem;
   struct intlist_t *next;
 }intlist_t;
 
-void *Calloc(size_t items, size_t size);
-char *str_lowercase(char *str);
-bool str_is_num(char *str);
-int *str_to_ints(char *str, int len);
-char *ints_to_str(int *ints, int len);
-int get_distance(int x_0, int y_0, int x_1, int y_1);
+/********************
+ * PUBLIC FUNCTIONS *
+ ********************/
 
-intlist_t *intlist_add(intlist_t *list, int elem);
-void intlist_remove(intlist_t *list, int elem);
-void intlist_free(intlist_t *list);
-intlist_t *intlist_new(int elem);
-
-int get_coord(int x,int y,int width);
-void get_coord_via_cursor(int* y, int* x);
-void get_origin(int *y, int *x);
-void get_centered_box_ul_coord(int *y, int *x, int h, int w);
-
-void quit(const char* error_msg);
-
+//Command functions
+void analyze_cmd_extended();
+bool analyze_cmd(int cmd, int* x, int* y);
+void close_tile(struct map_t *map, int x, int y, int direction);
 bool cmd_exists(int cmd);
 void cmd_init();
 void cmd_remap();
+void open_tile(struct map_t *map, int x, int y, int direction);
+void manual();
+void xscend();
 
+//Distance & coordinate functions
 bool coord_in_range(int target_x, int target_y, struct creature_t *seer);
+int  get_coord(int x,int y,int width);
+void get_coord_via_cursor(int* y, int* x);
+int  get_distance(int x_0, int y_0, int x_1, int y_1);
+void get_origin(int *y, int *x);
+void get_centered_box_ul_coord(int *y, int *x, int h, int w);
 bool in_range(struct creature_t *target, struct creature_t *seer);
 bool qckmv_continue(map_t *map, int x, int y, int qckmv_cmd);
 
+//Drawing functions
 void draw_borders();
 char display_list(char *instr, int **items, int num_items, int col_width);
+void draw_map(struct map_t *map);
+int  wall_correct(map_t *m, int i, int j);
 
+//Game functions
 void game_init();
 void game_over();
-void draw_map(struct map_t *map);
-
-void open_tile(struct map_t *map, int x, int y, int direction);
-void close_tile(struct map_t *map, int x, int y, int direction);
-int wall_correct(map_t *m, int i, int j);
+void quit(const char* error_msg);
 void debug();
-void manual();
-void xscend();
-void analyze_cmd_extended();
-bool analyze_cmd(int cmd, int* x, int* y);
 
+//Intlist functions
+intlist_t *intlist_add(intlist_t *list, int elem);
+void       intlist_free(intlist_t *list);
+intlist_t *intlist_new(int elem);
+void       intlist_remove(intlist_t *list, int elem);
+
+//Other
+void *Calloc(size_t items, size_t size);
 void display_mouse();
+char *ints_to_str(int *ints, int len);
+bool str_is_num(char *str);
+char *str_lowercase(char *str);
+int  *str_to_ints(char *str, int len);
 
 #endif

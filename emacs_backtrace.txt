@@ -1,0 +1,21 @@
+
+Exception 0xc0000005 at this address:
+01178f08
+
+Backtrace:
+01151828
+76b8a83c
+
+Exception 0xc0000005 at this address:
+01178f08
+
+Backtrace:
+01151828
+76b8a83c
+
+Exception 0xc0000005 at this address:
+01178f08
+
+Backtrace:
+01151828
+76b8a83c

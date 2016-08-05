@@ -15,7 +15,10 @@
 #define TILE_SAND_ALT1 8
 #define TILE_SAND_ALT2 9
 #define TILE_SAND_MOVING 10
-#define TILE_MAX 10
+#define TILE_DIRT 11
+#define TILE_STONE 12
+#define TILE_AIR 13
+#define TILE_MAX 13
 
 void tile_data_init();
 
