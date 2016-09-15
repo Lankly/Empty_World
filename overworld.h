@@ -25,9 +25,11 @@ void draw_overworld_coord(int x, int y, int z);
 bool overworld_place_creature(creature_t *c, int x, int y, int z);
 bool overworld_place_item(item_t *i, int x, int y, int z);
 
+void overworld_step();
+
 /* Getters and Setters */
 
-bool overworld_get_tile(int *t, int *x, int *y, int *z);
+int overworld_get_tile(int ox, int oy, int oz, int x, int y, int z);
 
 bool overworld_set_tile(int t, int x, int y, int z);
 void overworld_set_type(int type);

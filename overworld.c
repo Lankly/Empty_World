@@ -1,7 +1,7 @@
-
 #include <curses.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "colors.h"
 #include "creature.h"
 #include "helpers.h"
@@ -16,6 +16,9 @@ typedef struct chunklist_t{
   //coordinates
   int x, y, z;
   int *map;
+
+  //All the creatures on this chunk
+  clist_t creatures;
   
   //Next chunk in list
   struct chunklist_t *next;
@@ -24,16 +27,20 @@ typedef struct chunklist_t{
 /**********************
  * USEFUL DEFINITIONS *
  **********************/
-#define OVERWORLD_CHUNK_WIDTH 1024
+#define CACHE_LIMIT 16
+#define CHUNK_WIDTH 1024
+#define CHUNK_HEIGHT 1024
+#define CHUNK_DEPTH 64
+#define MAPIFY_CACHE_LIMIT 8
 #define SOIL_DEPTH 5
 
 /*********************
- * Private Variables *
+ * PRIVATE VARIABLES *
  *********************/
-clist_t *creatures;
 int wastes_width, wastes_height;
 int *wastes_map;
 chunklist_t *overworld;
+chunklist_t *mapify_cache;
 
 /******************************
  * HELPER FUNCTION PROTOTYPES *
@@ -61,17 +68,109 @@ void overworld_init(){
 
   //Generate the first chunk of the Overworld
   generate_overworld_chunk_at_coord(0,0,0);
+  
 }
 
+//Assumes draw the overworld at the player's coordinates
 void draw_overworld(){
   if(on_overworld_wastes){
     draw_overworld_wastes();
     return;
   }
+
+  int x, x0, y, y0, z, z0;
+  creature_get_coord(player, &x, &y, &z);
+  creature_get_overworld_coord(player, &x0, &y0, &z0);
+
+  draw_overworld_coord(x0, y0, z0, x, y, z, radius);
 }
 
-void draw_overworld_coord(int x, int y, int z){
+void draw_overworld_coord(int ox, int oy, int oz, int x, int y, int z){
+  if(x < 0 || x >= CHUNK_WIDTH
+     || y < 0 || y >= CHUNK_HEIGHT
+     || z < 0 || z >= CHUNK_DEPTH){
+    return;
+  }
   
+  chunklist_t *center = get_chunk_at_coord(ox, oy, oz);
+  if(center == NULL){
+    return;
+  }
+
+  int scr_w, scr_h;
+  getmaxyx(stdscr, &scr_h, &scr_w);
+  int radius = (scr_w < scr_h ? scr_w : scr_h) / 2 - 1;
+  int center_x = scr_w / 2;
+  int center_y = scr_h / 2;
+
+  for(int j = -radius; j < radius; j++){
+    for(int i = -radius; i < radius; i++){
+      //If this is actually outside the radius, skip this step
+      if((i * i) + (j * j) > (radius * radius)){
+        continue;
+      }
+      
+      chunklist_t *chunk = center;
+      int cur_chx = ox, cur_chy = oy,
+        tile_x = x + i, tile_y = y + j;
+
+      //Since the player might be at the edge of a chunk, move around until we
+      //arrive at the correct one, then use that for placing the tile on-screen
+      while(tile_x < 0){
+        cur_chx--;
+        tile_x += CHUNK_WIDTH;
+      }
+      while(tile_x >= CHUNK_WIDTH){
+        cur_chx++;
+        tile_x -= CHUNK_WIDTH;
+      }
+      while(tile_y < 0){
+        cur_chy--;
+        tile_y += CHUNK_HEIGHT;
+      }
+      while(tile_y >= CHUNK_HEIGHT){
+        cur_chy++;
+        tile_y -= CHUNK_HEIGHT;
+      }
+
+      //Place tile on-screen if it's not already there.
+      mv(center_y, center_x);
+      int screen_tile = inch();
+      int tile = overworld_get_tile(cur_chx, cur_chy, oz, tile_x, tile_y, z);
+      if(screen_tile != tile){
+        addch(tile);
+      }
+    }
+  }
+}
+
+/* Places the given creature on the chunk at the given coordinates.
+ * Where the creature is on the chunk is specified by its internal
+ * coordinates. (Chunks do not keep track of where individual creatures
+ * are on their maps).
+ */
+bool overworld_place_creature(creature_t *c, int x, int y, int z){
+  if(c == NULL){
+    return false;
+  }
+
+  chunklist_t *chunk = get_chunk_at_coord(x, y, z);
+  chunk->creatures = clist_add_creature(chunk->creatures, c);
+  return true;
+}
+
+void overworld_step(){
+  //Let each creature take its turn
+  for(chunklist_t *cur = overworld; cur != NULL; cur = cur->next){
+    for(clist_t *clist = cur->creatures;
+        clist != NULL;
+        clist = clist_next(clist)){
+
+      creature_t *c = clist_get_creature(clist);
+      //TODO: fix this so I can pass overworld instead of map
+      creature_take_turn(c, NULL);
+    }
+  }
 }
 
 /* GETTERS AND SETTERS */
@@ -95,6 +194,9 @@ void overworld_set_type(int type){
   }
 }
 
+bool player_is_on_overworld(){
+  return on_overworld_large || on_overworld_wastes;
+}
 
 /*****************************
  * WASTES-SPECIFIC FUNCTIONS *
@@ -289,13 +391,13 @@ int water_level(int *heightmap, int length){
   return y - 1;
 }
 
-int *gen_heightmap(int dimension){
-  int *hm = Calloc(dimension * dimension, sizeof(int));
+int *gen_heightmap(int width, int height, int ceiling){
+  int *hm = Calloc(width * height, sizeof(int));
 
-  for(int j = 0; j < dimension; j++){
-    for(int i = 0; i < dimension, i++){
-      int coord = get_coord(i, j, dimension);
-      hm[coord] = 100;
+  for(int j = 0; j < height; j++){
+    for(int i = 0; i < width, i++){
+      int coord = get_coord(i, j, width);
+      hm[coord] = ceiling / 2;
     }
   }
 }
@@ -305,27 +407,24 @@ int *gen_heightmap(int dimension){
  * being generated fits into everything.
  */
 void generate_overworld_chunk_at_coord(int x, int y, int z){
-  int side = OVERWORLD_CHUNK_WIDTH;
-  int square = side * side;
-  int cube = square * side;
-  int *heightmap = gen_heightmap(side);
-  int water_lvl = water_lvl(heightmap, square);
+  int *heightmap = gen_heightmap(CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH);
+  int water_lvl = water_lvl(heightmap, CHUNK_WIDTH * CHUNK_HEIGHT);
 
   chunklist_t *new_chunk = Calloc(1, sizeof(chunklist_t));
-  int *new_map = Calloc(cube, sizeof(int));
+  int *new_map = Calloc(CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH, sizeof(int));
   new_chunk->map = new_map;
   new_chunk->x = x;
   new_chunk->y = y;
   new_chunk->z = z;
 
   //Fill in overworld from heightmap
-  for(int j = 0; j < side; j++){
-    for(int i = 0; i < side; i++){
-      int coord = get_coord(i, j, side);
+  for(int j = 0; j < CHUNK_HEIGHT; j++){
+    for(int i = 0; i < CHUNK_WIDTH; i++){
+      int coord = get_coord(i, j, CHUNK_WIDTH);
       int height = heightmap[coord];
 
-      for(int k = 0; k < side; k++){
-        int coord3d = get_3d_coord(i, j, k, side, side);
+      for(int k = 0; k < CHUNK_DEPTH; k++){
+        int coord3d = get_3d_coord(i, j, k, CHUNK_WIDTH, CHUNK_HEIGHT);
         int tile_to_place = TILE_AIR;
         
         if(k <= height){
@@ -362,21 +461,6 @@ void generate_overworld_chunk_at_coord(int x, int y, int z){
  * HELPER FUNCTIONS *
  ********************/
 
-int get_random_sand_tile(){
-  switch(rand() % 6){
-  case 0:
-  case 1:
-  case 2:
-    return TILE_SAND;
-  case 3:
-  case 4:
-    return TILE_SAND_ALT1;
-  case 5:
-  default:
-    return TILE_SAND_ALT2;
-  }
-}
-
 int get_3d_coord(int x, int y, int z, int width, int height){
   return x + (y * width) + (z * width * height);
 }
@@ -410,6 +494,31 @@ chunklist_t *get_chunk_at_coord(int x, int y, int z){
   }
 
   return failed_to_find;
+}
+
+int get_random_sand_tile(){
+  switch(rand() % 6){
+  case 0:
+  case 1:
+  case 2:
+    return TILE_SAND;
+  case 3:
+  case 4:
+    return TILE_SAND_ALT1;
+  case 5:
+  default:
+    return TILE_SAND_ALT2;
+  }
+}
+
+int get_tile_at_coord(chunklist_t *c, int x, int y, int z){
+  if(c == NULL || c->map == NULL){
+    return TILE_UNKNOWN;
+  }
+
+  int coord = get_3d_coord(x, y, z, CHUNK_WIDTH, CHUNK_HEIGHT);
+  
+  return c->map[coord];
 }
 
 /* Updates or sets the chunk at the given coordinate. Returns true if successful

@@ -195,6 +195,7 @@ int   creature_get_display(creature_t *c);
 int   creature_get_last_position(creature_t *c);
 int   creature_get_max_carry_weight(creature_t *c);
 char *creature_get_name(creature_t *c);
+void creature_get_overworld_coord(creature_t *c, int *x, int *y, int *z);
 int   creature_get_skill_with_weapon(creature_t *c);
 int   creature_get_type(creature_t *c);
 

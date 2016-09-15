@@ -4,11 +4,8 @@
 #include <curses.h>
 #include <time.h>
 #include "helpers.h"
-#include "creature.h"
 #include "map.h"
-#include "tiles.h"
-#include "colors.h"
-#include "status.h"
+#include "overworld.h"
 #include "items.h"
 #include "inventory.h"
 
@@ -31,7 +28,12 @@ int main(int argc, char** argv){
     
     refresh();
 
-    apply_to_all_maps(&map_step);
+    if(player_is_on_overworld()){
+      overworld_step();
+    }
+    else{
+      apply_to_all_maps(&map_step);
+    }
   }
 
   endwin();

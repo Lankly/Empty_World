@@ -45,7 +45,7 @@ struct creature_t{
   int creature_id;
   int display;
   int type;
-  int x; int y; int z;
+  int x; int y; int z, o_x, o_y, o_z; //o_ used for overworld coordinates
   int last_position; //As in keys on a numpad
 
   char *name;
@@ -981,6 +981,21 @@ int creature_get_max_carry_weight(creature_t *c){
  */
 char *creature_get_name(creature_t *c){
   return c == NULL || c->name == NULL ? "Unknown" : c->name;
+}
+void creature_get_overworld_coord(creature_t *c, int *x, int *y, int *z){
+  if(c == NULL){
+    return;
+  }
+
+  if(x != NULL){
+    *x = c->o_x;
+  }
+  if(y != NULL){
+    *y = c->o_y;
+  }
+  if(z != NULL){
+    *z = c->o_z;
+  }
 }
 
 int creature_get_skill_with_weapon(creature_t *c){
