@@ -18,12 +18,6 @@ int main(int argc, char** argv){
   int seed = time(NULL);
   printf("Seed: %d\n", seed);
   srand(seed);
-  //srand(1401917882);
-  //KNOWN TESTING SEEDS
-  //1401917882
-  //1410214243
-  //1410291444
-  //1427689757
   game_init(seed);
   
   //Main Game Loop

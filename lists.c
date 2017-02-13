@@ -15,6 +15,27 @@ void *dll_new();
  * FUNCTION IMPLEMENTATIONS *
  ****************************/
 
+void ll_free(void *ll){
+  ll_helper_t *next = NULL;
+  for(ll_helper_t *cur = ll; cur != NULL; cur = next){
+    next = cur->next;
+    free(cur);
+  }
+}
+
+void dll_free(void *dll){
+  if(dll == NULL){
+    return;
+  }
+  
+  dll_helper_t *cur = dll;
+  while(cur->prev != NULL){
+    cur = cur->prev;
+  }
+
+  ll_free(cur);
+}
+
 void *ll_get_elem(void *ll){
   if(ll == NULL){
     return NULL;
@@ -50,7 +71,10 @@ void *dll_insert(void *dll, void *item){
   dll_helper_t *new = dll_new();
   new->elem = item;
   new->next = dll;
-  new->next->prev = new;
+  if(dll != NULL){
+    new->prev = new->next->prev;
+    new->next->prev = new;
+  }
 
   return new;
 }

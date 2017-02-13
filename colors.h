@@ -20,7 +20,19 @@ typedef enum color_pair_t {
 
 #define CP_CORPSE CP_DARK_GREY_BLACK
 
-//Initialize colors
+/***********************
+ * FUNCTION PROTOTYPES *
+ ***********************/
+
+/**
+ * Initializes internal color data. Must be called before using colors.
+ */
 void color_init();
+
+/**
+ * Returns the color pair associated with darker text, which is determined
+ * by whether or not compatibility mode is turned on.
+ */
+int color_pair_dark();
 
 #endif

@@ -24,6 +24,16 @@
  ***********************/
 
 /**
+ * Frees a given linked_list, but does not change any of its elements.
+ */
+void ll_free(void *ll);
+
+/**
+ * Like ll_free, but for doubly_linked_lists
+ */
+void dll_free(void *dll);
+
+/**
  * Returns the element of a given linked_list or doubly_linked_list.
  */
 void *ll_get_elem(void *ll);
@@ -39,7 +49,7 @@ void *ll_get_next(void *ll);
 void *ll_get_prev(void *dll);
 
 /**
- * Inserts an element into a given linked_list and returns the head of that 
+ * Inserts an element into a given linked_list and returns the new head of that 
  * list.
  */
 void *ll_insert(void *ll, void *item);
@@ -51,7 +61,7 @@ void *dll_insert(void *dll, void *item);
 
 /**
  * Removes an element from a given linked_list and returns the head of that
- * list. If the comparator func is NULL, will simply check addresses.
+ * list. If the comparator func is NULL, will simply check addresses. 
  *
  * Does nothing if ll or item is NULL.
  */
