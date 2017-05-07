@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
 #include <curses.h>
@@ -15,6 +16,7 @@
  * TYPES *
  *********/
 BTREE(attribute_tree_t)
+LINKED_LIST(inventory_t)
 
 struct creature_t{
   char *name;
@@ -23,7 +25,7 @@ struct creature_t{
   int lvl;
   int x, y;
 
-  int health;
+  int health, stamina;
 
   /**
    * Nutrition has possible values of 0 - 700.
@@ -58,12 +60,12 @@ struct creature_t{
   int intelligence;
   int agility;
   int luck;
-
-  body_t *body;
-  creature_t *owner;            /* Used for pets */
-  title_t title;
   
   attribute_tree_t *attributes;
+  body_t *body;
+  creature_t *owner;            /* Used for pets */
+  inventory_t *inventory;
+  title_t title;
 };
 
 
@@ -71,11 +73,22 @@ struct creature_t{
  * HELPER FUNCTION PROTOTYPES *
  ******************************/
 void move_creature(creature_t *c, map_t *m);
-void move_creature_default(creature_t *c, map_t *m);
-void move_creature_along_walls(creature_t *c, map_t *m);
-void move_creature_through_walls(creature_t *c, map_t *m);
-void move_creature_toward_target(creature_t *c, map_t *m, dijkstra_t *d);
+dir_t move_creature_toward_target(creature_t *c, map_t *m, dijkstra_t *d);
+/**
+ * Each of these should return a valid direction for the given creature to move
+ * on the given map. They should be called only when the given creature has no
+ * target to move to, when they're just wandering.
+ */
+dir_t move_creature_default(creature_t *c, map_t *m);
+dir_t move_creature_along_walls(creature_t *c, map_t *m);
+dir_t move_creature_through_walls(creature_t *c, map_t *m);
 
+/**
+ * These functions reevaluate certain attributes.
+ */
+void reevaluate_immobility(creature_t *c);
+void reevaluate_flying(creature_t *c);
+void reevaluate_hovering(creature_t *c);
 
 /*********************
  * PRIVATE VARIABLES *
@@ -112,7 +125,7 @@ void creatures_init(){
 creature_t *new_creature(){
   creature_t *ret = Calloc(1, sizeof(creature_t));
 
-  ret->attributes = Calloc(1, sizeof(attribute_list_t));
+  ret->attributes = Calloc(1, sizeof(attribute_tree_t));
   
   return ret;
 }
@@ -130,6 +143,13 @@ void creature_take_turn(creature_t *c, map_t *m){
     return;
   }
 
+  //If stamina too low, wait and recover some.
+  if(c->stamina < 0){
+    c->stamina += c->endurance + 10;
+    return;
+  }
+
+  //Player has a special turn helper function.
   if(is_player(c)){
     player_take_turn(c, m);
     return;
@@ -138,7 +158,7 @@ void creature_take_turn(creature_t *c, map_t *m){
   move_creature(c, m);
 }
 
-void creature_add_attribute(creature_t *c, attribute_t a){
+void add_attribute(creature_t *c, attribute_t a){
   if(c == NULL){
     return;
   }
@@ -146,7 +166,24 @@ void creature_add_attribute(creature_t *c, attribute_t a){
   c->attributes = tree_insert(c->attributes, &a, &int_cmp);
 }
 
-void creature_remove_attribute(creature_t *c, attribute_t a){
+void add_attributes(creature_t *c, int num_attributes, ...){
+  if(num_attributes < 0){
+    return;
+  }
+
+  va_list args;
+  va_start(args, num_attributes);
+
+  for(int i = 0; i < num_attributes; i++){
+    attribute_t arg = va_arg(args, attribute_t);
+
+    add_attribute(c, arg);
+  }
+  
+  va_end(args);
+}
+
+void remove_attribute(creature_t *c, attribute_t a){
   if(c == NULL){
     return;
   }
@@ -154,12 +191,64 @@ void creature_remove_attribute(creature_t *c, attribute_t a){
   c->attributes = tree_remove(c->attributes, &a, &int_cmp);
 }
 
-bool creature_has_attribute(creature_t *c, attribute_t a){
+void remove_attributes(creature_t *c, int num_attributes, ...){
+  if(num_attributes < 0){
+    return;
+  }
+
+  va_list args;
+  va_start(args, num_attributes);
+
+  for(int i = 0; i < num_attributes; i++){
+    attribute_t arg = va_arg(args, attribute_t);
+    remove_attribute(c, arg);
+  }
+  
+  va_end(args);
+}
+
+bool has_attribute(creature_t *c, attribute_t a){
   if(c == NULL){
     return false;
   }
   
   return tree_search(c->attributes, &a, int_cmp) != NULL;
+}
+
+bool has_attributes(creature_t *c, int num_attributes, ...){
+  if(num_attributes < 0){
+    return true;
+  }
+
+  va_list args;
+  va_start(args, num_attributes);
+  bool result = true;
+  
+  for(int i = 0; i < num_attributes; i++){
+    attribute_t arg = va_arg(args, attribute_t);
+
+    result = result && has_attribute(c, arg);
+  }
+  
+  va_end(args);
+
+  return result;
+}
+
+bool has_extrinsic(creature_t *c, attribute_t a){
+  if(c == NULL || c->inventory == NULL){
+    return false;
+  }
+
+  for(inventory_t *cur = c->inventory; cur != NULL; cur = ll_next(cur)){
+    item_t *item = ll_elem(cur);
+
+    if(grants(item, a)){
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 int creature_get_target(creature_t *c, map_t *m){
@@ -183,30 +272,6 @@ void creature_add_nutrition(creature_t *c, int amount){
   }
 
   c->nutrition += amount;
-}
-
-bool creature_is_hungry(creature_t *c){
-  if(c == NULL){
-    return false;
-  }
-
-  return c->nutrition < 401;
-}
-
-bool creature_is_satiated(creature_t *c){
-  if(c == NULL){
-    return false;
-  }
-
-  return c->nutrition > 500;
-}
-
-bool creature_is_oversatiated(creature_t *c){
-  if(c == NULL){
-    return false;
-  }
-
-  return c->nutrition > 600;
 }
 
 void creature_display_stats(creature_t *c){
@@ -260,6 +325,7 @@ int creature_get_icon(creature_t *c){
   return base | color_pair;
 }
 
+
 /*******************************
  * PLAYER FUNCTION DEFINITIONS *
  *******************************/
@@ -279,7 +345,7 @@ bool is_player(creature_t *c){
     return false;
   }
 
-  return creature_has_attribute(c, ATTR_IS_PLAYER);
+  return has_attribute(c, ATTR_IS_PLAYER);
 }
 
 
@@ -288,25 +354,93 @@ bool is_player(creature_t *c){
  *******************************/
 
 void move_creature(creature_t *c, map_t *m){
-  if(creature_has_attribute(c, ATTR_MOVES_ALONG_WALLS)){
-    move_creature_along_walls(c, m);
+  //Determine which direction to move
+  dir_t dir;
+  if(has_attribute(c, ATTR_MOVES_ALONG_WALLS)){
+    dir = move_creature_along_walls(c, m);
   }
-  else if(creature_has_attribute(c, ATTR_MOVES_THROUGH_WALLS)){
-    move_creature_through_walls(c, m);
+  else if(has_attribute(c, ATTR_MOVES_THROUGH_WALLS)){
+    dir = move_creature_through_walls(c, m);
   }
   else{
-    move_creature_default(c, m);
+    dir = move_creature_default(c, m);
+  }
+
+  //Figure out how the direction translates to a position
+  if(dir == DIR_UP || dir == DIR_UL || dir == DIR_UR){
+    c->y--;
+  }
+  else if(dir == DIR_DOWN || dir == DIR_LL || dir == DIR_LR){
+    c->y++;
+  }
+  if(dir == DIR_LEFT || dir == DIR_UL || dir == DIR_LL){
+    c->x--;
+  }
+  else if(dir == DIR_RIGHT || dir == DIR_UR || dir == DIR_LR){
+    c->x++;
   }
 }
 
-void move_creature_default(creature_t *c, map_t *m){
+dir_t move_creature_towards_target(creature_t *c, map_t *m){
   //TODO
 }
 
-void move_creature_along_walls(creature_t *c, map_t *m){
+dir_t move_creature_default(creature_t *c, map_t *m){
   //TODO
 }
 
-void move_creature_through_walls(creature_t *c, map_t *m){
+dir_t move_creature_along_walls(creature_t *c, map_t *m){
   //TODO
+}
+
+dir_t move_creature_through_walls(creature_t *c, map_t *m){
+  //TODO
+}
+
+void reevaluate_immobility(creature_t *c){
+  remove_attribute(c, ATTR_IS_IMMOBILE);
+  bool cant_move = false;
+
+  cant_move = cant_move || has_attribute(c, ATTR_IS_STUNNED);
+  cant_move = cant_move || has_attribute(c, ATTR_IS_FROZEN);
+  cant_move = cant_move || has_attribute(c, ATTR_IS_PINNED);
+
+  //Can move if has at least two wings
+  bool mw = has_attribute(c, ATTR_HAS_MANY_WINGS);
+  bool lrw = has_attributes(c, 2, ATTR_HAS_LEFT_WING, ATTR_HAS_RIGHT_WING);
+  
+  //Can move if has at least two feet
+  bool ml = has_attribute(c, ATTR_HAS_MANY_LEGS);
+  bool lrf = has_attributes(c, 2, ATTR_HAS_LEFT_FOOT, ATTR_HAS_RIGHT_FOOT);
+
+  //Can move if has at least two hands
+  bool ma = has_attribute(c, ATTR_HAS_MANY_ARMS);
+  bool lrh = has_attributes(c, 2, ATTR_HAS_LEFT_HAND, ATTR_HAS_RIGHT_HAND);
+
+  //Check wings, hands, and feet
+  if(!mw && !lrw && !ml && !lrf && !ma && !lrh){
+    cant_move = true;
+  }
+  
+  if(cant_move){
+    add_attribute(c, ATTR_IS_IMMOBILE);
+  }
+}
+
+void reevaluate_flying(creature_t *c){
+  remove_attribute(c, ATTR_IS_FLYING);
+  bool can_fly = false;
+
+  //Can fly if has at least two wings
+  bool mw = has_attribute(c, ATTR_HAS_MANY_WINGS);
+  bool lrw = has_attributes(c, 2, ATTR_HAS_LEFT_WING, ATTR_HAS_RIGHT_WING);
+
+  //Check wings, hands, and feet
+  if(mw || lrw){
+    can_fly = true;
+  }
+  
+  if(can_fly){
+    add_attribute(c, ATTR_IS_IMMOBILE);
+  }
 }

@@ -79,7 +79,7 @@ history_t *hist;
 history_t *cur_hist;       /* Where we currently are in the history */
 int hist_len;
 
-display_mode_t mode;
+display_mode_t mode;            /* The currently applied mode */
 
 WINDOW *WIN, *primary, *secondary, *alert, *alert_line, *status;
 
@@ -96,7 +96,7 @@ void change_panes_style(pane_style_t s){
 
   //Now change their borders
   while(wins != NULL){
-    WINDOW *cur_win = ll_get_elem(wins);
+    WINDOW *cur_win = ll_elem(wins);
     switch(s){
     case STYLE_NONE:
       wborder(cur_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
@@ -301,8 +301,8 @@ void reseat_windows(){
   int overall_width = primary_width + secondary_width;
   int overall_height = primary_height + alert_height + status_height;
   
-  for(winlist_t *cur = wins; cur != NULL; cur = ll_get_next(cur)){
-    WINDOW *cur_win = ll_get_elem(cur);
+  for(winlist_t *cur = wins; cur != NULL; cur = ll_next(cur)){
+    WINDOW *cur_win = ll_elem(cur);
     if(cur_win == primary || cur_win == alert_line){
       mvwin(cur_win,
             centery - overall_height / 2,
@@ -371,8 +371,8 @@ void write_to_alert_area(int *msg){
   wclear(alert);
   wmove(alert, 0, 0);
 
-  for(; cur_hist != NULL; cur_hist = ll_get_next(cur_hist)){
-    int *cur_str = ll_get_elem(cur_hist);
+  for(; cur_hist != NULL; cur_hist = ll_next(cur_hist)){
+    int *cur_str = ll_elem(cur_hist);
     int cursor_x, cursor_y;
     
     for(int i = 0; cur_str[i] != '\0'; i++){
@@ -404,7 +404,7 @@ void write_to_alert_line(int *msg){
   const char *more_msg = "[MORE]";
   int more_len = strlen(more_msg);
   
-  int *cur_str = ll_get_elem(cur_hist);
+  int *cur_str = ll_elem(cur_hist);
   for(int i = 0; cur_str[i] != 0; i++){
 
     //TODO: Have this look ahead to words
@@ -468,9 +468,9 @@ void remove_history(){
   history_t *next_hist = cur_hist;
   do{
     cur_hist = next_hist;
-    next_hist = ll_get_next(cur_hist);
+    next_hist = ll_next(cur_hist);
   } while(next_hist != NULL);
 
-  hist = dll_remove(hist, ll_get_elem(cur_hist), NULL);
+  hist = dll_remove(hist, ll_elem(cur_hist), NULL);
   cur_hist = hist;
 }

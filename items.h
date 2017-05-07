@@ -1,12 +1,14 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
-#include <stdbool.h>
+/*******************
+ * TYPE PROTOTYPES *
+ *******************/
+typedef struct item_t item_t;
 
 /****************
  * USEFUL TYPES *
  ****************/
-typedef struct item_t item_t;
 typedef enum item_type_t {
   ITYPE_BOW,
   ITYPE_CROSSBOW,
@@ -24,7 +26,8 @@ typedef enum beatitude_t {
   BUC_CURSED
 } beatitude_t;
 typedef enum item_attribute_t {
-  IATTR_IS_WEAPON,
+  IATTR_IS_WEARABLE,
+  IATTR_IS_WIELDABLE,
   MAX_ITEM_ATTRIBUTE
 } item_attribute_t;
 typedef enum attack_type_t {
@@ -40,6 +43,22 @@ typedef enum dmg_type_t {
   MAX_DMG_TYPE
 } dmg_type_t;
 
+
+/************
+ * INCLUDES *
+ ************/
+
+#include <stdbool.h>
+#include "creatures.h"
+#include "lists.h"
+
+
+/*********
+ * LISTS *
+ *********/
+LINKED_LIST(ilist_t)
+
+
 /***********************
  * FUNCTION PROTOTYPES *
  ***********************/
@@ -52,5 +71,10 @@ void free_item(item_t *i);
 void item_add_attribute(item_t *t, item_attribute_t a);
 void item_remove_attribute(item_t *t, item_attribute_t a);
 bool item_has_attribute(item_t *i, item_attribute_t a);
+
+/**
+ * Returns true if the given item grants the given attribute to the user.
+ */
+bool grants(item_t *i, attribute_t a);
 
 #endif

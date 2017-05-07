@@ -88,7 +88,7 @@ void refresh_pane(pane_t p);
  * PRIMARY will print the entirety of chars, until it reaches a 0.
  *
  * SECONDARY will print the entirety of chars, until it reaches 2 newlines in a
- * row. Each single 0 and '\n' means "end of current line".
+ * row. Each '\0' or '\n' means "end of current line".
  *
  * If the current mode shows the ALERT LINE instead of the ALERT area, and the
  * given text is longer than can fit in the ALERT LINE, the game will be paused

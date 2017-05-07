@@ -36,7 +36,7 @@ void dll_free(void *dll){
   ll_free(cur);
 }
 
-void *ll_get_elem(void *ll){
+void *ll_elem(void *ll){
   if(ll == NULL){
     return NULL;
   }
@@ -44,7 +44,7 @@ void *ll_get_elem(void *ll){
   return ((ll_helper_t *)ll)->elem;
 }
 
-void *ll_get_next(void *ll){
+void *ll_next(void *ll){
   if(ll == NULL){
     return NULL;
   }
@@ -52,7 +52,7 @@ void *ll_get_next(void *ll){
   return ((ll_helper_t *)ll)->next;
 }
 
-void *ll_get_prev(void *dll){
+void *ll_prev(void *dll){
   if(dll == NULL){
     return NULL;
   }
@@ -141,7 +141,7 @@ void *dll_remove(void *dll, void *item, cmp func){
 
 void *ll_search(void *ll, void *item, cmp func){
   for(ll_helper_t *cur = ll; cur != NULL; cur = cur->next){
-    void *cur_elem = ll_get_elem(cur);
+    void *cur_elem = ll_elem(cur);
     
     //If their addresses are the same, they have to be equal
     if(item == cur_elem){

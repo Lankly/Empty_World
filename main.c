@@ -4,13 +4,11 @@
 #include <curses.h>
 #include <time.h>
 #include "helpers.h"
-#include "creature.h"
-#include "map.h"
+#include "creatures.h"
+#include "maps.h"
 #include "tiles.h"
 #include "colors.h"
-#include "status.h"
 #include "items.h"
-#include "inventory.h"
 
 //Main
 int main(int argc, char** argv){

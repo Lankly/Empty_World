@@ -1,54 +1,71 @@
 #ifndef CREATURES_H
 #define CREATURES_H
 
-#include <stdbool.h>
-#include "items.h"
-#include "maps.h"
+/*******************
+ * TYPE PROTOTYPES *
+ *******************/
+//typedef intrinsics_t extrinsics_t; /* Uncomment this when intrinsics exist */
+typedef struct creature_t creature_t;
+
 
 /**********************
  * USEFUL DEFINITIONS *
  **********************/
-#define extrinsics_t intrinsics_t
-
 
 /****************
  * USEFUL TYPES *
  ****************/
-typedef struct creature_t creature_t;
 
 typedef enum attribute_t {
   ATTR_IS_PLAYER,
-  /* Diet Section */
-  ATTR_IS_CARNAVOR,
-  ATTR_IS_HERBAVOR,
-  ATTR_IS_OMNIVORE, /* OMNIVORE in this context is just CARN + HERB */
-  ATTR_IS_METALVORE,
-  ATTR_IS_POISONOUS,
-  /* Food Chain Section */
-  ATTR_IS_PLANT,
-  ATTR_IS_PREY,
-  ATTR_IS_PREDATOR,
-  ATTR_IS_APEX_PREDATOR,
+
+  /* Body parts (To be used in coordination with bodies.h) */
+  ATTR_HAS_BRAIN,
+  ATTR_HAS_HEAD,
+  ATTR_HAS_MANY_EYES,    ATTR_HAS_RIGHT_EYE,   ATTR_HAS_LEFT_EYE,
+  ATTR_HAS_MANY_ARMS,    ATTR_HAS_RIGHT_ARM,   ATTR_HAS_LEFT_ARM,
+  ATTR_HAS_MANY_LEGS,    ATTR_HAS_RIGHT_LEG,   ATTR_HAS_LEFT_LEG,
+  ATTR_HAS_RIGHT_HAND,   ATTR_HAS_LEFT_HAND,
+  ATTR_HAS_RIGHT_PINKIE, ATTR_HAS_LEFT_PINKIE,
+  ATTR_HAS_RIGHT_RING,   ATTR_HAS_LEFT_RING,
+  ATTR_HAS_RIGHT_MIDDLE, ATTR_HAS_LEFT_MIDDLE,
+  ATTR_HAS_RIGHT_FIRST,  ATTR_HAS_LEFT_FIRST,
+  ATTR_HAS_RIGHT_THUMB,  ATTR_HAS_LEFT_THUMB,
+  ATTR_HAS_RIGHT_FOOT,   ATTR_HAS_LEFT_FOOT,
+  ATTR_HAS_MANY_WINGS,   ATTR_HAS_LEFT_WING,   ATTR_HAS_RIGHT_WING,
+  ATTR_HAS_BLOOD,        ATTR_HAS_JELLY,
+  ATTR_HAS_FEATHERS,     ATTR_HAS_FUR,         ATTR_HAS_HAIR,
+  ATTR_HAS_SKELETON,     ATTR_HAS_EXOSKELETON, ATTR_HAS_CHASSIS,
+  ATTR_HAS_TEETH,        ATTR_HAS_CLAWS,       ATTR_HAS_FANGS,
+
+  /* Curses */
+  ATTR_CURSE_OF_BAD_LUCK,      ATTR_CURSE_OF_FLYING, ATTR_CURSE_OF_POLYMORPH,
+  ATTR_CURSE_OF_TELEPORTATION,
+
+  /* Diseases */
+  ATTR_CRYOASTHENIA, ATTR_POLYFORMIASIS, ATTR_PYROASTHENIA,
+  
+  /* Food & Diet Section */
+  ATTR_IS_CARNAVOR,  ATTR_IS_HERBAVOR, ATTR_IS_METALVORE,
+  ATTR_IS_PLANT,     ATTR_IS_PREY,     ATTR_IS_PREDATOR,  ATTR_IS_APEX_PREDATOR,
+  ATTR_IS_POISONOUS, ATTR_IS_ROTTEN,
+  ATTR_IS_STARVING,  ATTR_IS_HUNGRY,   ATTR_IS_SATIATED,  ATTR_IS_OVERSATIATED,
+  
   /* Material Section */
-  ATTR_IS_FEATHERED,
-  ATTR_IS_FLESHY,
-  /** Metal Sub-section**/
-  ATTR_IS_COPPER,
-  ATTR_IS_SILVER,
-  ATTR_IS_GOLD,
-  ATTR_IS_PLATINUM,
-  ATTR_IS_ADAMANTINE,
-  ATTR_IS_STEEL,
+  ATTR_IS_STRAW,    ATTR_IS_COPPER,     ATTR_IS_SILVER, ATTR_IS_GOLD,
+  ATTR_IS_PLATINUM, ATTR_IS_ADAMANTINE, ATTR_IS_STEEL,
+  
   /* Mobility Section */
-  ATTR_IS_FLYING,
-  ATTR_IS_IMMOBILE,
-  ATTR_MOVES_ALONG_WALLS,
-  ATTR_MOVES_THROUGH_WALLS,
+  ATTR_IS_IMMOBILE,       ATTR_IS_FLYING,           ATTR_IS_HOVERING,
+  ATTR_MOVES_ALONG_WALLS, ATTR_MOVES_THROUGH_WALLS,
+  ATTR_IS_STUNNED,        ATTR_IS_FROZEN,           ATTR_IS_PINNED,
+  
   /* Resistances */
-  RESIST_FIRE,
-  RESIST_ICE,
-  RESIST_PHYSICAL,
-  RESIST_PSIONIC,
+  RESIST_FIRE, RESIST_ICE, RESIST_PHYSICAL, RESIST_PSIONIC,
+
+  /* Pronouns ("It" by default, "You" if ATTR_IS_PLAYER) */
+  ATTR_HE, ATTR_SHE, ATTR_THEY,
+  
   MAX_ATTRIBUTE
 } attribute_t;
 typedef enum class_t {
@@ -75,6 +92,24 @@ typedef enum title_t{
   MAX_TITLE
 } title_t;
 
+
+/*********
+ * LISTS *
+ *********/
+#include "lists.h"
+LINKED_LIST(clist_t)
+
+
+/************
+ * INCLUDES *
+ ************/
+
+#include <stdbool.h>
+#include "items.h"
+#include "maps.h"
+
+
+
 /***********************
  * FUNCTION PROTOTYPES *
  ***********************/
@@ -100,18 +135,38 @@ void creature_take_turn(creature_t *c, map_t *m);
  * Adds an attribute to a given creature. Does nothing if that creature already
  * has that attribute, or if the creature is NULL.
  */
-void creature_add_attribute(creature_t *c, attribute_t a);
+void add_attribute(creature_t *c, attribute_t a);
+/**
+ * Adds many attributes to a given creature at once.
+ */
+void add_attributes(creature_t *c, int num_attributes, ...);
 /**
  * Removes an attribute from a given creature. Does nothing if that creature did
  * not already have that attribute, or if the creature is NULL.
  */
-void creature_remove_attribute(creature_t *c, attribute_t a);
+void remove_attribute(creature_t *c, attribute_t a);
+/**
+ * Removes all the given attributes from the given creature.
+ */
+void remove_attributes(creature_t *c, int num_attributes, ...);
 
 /**
- * Returns true if the given creature has the given attribute. Returns false if
- * the creature is NULL.
+ * Returns true if the given creature has the given attribute. Also returns
+ * false if the creature is NULL.
  */
-bool creature_has_attribute(creature_t *c, attribute_t a);
+bool has_attribute(creature_t *c, attribute_t a);
+
+/**
+ * Returns true if the given creature has all the given attributes. Also returns
+ * false if the creature is NULL.
+ */
+bool has_attributes(creature_t *c, int num_attributes, ...);
+
+/**
+ * Returns true if the given creature is granted the given attribute by an item
+ * in their inventory.
+ */
+bool has_extrinsic(creature_t *c, attribute_t a);
 
 /* Damage-related functions */
 
@@ -144,21 +199,6 @@ bool creature_teleport(creature_t *c, map_t *m, int x, int y);
  * internal nutrition.
  */
 void creature_add_nutrition(creature_t *c, int amount);
-
-/**
- * Returns true if the creature's internal nutrition value is low.
- */
-bool creature_is_hungry(creature_t *c);
-
-/**
- * Returns true if the creature's internal nutrition value is high.
- */
-bool creature_is_satiated(creature_t *c);
-
-/**
- * Returns true if the creature's internal nutrition value is very high.
- */
-bool creature_is_oversatiated(creature_t *c);
 
 /* Stat-related functions */
 

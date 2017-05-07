@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <curses.h>
 #include "helpers.h"
+#include "creatures.h"
+#include "display.h"
+#include "items.h"
+#include "maps.h"
 
 /************************
  * FUNCTION DEFINITIONS *
@@ -34,4 +38,15 @@ int int_cmp(void *item1, void *item2){
   }
 
   return (*((int *)item1)) - (*((int *)item2));
+}
+
+void game_init(){
+  creatures_init();
+  display_init();
+  items_init();
+  //maps_init();
+}
+
+dir_t rand_dir(){
+  return rand() % DIR_COUNT;
 }

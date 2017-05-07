@@ -36,17 +36,17 @@ void dll_free(void *dll);
 /**
  * Returns the element of a given linked_list or doubly_linked_list.
  */
-void *ll_get_elem(void *ll);
+void *ll_elem(void *ll);
 
 /**
  * Returns the next node of a linked_list or doubly_linked_list.
  */
-void *ll_get_next(void *ll);
+void *ll_next(void *ll);
 
 /**
  * Returns the previous node of a doubly_linked_list (dll MUST be a valid DLL).
  */
-void *ll_get_prev(void *dll);
+void *ll_prev(void *dll);
 
 /**
  * Inserts an element into a given linked_list and returns the new head of that 
@@ -55,7 +55,7 @@ void *ll_get_prev(void *dll);
 void *ll_insert(void *ll, void *item);
 
 /**
- * Like ll_insert, but for doubly_linked_lists.
+ * Inserts an element at the location that dll is in.
  */
 void *dll_insert(void *dll, void *item);
 

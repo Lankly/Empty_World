@@ -14,6 +14,12 @@ typedef struct body_t body_t;
  ***********************/
 
 /**
+ * Initializes all internal bodies data. MUST be called before creating any new
+ * bodies.
+ */
+void bodies_init();
+
+/**
  * Returns a new body represented by the given species.
  */
 body_t *new_body_by_species(species_t s);
