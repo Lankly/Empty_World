@@ -27,15 +27,64 @@ struct map_t{
   clist_t *creatures;
 };
 
+
 /******************************
  * HELPER FUNCTION PROTOTYPES *
  ******************************/
 
+/**
+ * Determines whether or not a given coordinate exists on a given map.
+ * A valid coordinate is inside the bounds of the map.
+ * Always returns false on a NULL map.
+ * @param m A valid map.
+ * @param x The x-coordinate to check.
+ * @param y The y-coordinate to check.
+ * @returns True if the coordinate is valid.
+ */
 bool xycoord_is_valid(map_t *m, int x, int y);
+/**
+ * Determines whether or not a given coordinate exists on a given map.
+ * A valid coordinate is inside the bounds of the map.
+ * Always returns false on a NULL map.
+ * @param m A valid map.
+ * @param c An index into an array representation of a 2-D space.
+ * @returns True if the coordinate is valid.
+ */
 bool coord_is_valid(map_t *m, int c);
-void map_draw_box(map_t *m, int x, int y, tile_t t);
-void map_draw_circle(map_t *m, int x, int y, tile_t t);
-void map_draw_line(map_t *m, int x, int y, tile_t t);
+/**
+ * Draws a filled-in box of the given tile on the given map. If the box would
+ * exceed the bounds of the map, the box will clip.
+ * @param m A valid map.
+ * @param c An index into an array representation of a 2-D space.
+ * @param width The width of the box to draw.
+ * @param height The height of the box to draw.
+ * @param t The tile to draw the box with.
+ */
+void map_draw_box(map_t *m, int c, int width, int height, tile_t t);
+/**
+ * Draws a circle of the given tile on the given map. If the circle would exceed
+ * the bounds of the map, the circle will clip.
+ * @param m A valid map.
+ * @param c An index into an array representation of a 2-D space.
+ * @param r The radius of the circle.
+ * @param t The tile to draw the circle with.
+ */
+void map_draw_circle(map_t *m, int c, int r, tile_t t);
+/**
+ * Draws a line from the first coordinate to the second coordinate.
+ * @param m A valid map.
+ * @param c1 An index into an array representation of a 2-D space.
+ * @param c2 An index into an array representation of a 2-D space.
+ * @param t The tile to draw the line with.
+ * @param only_unknown If true, will only draw the line over TILE_UNKNOWN tiles.
+ */
+void map_draw_line(map_t *m, int c1, int c2, tile_t t, bool only_unknown);
+/**
+ * Draws walls around the rooms in a given map.
+ * @param m A valid map.
+ * @param t The tile to draw the walls with.
+ */
+void map_draw_walls(map_t *m, tile_t t);
 
 
 /************************
@@ -147,14 +196,46 @@ void new_desert(map_t *base){
   add_property(base, PROP_IS_DESERT);
 }
 
-void new_main_dungeon(map_t *base){
-  if(base == NULL){
+void new_main_dungeon(map_t *m, int player_coord){
+  if(m == NULL || m->tiles == NULL || !coord_is_valid(m, player_coord)){
     return;
   }
 
-  //TODO
+  int num_rooms = rand() % 8 + 3; //min 3 rooms, max 10
+  int prev_center = -1;
   
-  add_property(base, PROP_IS_MAIN_DUNGEON);
+  for(int i = 0; i < num_rooms; i++){
+    int x, y, w, h, ur_corner, ll_corner;
+
+    /* If the player coordinate was given, we cannot advance until the first
+     * room generated contains the given position.
+     */
+    do{
+      w = (10 - i) * (rand() % 3 + 1) + 3;
+      h = rand() % (10 - i) + 3;
+      x = rand() % (m->width - w - 3) + 1;
+      y = rand() % (m->height - h - 3) + 1;
+      ur_corner = get_coord_in_arr(x, y, m->width);
+      ll_corner = get_coord_in_arr(x + w, y + h, m->width);
+    }while(prev_center < 0 && player_coord > 0
+           && (ur_corner > player_coord || ll_corner < player_coord));
+
+    //Draw the room
+    map_draw_box(m, get_coord_in_arr(x, y, m->width), w, h, TILE_FLOOR);
+    
+    //Draw corridor connection the rooms
+    int cur_center = get_coord_in_arr((x + w) / 2, (y + h) / 2, m->width);
+    if(prev_center > 0){
+      map_draw_line(m, cur_center, prev_center, TILE_CORRIDOR, true);
+    }
+
+    //Draw walls around the rooms
+    map_draw_walls(m, TILE_WALL);
+    
+    prev_center = cur_center;
+  }
+    
+  add_property(m, PROP_IS_MAIN_DUNGEON);
 }
 
 
@@ -176,16 +257,20 @@ bool coord_is_valid(map_t *m, int c){
     && c < (m->width * m->height);
 }
 
-void map_draw_box(map_t *m, int x, int y, tile_t t){
-  if(m == NULL || m->tiles == NULL || !xycoord_is_valid(m, x, y)){
+void map_draw_box(map_t *m, int c, int width, int height, tile_t t){
+  if(m == NULL || m->tiles == NULL || !coord_is_valid(m, c)){
     return;
   }
 
-  for(int j = 0; j < y; j++){
-    int coord = j * m->width;
-    for(int i = 0; i < x; i++){
-      coord++;
+  //Extract coordinates
+  int x = c % m->width;
+  int y = c / m->width;
+
+  for(int j = 0; j < height && j < m->height; j++){
+    int coord = (j + y) * m->width + x;
+    for(int i = 0; i < width && i < m->width; i++){
       m->tiles[coord] = t;
+      coord++;
     }
   }
 }
@@ -199,44 +284,64 @@ void map_draw_line(map_t *m, int c1, int c2, tile_t t, bool only_unknown){
   //Extract coordinates
   int x1 = c1 % m->width, x2 = c2 % m->width;
   int y1 = c1 / m->width, y2 = c2 / m->width;
+
+  //c1 should be on the left
+  if(x1 > x2){
+    int tmp = x1;  x1 = x2;  x2 = tmp;
+        tmp = y1;  y1 = y2;  y2 = tmp;
+  }
   
-  float deltax = (x2 < x1) ? x1 - x2 : x2 - x1;
+  float deltax = x2 - x1;
   float deltay = (y2 < y1) ? y1 - y2 : y2 - y1;
-  float deltaerr = (deltax == 0) ? 0 : abs(deltay / deltax);
+  float deltaerr = (deltax == 0) ? 1 : abs(deltay / deltax);
   float error = deltaerr - 0.5;
-  int y = (y1 < y2) ? y1 : y2;
   
-  for(int x = (x1 < x2) ? x1 : x2; x < (x1 < x2) ? x2 : x1; x++){ 
-    int coord = get_coord_in_arr(x, y, m->width);
+  while( x1 < x2){
+    int coord = get_coord_in_arr(x1, y1, m->width);
     if(!only_unknown || m->tiles[coord] != TILE_UNKNOWN){
       m->tiles[coord] = t;
     }
     
-    error = error + deltaerr;
-    if(error >= 0.5){
-      y++;
-      x--;
-      error = error - 1.0;
-    }
-  }
-
-  //Place tile while moving closer to other coord
-  while(x1 != x2 && y1 != y2){
-
-    int x_diff = x1 < x2 ? x2 - x1 : x1 - x2;
-    int y_diff = y1 < y2 ? y2 - y1 : y1 - y2;
-    
-    if(x1 < x2 && (x_diff % ((x_diff < y_diff) ? y_diff / x_diff : 1)) > 0){
-      x1++;
-    }
-    else if(x1 > x2){
+    error += deltaerr;
+    if(error > 0.5 || error < -0.5){
+      if(y1 < y2){
+        y1++;
+        error--;
+      }
+      else{
+        y1--;
+        error++;
+      }
       x1--;
     }
-    else if(y1 < y2){
-      y1++;
-    }
-    else{
-      y1--;
+    
+    x1++;
+  }
+}
+
+void map_draw_walls(map_t *m, tile_t t){
+  if(m == NULL || m->tiles == NULL){
+    return;
+  }
+
+  for(int j = 0; j < m->height; j++){
+    int coord = get_coord_in_arr(j, 0, m->width) - 1;
+    for(int i = 0; i < m->width; i++){
+      coord++;
+      if(m->tiles[coord] != TILE_UNKNOWN){
+        continue;
+      }
+
+      if(get_tile_at(m,    i + 1, j    ) == TILE_FLOOR
+         || get_tile_at(m, i + 1, j + 1) == TILE_FLOOR
+         || get_tile_at(m, i + 1, j - 1) == TILE_FLOOR
+         || get_tile_at(m, i    , j + 1) == TILE_FLOOR
+         || get_tile_at(m, i    , j - 1) == TILE_FLOOR
+         || get_tile_at(m, i - 1, j + 1) == TILE_FLOOR
+         || get_tile_at(m, i - 1, j    ) == TILE_FLOOR
+         || get_tile_at(m, i - 1, j - 1) == TILE_FLOOR){
+        m->tiles[j*m->width+i] = t;
+      }
     }
   }
 }

@@ -38,16 +38,21 @@ typedef enum { DIR_NONE, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT,
 
 /**
  * Like calloc, but will perform a check for NULL on memory returned.
+ * @param items The number of items to allocate in a row.
+ * @param size The size of each item.
  */
 void *Calloc(size_t items, size_t size);
 
 /**
  * Quits the game and displays an error message.
+ * @param error_msg The error message to display.
  */
 void quit(const char* error_msg);
 
 /**
  * A comparator for integers.
+ * @param item1 The first item for comparison. Must point to an integer.
+ * @param item2 The second item for comparison. Must point to an integer.
  */
 int int_cmp(void *item1, void *item2);
 
@@ -57,12 +62,16 @@ int int_cmp(void *item1, void *item2);
 void game_init();
 
 /**
- * Returns a random dir_t (excluding DIR_COUNT).
+ * @returns A random dir_t (excluding DIR_COUNT).
  */
 dir_t rand_dir();
 
 /**
- * Turns a 2D coordinate into the corresponding index in a 1D array.
+ * Converts an x-y coordinate pair into an index into an array representation of
+ * that 2-D space. Returns -1 if x or y is negative.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @param width The width of the matrix.
  */
 int get_coord_in_arr(int x, int y, int width);
 

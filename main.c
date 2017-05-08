@@ -25,11 +25,11 @@ int main(int argc, char** argv){
     
     /* Let each creature take its turn.
      */
-    for(clist_t* cur = map_get_creatures(cur_map);
+    for(clist_t* cur = get_creatures(cur_map);
 	cur != NULL;
-	cur = clist_next(cur))
+	cur = ll_next(cur))
       {
-	creature_t *creature = clist_get_creature(cur);
+	creature_t *creature = ll_elem(cur);
 	if(creature != NULL){
 	  //If this creature is not out of move tokens, take turn.
 	  if(!creature_is_out_of_turns(creature)){

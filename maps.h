@@ -85,7 +85,8 @@ void remove_properties(map_t *m, int num_properties, ...);
 /* TILE FUNCTIONS */
 
 /**
- * Gets the tile at the specified coordinate.
+ * Gets the tile at the specified coordinate. If the coordinate is invalid,
+ * returns TILE_UNKNOWN.
  * @param m A valid map.
  * @param x The x-coordinate of the desired tile on the map.
  * @param y The y-coordinate of the desired tile on the map.
@@ -110,8 +111,8 @@ void set_tile_at(map_t *m, int x, int y, tile_t new);
 void new_desert(map_t *base);
 /**
  * Generates a basic dungeon on the given map.
- * @param base The map to generate the dungeon on.
+ * @param m The map to generate the dungeon on.
  */
-void new_main_dungeon(map_t *base);
+void new_main_dungeon(map_t *m, int player_coord);
 
 #endif

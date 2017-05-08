@@ -215,6 +215,7 @@ void creature_display_stats(creature_t *c);
  */
 int creature_get_icon(creature_t *c);
 
+
 /******************************
  * PLAYER FUNCTION PROTOTYPES *
  ******************************/
