@@ -25,6 +25,7 @@ typedef void (*map_generator)(map_t *);
 
 #include <stdbool.h>
 #include "creatures.h"
+#include "items.h"
 #include "tiles.h"
 
 
@@ -46,6 +47,129 @@ map_t *map_new(map_generator ptr);
  * @returns A creature list containing every creature on the given map.
  */
 clist_t *get_creatures(map_t *m);
+
+/* CREATURES FUNCTIONS */
+
+/**
+ * Adds a given creature to a given map. Does nothing if either is NULL.
+ * @param m A valid map.
+ * @param c A valid creature.
+ */
+void map_add_creature(map_t *m, creature_t *c);
+
+/**
+ * Adds a known number of creatures to a given map, using map_add_creature.
+ * @param m A valid map.
+ * @param num_creatures The number of creatures passed into the function.
+ * @param ... A number (num_creatures) of creatures to add to the map.
+ */
+void map_add_creatures(map_t *m, int num_creatures, ...);
+
+/**
+ * Returns all the creatures on a given map. Returns NULL if the map was NULL.
+ * @param m A valid map.
+ * @returns A clist of creatures.
+ */
+clist_t *map_get_creatures(map_t *m);
+
+/**
+ * Teleports a given creature to the given coordinates on the given map. If the
+ * creature or map is NULL, if the coordinates are out of bounds, or if the
+ * space is blocked, does not move the creature and returns false;
+ * @param m A valid map.
+ * @param c A valid creature.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @returns True if the creature was successfully teleported.
+ */
+bool teleport_creature(map_t *m, creature_t *c, int x, int y);
+
+/* DATA FUNCTIONS */
+
+/**
+ * Returns the height of the map. Not the depth from the floor to the ceiling,
+ * but the distance from the top y-coordinate to the bottom y-coordinate.
+ * @param m A valid map.
+ * @returns The height on the map on the y-axis.
+ */
+int map_get_height(map_t *m);
+
+/**
+ * Returns the width of the map. 
+ * @param m A valid map.
+ * @returns The width of the map on the x-axis.
+ */
+int map_get_width(map_t *m);
+
+/* DIJKSTRA FUNCTIONS */
+
+/**
+ * Creates a new, empty, dijkstra map based off of a regular map. Any tiles
+ * without the TPROP_OPEN property will get a correspinding value of INT_MIN.
+ * @param m A valid map.
+ * @returns A valid dijkstra map with the same dimensions as m.
+ */
+dijkstra_t *dijkstra_new(map_t *m);
+
+/**
+ * Handles freeing a given dijkstra map.
+ * @param d A dijkstra map.
+ */
+void dijkstra_free(dijkstra_t *d);
+
+/**
+ * For a dijkstra map to be calculated, there has to be at least one weight on
+ * the map. This function will add a weight to the map. Larger values mean
+ * greater desireability. Function will do nothing with a NULL dijkstra map or
+ * invalid coordinates. This function will not work on a dijkstra map that has
+ * already been calculated.
+ *
+ * The value INT_MIN is interpreted as "There is an obstacle here" and will not
+ * affect any cells on the map other than the one it is placed on.
+ *
+ * @param d A valid, uncalculated dijkstra map.
+ * @param weight An integer value representing desireability of some kind.
+ * @param x The x-coordinate of the weight.
+ * @param y The y-coordinate of the weight.
+ */
+void dijkstra_add_value(dijkstra_t *d, int weight, int x, int y);
+
+/**
+ * Does the calculations required to actually use a dijkstra map. Requires the
+ * map to have at least one weight on it and be non-NULL. Will modify the map
+ * passed in. 
+ * @param d A valid dijkstra map with at least one weight on it.
+ */
+void dijkstra_calculate(dijkstra_t *d);
+
+/**
+ * Returns a copy of the internal map of the given dijkstra map. You will need
+ * to free this data yourself.
+ * @param d A valid dijkstra map.
+ * @returns An integer array representing the given dijkstra map.
+ */
+int *dijkstra_map(dijkstra_t *d);
+
+/* ITEMS FUNCTIONS */
+
+/**
+ * Returns all the items on a given map. Returns NULL if the map was NULL.
+ * @param m A valid map.
+ * @returns An ilist of creatures.
+ */
+ilist_t *map_get_items(map_t *m);
+
+/**
+ * Teleports a given item to the given coordinates on the given map. If the
+ * item or map is NULL, if the coordinates are out of bounds, or if the
+ * space is blocked, does not move the item and returns false;
+ * @param m A valid map.
+ * @param i A valid item.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ * @returns True if the creature was successfully teleported.
+ */
+bool teleport_item(map_t *m, item_t *c, int x, int y);
 
 /* PROPERTIES FUNCTIONS */
 
@@ -101,6 +225,16 @@ tile_t get_tile_at(map_t *m, int x, int y);
  * @param new The new tile to place on the map.
  */
 void set_tile_at(map_t *m, int x, int y, tile_t new);
+
+/**
+ * Analyzes the given map to find the TPROP_IS_WALL tile closest to the given
+ * coordinate.
+ * @param m A valid map.
+ * @param x A valid x-coordinate on the map.
+ * @param y A valid y-coordinate on the map.
+ * @param Returns an index into a 2-dimensional represention of the map.
+ */
+int map_get_nearest_wall(map_t *m, int x, int y);
 
 /* MAP GENERATORS */
 

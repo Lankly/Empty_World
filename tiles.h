@@ -3,38 +3,49 @@
 #ifndef TILES_H
 #define TILES_H
 
-//Tile values
+/****************
+ * USEFUL TYPES *
+ ****************/
+
 typedef enum {
   TILE_UNKNOWN,
-  TILE_FLOOR,
-  TILE_WALL,
-  TILE_DOOR_OPEN,
-  TILE_DOOR_CLOSE,
-  TILE_DOOR_BROKEN,
-  TILE_CORRIDOR,
+  /* DIRT TILES*/
+  TILE_DIRT_FLOOR,
+  TILE_DIRT_FLOOR_ALT,
+  
+  /* SAND TILES */
+  TILE_SAND_FLOOR,
+  TILE_SAND_FLOOR_ALT,
+  TILE_SAND_HILL,
+  
+  /* STONE TILES*/
+  TILE_STONE_FLOOR,
+  TILE_STONE_WALL,
+  TILE_STONE_CORRIDOR,
   TILE_MAX
 } tile_t;
 
-typedef struct {
-  int id;
-  int display;
-  int display_color;
-  int display_color_alt;
-  int hardness;  //Scale of 0 to 100
-  bool deep;
-  bool passable;
-  bool stopme;
-  bool openable;
-  bool transparent;
-  char* exam_text;
-} tile_data_t;
+typedef enum {
+  TPROP_DEEP,        /* Tile has some kind of deep hole in it. */
+  TPROP_OPEN,        /* Tile can be passed through by solid beings. */
+  TPROP_STOPME,      /* Tile stops automove. */
+  TPROP_TRANSPARENT, /* Tile can be easily seen through. Default is Opaque. */
+  TPROP_TRANSLUCENT, /* Tile can be only partially seen through. */
 
-tile_data_t tile_data[TILE_MAX + 1];
+  /* TILE TYPES */
+  TPROP_IS_CORRIDOR,
+  TPROP_IS_WALL,
+} tile_property_t;
 
-int tile_id(tile_data_t t);
+
+/***********************
+ * FUNCTION PROTOTYPES *
+ ***********************/
 
 void tile_data_init();
 
-tile_data_t get_tile(tile_t t);
+/* PROPERTIES FUNCTIONS */
+
+bool tile_has_property(tile_t t, tile_property_t p);
 
 #endif

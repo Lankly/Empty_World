@@ -43,6 +43,13 @@ typedef enum dmg_type_t {
   MAX_DMG_TYPE
 } dmg_type_t;
 
+/*********
+ * LISTS *
+ *********/
+
+#include "lists.h"
+LINKED_LIST(ilist_t)
+
 
 /************
  * INCLUDES *
@@ -50,13 +57,7 @@ typedef enum dmg_type_t {
 
 #include <stdbool.h>
 #include "creatures.h"
-#include "lists.h"
 
-
-/*********
- * LISTS *
- *********/
-LINKED_LIST(ilist_t)
 
 
 /***********************

@@ -17,6 +17,11 @@ int main(int argc, char** argv){
   printf("Seed: %d\n", seed);
   srand(seed);
   game_init(seed);
+
+  creature_t *player = new_player();
+  map_t *maps = map_new(&new_desert);
+  map_add_creature(maps, player);
+  
   
   //Main Game Loop
   while(true){
@@ -25,7 +30,7 @@ int main(int argc, char** argv){
     
     /* Let each creature take its turn.
      */
-    for(clist_t* cur = get_creatures(cur_map);
+    for(clist_t* cur = get_creatures(maps);
 	cur != NULL;
 	cur = ll_next(cur))
       {
@@ -33,7 +38,7 @@ int main(int argc, char** argv){
 	if(creature != NULL){
 	  //If this creature is not out of move tokens, take turn.
 	  if(!creature_is_out_of_turns(creature)){
-	    creature_take_turn(creature, cur_map);
+	    creature_take_turn(creature, maps);
 	  }
 	  //Otherwise, skip the turn to reset them
 	  else{

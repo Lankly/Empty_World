@@ -109,7 +109,6 @@ LINKED_LIST(clist_t)
 #include "maps.h"
 
 
-
 /***********************
  * FUNCTION PROTOTYPES *
  ***********************/
@@ -123,48 +122,58 @@ void creatures_init();
 creature_t *new_creature();
 creature_t *new_creature_by_species(species_t s);
 
-/**
- * Execute's a turn for a given creature. Does nothing if the map or the
- * creature was NULL.
- */
-void creature_take_turn(creature_t *c, map_t *m);
-
 /* Attribute-related functions */
 
 /**
  * Adds an attribute to a given creature. Does nothing if that creature already
  * has that attribute, or if the creature is NULL.
+ * @param c A valid creature.
+ * @param a An attribute to give to the creature.
  */
 void add_attribute(creature_t *c, attribute_t a);
 /**
  * Adds many attributes to a given creature at once.
+ * @param c A valid creature.
+ * @param num_attributes The number of attributes that follow.
  */
 void add_attributes(creature_t *c, int num_attributes, ...);
 /**
  * Removes an attribute from a given creature. Does nothing if that creature did
  * not already have that attribute, or if the creature is NULL.
+ * @param c A valid creature
+ * @param a An attribute to remove.
  */
 void remove_attribute(creature_t *c, attribute_t a);
 /**
  * Removes all the given attributes from the given creature.
+ * @param c A valid creature.
+ * @param num_attributes The number of atributes that follow.
  */
 void remove_attributes(creature_t *c, int num_attributes, ...);
 
 /**
- * Returns true if the given creature has the given attribute. Also returns
- * false if the creature is NULL.
+ * Determines whether a given creature has a given attribute. Also returns false
+ * if the creature is NULL.
+ * @param c A valid creature.
+ * @param a An attribute to check for.
+ * @returns True if the creature has the attribute.
  */
 bool has_attribute(creature_t *c, attribute_t a);
 
 /**
- * Returns true if the given creature has all the given attributes. Also returns
- * false if the creature is NULL.
+ * Determines whether a given creature has all the given attributes. Also
+ * returns false if the creature is NULL.
+ * @param c A valid creature.
+ * @param num_attributes The number of attributes that follow.
+ * @returns True if the creature has all the attributes.
  */
 bool has_attributes(creature_t *c, int num_attributes, ...);
 
 /**
- * Returns true if the given creature is granted the given attribute by an item
- * in their inventory.
+ * Determines whether the given creature is granted the given attribute by an
+ * item in its inventory.
+ * @param c A valid creature.
+ * @param a An attribute to check for.
  */
 bool has_extrinsic(creature_t *c, attribute_t a);
 
@@ -174,6 +183,9 @@ bool has_extrinsic(creature_t *c, attribute_t a);
  * Handles everything associated with dealing a specific creature damage,
  * including whether or not that damage was lethal, and whether it should be
  * resisted.
+ * @param c A valid creature.
+ * @param amount The amount of damage to attempt to deal to the creature.
+ * @param t The type of damage.
  */
 void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
 
@@ -181,22 +193,20 @@ void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
 
 /**
  * Returns the coordinates of the most important thing that the given creature
- * can see.
+ * can see. If no target could be found, returns -1.
+ * @param c A valid creature.
+ * @param m The map that creature is on.
+ * @returns A coordinate 
  */
-int creature_get_target(creature_t *c, map_t *m);
-
-/**
- * Teleports a given creature to the given coordinates on the given map. If the
- * creature or map is NULL, if the coordinates are out of bounds, or if the
- * space is blocked, does not move the creature and returns false;
- */
-bool creature_teleport(creature_t *c, map_t *m, int x, int y);
+dijkstra_t *creature_get_targets(creature_t *c, map_t *m);
 
 /* Nutrition-related functions */
 
 /**
  * Adds (or subtracts, if amount is negative) amount from the given creature's
  * internal nutrition.
+ * @param c A valid creature.
+ * @param amount The amount of nutrition to add.
  */
 void creature_add_nutrition(creature_t *c, int amount);
 
@@ -204,14 +214,42 @@ void creature_add_nutrition(creature_t *c, int amount);
 
 /**
  * Prints a window with the given creature's stats.
+ * @param c A valid creature.
  */
 void creature_display_stats(creature_t *c);
+
+/* Turn-related functions*/
+
+/**
+ * Determines whether or not a given creature is exhausted or not. If it is, its
+ * turn should be skipped and creature_take_break() should be called.
+ * @param c A valid creature.
+ * @returns True if the creature is exhausted. False if it is not or it is NULL.
+ */
+bool creature_is_out_of_turns(creature_t *c);
+
+/**
+ * Refreshes a given creature's stamina. Should be called if the creature did
+ * nothing on the previous turn.
+ * @param c A valid creature.
+ */
+void creature_take_break(creature_t *c);
+
+/**
+ * Execute's a turn for a given creature. Does nothing if the map or the
+ * creature was NULL.
+ * @param c A valid creature.
+ * @param m A valid map.
+ */
+void creature_take_turn(creature_t *c, map_t *m);
 
 /* Other functions */
 
 /**
  * Returns an ncurses-printable character representing the given creature. If it
  * could not be determined, returns '\0' instead.
+ * @param c A valid creature.
+ * @returns A character that ncurses can print.
  */
 int creature_get_icon(creature_t *c);
 
@@ -220,12 +258,29 @@ int creature_get_icon(creature_t *c);
  * PLAYER FUNCTION PROTOTYPES *
  ******************************/
 
-creature_t *new_player(class_t c, species_t s);
+/**
+ * Creates a new player. Will prompt the player for input to pick their class,
+ * pick their species, and assign their starting stats.
+ * @returns A valid creature marked as a player.
+ */
+creature_t *new_player();
 
 void display_status_line(creature_t *player, int row);
 
+/**
+ * Determines whether or not the given creature is marked as a player.
+ * Just checks for the ATTR_IS_PLAYER attribute.
+ * @param A valid creature.
+ * @returns True if the creature is a player.
+ */
 bool is_player(creature_t *c);
 
+/**
+ * A special function that allows the player to take their turn instead of
+ * acting like a normal creature.
+ * @param p The player.
+ * @param m The map the player is currently on.
+ */
 void player_take_turn(creature_t *p, map_t *m);
 
 #endif

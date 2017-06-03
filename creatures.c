@@ -73,15 +73,6 @@ struct creature_t{
  * HELPER FUNCTION PROTOTYPES *
  ******************************/
 void move_creature(creature_t *c, map_t *m);
-dir_t move_creature_toward_target(creature_t *c, map_t *m, dijkstra_t *d);
-/**
- * Each of these should return a valid direction for the given creature to move
- * on the given map. They should be called only when the given creature has no
- * target to move to, when they're just wandering.
- */
-dir_t move_creature_default(creature_t *c, map_t *m);
-dir_t move_creature_along_walls(creature_t *c, map_t *m);
-dir_t move_creature_through_walls(creature_t *c, map_t *m);
 
 /**
  * These functions reevaluate certain attributes.
@@ -138,36 +129,18 @@ creature_t *new_creature_by_species(species_t s){
   return ret;
 }
 
-void creature_take_turn(creature_t *c, map_t *m){
-  if(c == NULL || m == NULL){
-    return;
-  }
-
-  //If stamina too low, wait and recover some.
-  if(c->stamina < 0){
-    c->stamina += c->endurance + 10;
-    return;
-  }
-
-  //Player has a special turn helper function.
-  if(is_player(c)){
-    player_take_turn(c, m);
-    return;
-  }
-
-  move_creature(c, m);
-}
+/* Attribute-related functions */
 
 void add_attribute(creature_t *c, attribute_t a){
   if(c == NULL){
     return;
   }
 
-  c->attributes = tree_insert(c->attributes, &a, &int_cmp);
+  c->attributes = tree_insert(c->attributes, &a, int_cmp);
 }
 
 void add_attributes(creature_t *c, int num_attributes, ...){
-  if(num_attributes < 0){
+  if(num_attributes < 1){
     return;
   }
 
@@ -251,20 +224,28 @@ bool has_extrinsic(creature_t *c, attribute_t a){
   return false;
 }
 
-int creature_get_target(creature_t *c, map_t *m){
-  //TODO
+/* Map-related functions */
+
+dijkstra_t *creature_get_targets(creature_t *c, map_t *m){
+  if(c == NULL || m == NULL){
+    return NULL;
+  }
+  
+  clist_t *creatures = map_get_creatures(m);
+  ilist_t *items = map_get_items(m);
+
+  for(clist_t *cur = creatures; cur != NULL; cur = ll_next(cur)){
+    
+  }
+  
+  for(ilist_t *cur = items; cur != NULL; cur = ll_next(cur)){
+    
+  }
+  
   return 0;
 }
 
-bool creature_teleport(creature_t *c, map_t *m, int x, int y){
-  if(c == NULL || m == NULL || x < 0 || y < 0){
-    return false;
-  }
-  //TODO
-  //Check if tile is blocked
-
-  return false;
-}
+/* Nutrition-related functions */
 
 void creature_add_nutrition(creature_t *c, int amount){
   if(c == NULL){
@@ -274,9 +255,47 @@ void creature_add_nutrition(creature_t *c, int amount){
   c->nutrition += amount;
 }
 
+/* Stat-related functions */
+
 void creature_display_stats(creature_t *c){
   //TODO
 }
+
+/* Turn-related functions */
+
+bool creature_is_out_of_turns(creature_t *c){
+  return c == NULL || c->stamina < 1;
+}
+
+void creature_take_break(creature_t *c){
+  if(c == NULL){
+    return;
+  }
+
+  c->stamina = c->endurance * c->lvl;
+}
+
+void creature_take_turn(creature_t *c, map_t *m){
+  if(c == NULL || m == NULL){
+    return;
+  }
+
+  //If stamina too low, wait and recover some.
+  if(c->stamina < 0){
+    c->stamina += c->endurance + 10;
+    return;
+  }
+
+  //Player has a special turn helper function.
+  if(is_player(c)){
+    player_take_turn(c, m);
+    return;
+  }
+
+  move_creature(c, m);
+}
+
+/* Other functions */
 
 int creature_get_icon(creature_t *c){
   int base = '\0';
@@ -330,11 +349,14 @@ int creature_get_icon(creature_t *c){
  * PLAYER FUNCTION DEFINITIONS *
  *******************************/
 
-creature_t *new_player(class_t c, species_t s){
+creature_t *new_player(){
+  species_t s = SPECIES_HUMAN;
+  class_t c = CLASS_WARRIOR;
+  
   creature_t *player = new_creature_by_species(s);
 
   body_t *temp = player->body;
-  memcpy(player, class_template + c, sizeof(creature_t));
+  memcpy(player, class_templates + c, sizeof(creature_t));
   player->body = temp;
   
   return player;
@@ -354,47 +376,19 @@ bool is_player(creature_t *c){
  *******************************/
 
 void move_creature(creature_t *c, map_t *m){
-  //Determine which direction to move
-  dir_t dir;
+  dijkstra_t *priorities = dijkstra_new(m);
   if(has_attribute(c, ATTR_MOVES_ALONG_WALLS)){
-    dir = move_creature_along_walls(c, m);
-  }
-  else if(has_attribute(c, ATTR_MOVES_THROUGH_WALLS)){
-    dir = move_creature_through_walls(c, m);
-  }
-  else{
-    dir = move_creature_default(c, m);
+    int coord = map_get_nearest_wall(m, c->x, c->y);
+    dijkstra_add_value(priorities, 100,
+                       coord % map_get_width(m), coord / map_get_height(m));
   }
 
-  //Figure out how the direction translates to a position
-  if(dir == DIR_UP || dir == DIR_UL || dir == DIR_UR){
-    c->y--;
+  dijkstra_calculate(priorities);
+  
+  int *weights = dijkstra_map(priorities);
+  if(weights != NULL){
+    //TODO: Determine which space is the best to move to.
   }
-  else if(dir == DIR_DOWN || dir == DIR_LL || dir == DIR_LR){
-    c->y++;
-  }
-  if(dir == DIR_LEFT || dir == DIR_UL || dir == DIR_LL){
-    c->x--;
-  }
-  else if(dir == DIR_RIGHT || dir == DIR_UR || dir == DIR_LR){
-    c->x++;
-  }
-}
-
-dir_t move_creature_towards_target(creature_t *c, map_t *m){
-  //TODO
-}
-
-dir_t move_creature_default(creature_t *c, map_t *m){
-  //TODO
-}
-
-dir_t move_creature_along_walls(creature_t *c, map_t *m){
-  //TODO
-}
-
-dir_t move_creature_through_walls(creature_t *c, map_t *m){
-  //TODO
 }
 
 void reevaluate_immobility(creature_t *c){

@@ -1,7 +1,11 @@
+#include <limits.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include "maps.h"
 #include "creatures.h"
+#include "helpers.h"
+#include "lists.h"
 #include "tiles.h"
 #include "trees.h"
 
@@ -27,6 +31,12 @@ struct map_t{
   clist_t *creatures;
 };
 
+struct dijkstra_t{
+  bool calculated;
+  int width, height;
+
+  int *cells;
+};
 
 /******************************
  * HELPER FUNCTION PROTOTYPES *
@@ -166,6 +176,190 @@ void remove_properties(map_t *m, int num_properties, ...){
   va_end(args);
 }
 
+/* CREATURES FUNCTIONS */
+
+void map_add_creature(map_t *m, creature_t *c){
+  if(m == NULL || c == NULL){
+    return;
+  }
+  m->creatures = ll_insert(m->creatures, c);
+}
+
+void map_add_creatures(map_t *m, int num_creatures, ...){
+  if(m == NULL || num_creatures < 1){
+    return;
+  }
+
+  va_list args;
+  va_start(args, num_creatures);
+
+  for(int i = 0; i < num_creatures; i++){
+    creature_t *arg = va_arg(args, creature_t *);
+
+    map_add_creature(m, arg);
+  }
+}
+
+clist_t *map_get_creatures(map_t *m){
+  if(m == NULL){
+    return NULL;
+  }
+
+  return m->creatures;
+}
+
+bool teleport_creature(map_t *m, creature_t *c, int x, int y){
+  if(m == NULL || c == NULL || x < 0 || y < 0){
+    return false;
+  }
+  
+  //TODO
+  //Check if tile is blocked
+
+  return false;
+}
+
+/* DIJKSTRA FUNCTIONS */
+
+dijkstra_t *dijkstra_new(map_t *m){
+  if(m == NULL){
+    return NULL;
+  }
+
+  int w = m->width, h = m->height, total = w * h;
+  
+  dijkstra_t *to_return = Calloc(1, sizeof(dijkstra_t));
+  to_return->width = w;
+  to_return->height = h;
+  to_return->cells = Calloc(total, sizeof(int));
+
+  
+  //Any tile that cannot be passed through by solid objects gets marked INT_MIN
+  if(m->tiles != NULL){
+    for(int i = 0; i < total; i++){
+      if(!tile_has_property(m->tiles[i], TPROP_OPEN)){
+        to_return->cells[i] = INT_MIN;
+      }
+    }
+  }
+
+  return to_return;
+}
+
+void dijkstra_free(dijkstra_t *d){
+  if(d == NULL){
+    return;
+  }
+
+  if(d->cells != NULL){
+    free(d->cells);
+  }
+  free(d);
+}
+
+void dijkstra_add_value(dijkstra_t *d, int weight, int x, int y){
+  if(x < 0 || y < 0 || x >= d->width || y >= d->height){
+    return;
+  }
+
+  d->cells[get_coord_in_arr(x, y, d->width)] = weight;
+}
+
+void calculate_dijkstra(dijkstra_t *d){
+  if(d == NULL || d->calculated){
+    return;
+  }
+
+  //Need to keep track of where orginal values were
+  int num_cells = d->width * d->height;
+  int orig[num_cells];
+  memcpy(orig, d->cells, sizeof(orig));
+  
+  bool change_made;
+  int num_iterations = 0;
+  int max_iterations = 256; //This is completely arbitrary.
+  do{
+    change_made = false;
+    int cur_coord = 0;
+    for(int y = 0; y < d->height; y++){
+      for(int x = 0; x < d->width; x++){
+        //Don't alter original values
+        if(orig[cur_coord] != 0){
+          continue;
+        }
+        
+        /* Attempt to find nearby values */
+        int n = 0, nw = 0, ne = 0, s = 0, sw = 0, se = 0, e = 0, w = 0, h = 0;
+
+        //Grab all the northern values
+        if(y > 0){
+          n = d->cells[get_coord_in_arr(x, y - 1, d->width)];
+          //ne 
+          if(x > 0){
+            ne = d->cells[get_coord_in_arr(x - 1, y - 1, d->width)];
+          }
+          //nw
+          if(x < (d->width - 1)){
+            nw = d->cells[get_coord_in_arr(x + 1, y -1, d->width)];
+          }
+        }
+        //Grab all the southern values
+        if(y < (d->height - 1)){
+          s = d->cells[get_coord_in_arr(x, y + 1, d->width)];
+          //se
+          if(x > 0){
+            se = d->cells[get_coord_in_arr(x - 1, y + 1, d->width)];
+          }
+          //sw
+          if(x < (d->width - 1)){
+            sw = d->cells[get_coord_in_arr(x + 1, y + 1, d->width)];
+          }
+        }
+        //East
+        if(x > 0){
+          e = d->cells[cur_coord - 1];
+        }
+        //West
+        if(x < (d->width - 1)){
+          e = d->cells{cur_coord + 1];
+        }
+        //Here
+        h = d->cells[cur_coord];
+
+        /* Calculate value for this cell */
+        int all_values[] = {n, nw, ne, s, sw, se, e, w, h};
+        int total_for_this_cell = 0, num_nonzero = 0;
+        for(int k = 0; k < 9; k++){
+          //Don't spread INT_MIN
+          if(all_values[k] != INT_MIN){
+            total_for_this_cell += all_values[k];
+          }
+          if(all_values[k] != 0){
+            num_nonzero++;
+          }
+        }
+        if(num_nonzero != 0){
+          total_for_this_cell /= num_nonzero;
+        }
+
+        //Check if we actually wind up changing this value or not
+        if(h != total_for_this_cell){
+          d->cells[cur_coord] = total_for_this_cell;
+          change_made = true;
+        }
+        
+        cur_coord++;
+      }
+    }
+
+    num_iterations++;
+  }while(!change_made && num_iterations < max_iterations);
+
+  d->calculated = true;
+}
+
+/* ITEMS FUNCTIONS */
+
 /* TILE FUNCTIONS */
 
 tile_t get_tile_at(map_t *m, int x, int y){
@@ -272,6 +466,43 @@ void map_draw_box(map_t *m, int c, int width, int height, tile_t t){
       m->tiles[coord] = t;
       coord++;
     }
+  }
+}
+
+void map_draw_circle(map_t *m, int c, int r, tile_t t){
+  if(m == NULL || !coord_is_valid(m, c) || r < 0){
+    return;
+  }
+  
+  //Extract coordinates
+  int x = r + c % m->width;
+  int y = c / m->width;
+  int err = 0;
+
+  if(x >= m->width){
+    return;
+  }
+  
+  while (x >= y) {
+    putpixel(x0 + x, y0 + y);
+    putpixel(x0 + y, y0 + x);
+    putpixel(x0 - y, y0 + x);
+    putpixel(x0 - x, y0 + y);
+    putpixel(x0 - x, y0 - y);
+    putpixel(x0 - y, y0 - x);
+    putpixel(x0 + y, y0 - x);
+    putpixel(x0 + x, y0 - y);
+    
+    y += 1;
+    if (err <= 0)
+      {
+        err += 2*y + 1;
+      }
+    if (err > 0)
+      {
+        x -= 1;
+        err -= 2*x + 1;
+      }
   }
 }
 

@@ -75,4 +75,14 @@ dir_t rand_dir();
  */
 int get_coord_in_arr(int x, int y, int width);
 
+/**
+ * Calculates the distance between two points in a plane.
+ * @param x1 The x-coordinate of the first coordinate pair.
+ * @param y1 The y-coordinate of the first coordinate pair.
+ * @param x2 The x-coordinate of the second coordinate pair.
+ * @param y2 The y-coordinate of the second coordinate pair.
+ * @returns The exact distance between the two coordinate pairs.
+ */
+double dist(int x1, int y1, int x2, int y2);
+
 #endif
