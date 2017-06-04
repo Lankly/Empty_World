@@ -68,7 +68,8 @@ dir_t rand_dir();
 
 /**
  * Converts an x-y coordinate pair into an index into an array representation of
- * that 2-D space. Returns -1 if x or y is negative.
+ * that 2-D space. Returns -1 if x or y is negative, or if x is greater than
+ * width.
  * @param x The x-coordinate.
  * @param y The y-coordinate.
  * @param width The width of the matrix.

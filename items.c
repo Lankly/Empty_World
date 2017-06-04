@@ -15,6 +15,8 @@ struct item_t {
   char *name;
   item_type_t type;
 
+  int index; /* Used for both coordinate on the map and place in inventory */
+
   beatitude_t buc_status;
   iattributes_t *attributes;
   attributes_t *extrinsics;
@@ -38,6 +40,59 @@ item_t *item_new();
  * FUNCTION DEFINITIONS *
  ************************/
 
+void items_init(){
+  /* WEAPONS */
+  item_templates[ITYPE_BOW] = (item_t){
+    .name = "Bow",
+    .type = ITYPE_BOW
+  };
+  item_add_attributes(&item_templates[ITYPE_BOW], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_CROSSBOW] = (item_t){
+    .name = "Crossbow",
+    .type = ITYPE_CROSSBOW
+  };
+  item_add_attributes(&item_templates[ITYPE_CROSSBOW], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_BOW] = (item_t){
+    .name = "Bow",
+    .type = ITYPE_BOW
+  };
+  item_add_attributes(&item_templates[ITYPE_BOW], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_DAGGER] = (item_t){
+    .name = "Dagger",
+    .type = ITYPE_DAGGER
+  };
+  item_add_attributes(&item_templates[ITYPE_DAGGER], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_LONGBOW] = (item_t){
+    .name = "Longbow",
+    .type = ITYPE_LONGBOW
+  };
+  item_add_attributes(&item_templates[ITYPE_LONGBOW], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_LONGSWORD] = (item_t){
+    .name = "Longsword",
+    .type = ITYPE_LONGSWORD
+  };
+  item_add_attributes(&item_templates[ITYPE_LONGSWORD], 1,
+                      IATTR_IS_WIELDABLE);
+  
+  item_templates[ITYPE_RAPIER] = (item_t){
+    .name = "Rapier",
+    .type = ITYPE_RAPIER
+  };
+  item_add_attributes(&item_templates[ITYPE_RAPIER], 1,
+                      IATTR_IS_WIELDABLE);
+  //TODO: Finish these
+}
+
 item_t *new_item_from_type(item_type_t t){
   item_t *to_return = item_new();
 
@@ -58,6 +113,8 @@ void free_item(item_t *i){
   }
   free(i);
 }
+
+/* ATTRIBUTE FUNCTIONS */
 
 void item_add_attribute(item_t *i, item_attribute_t a){
   if(i == NULL){
@@ -135,6 +192,26 @@ bool item_has_attributes(item_t *i, int num_attributes, ...){
 
   return result;
 }
+
+/* DATA FUNCTIONS */
+
+int item_get_index(item_t *i){
+  if(i == NULL){
+    return -1;
+  }
+
+  return i->index;
+}
+
+void item_set_index(item_t *i, int index){
+  if(i == NULL){
+    return;
+  }
+
+  i->index = index;
+}
+
+/* EXTRINSIC FUNCTIONS */
 
 bool grants(item_t *i, attribute_t a){
   if(i == NULL){

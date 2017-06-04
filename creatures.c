@@ -226,6 +226,14 @@ bool has_extrinsic(creature_t *c, attribute_t a){
 
 /* Map-related functions */
 
+int creature_get_coord(creature_t *c, map_t *m){
+  if(c == NULL || m == NULL){
+    return -1;
+  }
+
+  return get_coord_in_arr(c->x, c->y, map_get_width(m));
+}
+
 dijkstra_t *creature_get_targets(creature_t *c, map_t *m){
   if(c == NULL || m == NULL){
     return NULL;
@@ -370,6 +378,14 @@ bool is_player(creature_t *c){
   return has_attribute(c, ATTR_IS_PLAYER);
 }
 
+void player_take_turn(creature_t *p, map_t *m){
+  if(p == NULL || !has_attribute(p, ATTR_IS_PLAYER) || m == NULL){
+    return;
+  }
+
+  //TODO
+  getch();
+}
 
 /*******************************
  * HELPER FUNCTION DEFINITIONS *

@@ -175,9 +175,7 @@ bool has_attributes(creature_t *c, int num_attributes, ...);
  * @param c A valid creature.
  * @param a An attribute to check for.
  */
-bool has_extrinsic(creature_t *c, attribute_t a);
-
-/* Damage-related functions */
+bool has_extrinsic(creature_t *c, attribute_t a);/* Damage-related functions */
 
 /**
  * Handles everything associated with dealing a specific creature damage,
@@ -190,6 +188,16 @@ bool has_extrinsic(creature_t *c, attribute_t a);
 void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
 
 /* Map-related functions */
+
+/**
+ * Returns an index into a 2-D representation of a map, representing the given
+ * creature's current location, or -1 if the creature or map was NULL. The map
+ * is required for the conversion of the xy pair into a 1-D index.
+ * @param c A valid creature.
+ * @param m A valid map.
+ * @returns A index representing the creature's current coordinates, or -1.
+ */
+int creature_get_coord(creature_t *c, map_t *m);
 
 /**
  * Returns the coordinates of the most important thing that the given creature
@@ -218,7 +226,7 @@ void creature_add_nutrition(creature_t *c, int amount);
  */
 void creature_display_stats(creature_t *c);
 
-/* Turn-related functions*/
+/* Turn-related functions */
 
 /**
  * Determines whether or not a given creature is exhausted or not. If it is, its

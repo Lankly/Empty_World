@@ -119,6 +119,27 @@ bool item_has_attribute(item_t *i, item_attribute_t a);
  */
 bool item_has_attributes(item_t *i, int num_attributes, ...);
 
+/* DATA FUNCTIONS*/
+
+/**
+ * Gets the index of the given item. The index is used for keeping track of
+ * where the item is on a map as well as in inventory.
+ * @param i A valid item.
+ * @param index An integer to set the item's location to.
+ * @returns The item's index.
+ */
+int item_get_index(item_t *i);
+
+/**
+ * Sets the index of the given item. The index is used for keeping track of
+ * where the item is on a map as well as in inventory.
+ * @param i A valid item.
+ * @param index An integer to set the item's location to.
+ */
+void item_set_index(item_t *i, int index);
+
+/* EXTRINSIC FUNCTIONS */
+
 /**
  * Returns true if the given item grants the given attribute to the user.
  * @param i A valid item.

@@ -5,6 +5,7 @@
 #include "maps.h"
 #include "creatures.h"
 #include "helpers.h"
+#include "items.h"
 #include "lists.h"
 #include "tiles.h"
 #include "trees.h"
@@ -29,6 +30,7 @@ struct map_t{
 
   property_tree_t *properties;
   clist_t *creatures;
+  ilist_t *items;
 };
 
 struct dijkstra_t{
@@ -96,6 +98,15 @@ void map_draw_line(map_t *m, int c1, int c2, tile_t t, bool only_unknown);
  */
 void map_draw_walls(map_t *m, tile_t t);
 
+/**
+ * Determines whether or not the tile is blocked for physical things to pass
+ * through.
+ * @param m A valid map.
+ * @param x The x-coordinate on the map.
+ * @param y The y-coordinate on the map.
+ * @returns False if the space is open with no obstructions. True otherwise.
+ */
+bool tile_is_blocked(map_t *m, int x, int y);
 
 /************************
  * FUNCTION DEFINITIONS *
@@ -115,65 +126,6 @@ clist_t *get_creatures(map_t *m){
   }
 
   return m->creatures;
-}
-
-/* PROPERTIES FUNCTIONS */
-
-bool has_property(map_t *m, property_t p){
-  if(m == NULL){
-    return false;
-  }
-  
-  return tree_search(m->properties, &p, int_cmp);
-}
-
-void add_property(map_t *m, property_t p){
-  if(m == NULL){
-    return;
-  }
-
-  m->properties = tree_insert(m->properties, &p, &int_cmp);
-}
-
-void add_properties(map_t *m, int num_properties, ...){
-  if(num_properties < 0){
-    return;
-  }
-
-  va_list args;
-  va_start(args, num_properties);
-
-  for(int i = 0; i < num_properties; i++){
-    property_t arg = va_arg(args, attribute_t);
-
-    add_property(m, arg);
-  }
-  
-  va_end(args);
-}
-
-void remove_property(map_t *m, property_t p){
-  if(m == NULL){
-    return;
-  }
-
-  m->properties = tree_remove(m->properties, &p, &int_cmp);
-}
-
-void remove_properties(map_t *m, int num_properties, ...){
-  if(num_properties < 0){
-    return;
-  }
-
-  va_list args;
-  va_start(args, num_properties);
-
-  for(int i = 0; i < num_properties; i++){
-    property_t arg = va_arg(args, property_t);
-    remove_property(m, arg);
-  }
-  
-  va_end(args);
 }
 
 /* CREATURES FUNCTIONS */
@@ -217,6 +169,24 @@ bool teleport_creature(map_t *m, creature_t *c, int x, int y){
   //Check if tile is blocked
 
   return false;
+}
+
+/* DATA FUNCTIONS */
+
+int map_get_height(map_t *m){
+  if(m == NULL){
+    return -1;
+  }
+
+  return m->height;
+}
+
+int map_get_width(map_t *m){
+  if(m == NULL){
+    return -1;
+  }
+
+  return m->width;
 }
 
 /* DIJKSTRA FUNCTIONS */
@@ -358,7 +328,102 @@ void dijkstra_calculate(dijkstra_t *d){
   d->calculated = true;
 }
 
+int *dijkstra_map(dijkstra_t *d){
+  if(d == NULL || d->cells){
+    return NULL;
+  }
+
+  int num_cells = d->width * d->height;
+  int *to_return = Calloc(num_cells, sizeof(int));
+  for(int i = 0; i < num_cells; i++){
+    to_return[i] = d->cells[i];
+  }
+
+  return to_return;
+}
+
 /* ITEMS FUNCTIONS */
+
+ilist_t *map_get_items(map_t *m){
+  if(m == NULL){
+    return NULL;
+  }
+
+  return m->items;
+}
+
+bool teleport_item(map_t *m, item_t *i, int x, int y){
+  if(m == NULL || i == NULL || !xycoord_is_valid(m, x, y)){
+    return false;
+  }
+
+  if(tile_is_blocked(m, x, y)){
+    return false;
+  }
+
+  item_set_index(i, get_coord_in_arr(x, y, m->width));
+  
+  return true;
+}
+
+/* PROPERTIES FUNCTIONS */
+
+bool has_property(map_t *m, property_t p){
+  if(m == NULL){
+    return false;
+  }
+  
+  return tree_search(m->properties, &p, int_cmp);
+}
+
+void add_property(map_t *m, property_t p){
+  if(m == NULL){
+    return;
+  }
+
+  m->properties = tree_insert(m->properties, &p, &int_cmp);
+}
+
+void add_properties(map_t *m, int num_properties, ...){
+  if(num_properties < 0){
+    return;
+  }
+
+  va_list args;
+  va_start(args, num_properties);
+
+  for(int i = 0; i < num_properties; i++){
+    property_t arg = va_arg(args, attribute_t);
+
+    add_property(m, arg);
+  }
+  
+  va_end(args);
+}
+
+void remove_property(map_t *m, property_t p){
+  if(m == NULL){
+    return;
+  }
+
+  m->properties = tree_remove(m->properties, &p, &int_cmp);
+}
+
+void remove_properties(map_t *m, int num_properties, ...){
+  if(num_properties < 0){
+    return;
+  }
+
+  va_list args;
+  va_start(args, num_properties);
+
+  for(int i = 0; i < num_properties; i++){
+    property_t arg = va_arg(args, property_t);
+    remove_property(m, arg);
+  }
+  
+  va_end(args);
+}
 
 /* TILE FUNCTIONS */
 
@@ -376,6 +441,33 @@ void set_tile_at(map_t *m, int x, int y, tile_t new){
   }
 
   m->tiles[get_coord_in_arr(x, y, m->width)] = new;
+}
+
+int map_get_nearest_wall(map_t *m, int x, int y){
+  if(m == NULL || !xycoord_is_valid(m, x, y)){
+    return -1;
+  }
+
+  double closest_found = INT_MAX;
+  int closest_index = -1;
+
+  int cur_coord = 0;
+  for(int j = 0; j < m->height; j++){
+    for(int i = 0; i < m->width; i++){
+
+      if(tile_has_property(m->tiles[cur_coord], TPROP_IS_WALL)){
+        int cur_dist = dist(i, j, x, y);
+        if(cur_dist < closest_found){
+          closest_found = cur_dist;
+          closest_index = cur_coord;
+        }
+      }
+      
+      cur_coord++;
+    }
+  }
+  
+  return closest_index;
 }
 
 /* MAP GENERATORS */
@@ -575,4 +667,25 @@ void map_draw_walls(map_t *m, tile_t t){
       }
     }
   }
+}
+
+bool tile_is_blocked(map_t *m, int x, int y){
+  if(m == NULL || !xycoord_is_valid(m, x, y)){
+    return false;
+  }
+
+  if(!tile_has_property(m->tiles[get_coord_in_arr(x, y, m->width)],TPROP_OPEN)){
+    return true;
+  }
+
+  int cur_coord = get_coord_in_arr(x, y, m->width);
+  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
+    creature_t *cur_creature = ll_elem(cur);
+
+    if(cur_creature != NULL && cur_coord == creature_get_coord(cur_creature,m)){
+      return true;
+    }
+  }
+
+  return false;
 }

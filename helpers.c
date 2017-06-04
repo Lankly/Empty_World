@@ -10,8 +10,7 @@
  * FUNCTION DEFINITIONS *
  ************************/
 
-void *Calloc(size_t items, size_t size)
-{
+void *Calloc(size_t items, size_t size){
   void *ret = calloc(items, size);
   if (ret == NULL)
   {
@@ -49,4 +48,12 @@ void game_init(){
 
 dir_t rand_dir(){
   return rand() % DIR_COUNT;
+}
+
+int get_coord_in_arr(int x, int y, int width){
+  if(x < 0 || y < 0 || x >= width){
+    return -1;
+  }
+
+  return (width * y) + x;
 }

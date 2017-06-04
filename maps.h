@@ -88,14 +88,15 @@ bool teleport_creature(map_t *m, creature_t *c, int x, int y);
 
 /**
  * Returns the height of the map. Not the depth from the floor to the ceiling,
- * but the distance from the top y-coordinate to the bottom y-coordinate.
+ * but the distance from the top y-coordinate to the bottom y-coordinate. Will
+ * return -1 if the map was invalid.
  * @param m A valid map.
- * @returns The height on the map on the y-axis.
+ * @returns The height on the map on the y-axis, or -1.
  */
 int map_get_height(map_t *m);
 
 /**
- * Returns the width of the map. 
+ * Returns the width of the map, or -1 if the map was invalid.
  * @param m A valid map.
  * @returns The width of the map on the x-axis.
  */
