@@ -24,4 +24,10 @@ void bodies_init();
  */
 body_t *new_body_by_species(species_t s);
 
+/**
+ * Handles freeing an allocated body.
+ * @param A body.
+ */
+void body_free(body_t *b);
+
 #endif

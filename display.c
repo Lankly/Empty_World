@@ -250,6 +250,7 @@ void display_init(){
   change_panes_style(STYLE_CLEAN_MERGED);
 }
 
+
 /***********************************
  * HELPER FUNCTION IMPLEMENTATIONS *
  ***********************************/
@@ -380,7 +381,7 @@ void write_to_alert_area(int *msg){
         waddch(alert, cur_str[i]);
       }
       else{
-        waddch(alert, ((char)(cur_str[i])) | color_pair_dark());
+        waddch(alert, ((char)(cur_str[i])) | color_pair_dark_text());
       }
       getyx(alert, cursor_y, cursor_x);
       if(cursor_y == alert_height - 2 && cursor_x == alert_width - 2){

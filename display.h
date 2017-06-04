@@ -82,12 +82,12 @@ void resize_pane(pane_t p, int additional_width, int additional_height);
 void refresh_pane(pane_t p);
 
 /**
- * Writes the given test to the specified pane. If that pane is not supported
+ * Writes the given text to the specified pane. If that pane is not supported
  * by the current display_mode, or the text is NULL or empty, this does nothing.
  *
- * PRIMARY will print the entirety of chars, until it reaches a 0.
+ * PRIMARY will print the entirety of text, until it reaches a \0.
  *
- * SECONDARY will print the entirety of chars, until it reaches 2 newlines in a
+ * SECONDARY will print the entirety of text, until it reaches 2 newlines in a
  * row. Each '\0' or '\n' means "end of current line".
  *
  * If the current mode shows the ALERT LINE instead of the ALERT area, and the

@@ -1,5 +1,6 @@
-#include <stdlib.h>
 #include <curses.h>
+#include <math.h>
+#include <stdlib.h>
 #include "helpers.h"
 #include "creatures.h"
 #include "display.h"
@@ -56,4 +57,8 @@ int get_coord_in_arr(int x, int y, int width){
   }
 
   return (width * y) + x;
+}
+
+double dist(int x1, int y1, int x2, int y2){
+  return sqrt(x1*x2 + y1*y2);
 }

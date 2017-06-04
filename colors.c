@@ -1,8 +1,20 @@
+#include <curses.h>
+#include <stdbool.h>
 #include "colors.h"
 #include "helpers.h"
-#include <curses.h>
 
-void color_init(){
+/*********************
+ * PRIVATE VARIABLES *
+ *********************/
+
+bool compatibility_mode_on = false;
+
+
+/************************
+ * FUNCTION DEFINITIONS *
+ ************************/
+
+void colors_init(){
   start_color();
 
   //Create colors
@@ -20,4 +32,26 @@ void color_init(){
   init_pair(CP_GREY_BLACK, COLOR_GREY, COLOR_BLACK);
   init_pair(CP_RED_BLACK, COLOR_RED, COLOR_BLACK);
   init_pair(CP_YELLOW_BLACK, COLOR_YELLOW, COLOR_BLACK);
+  init_pair(CP_WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
+}
+
+int color_pair_dark_text(){
+  if(compatibility_mode_on){
+    return CP_WHITE_BLACK;
+  }
+  return CP_GREY_BLACK;
+}
+
+/* COMPATIBILITY MODE FUNCTIONS */
+
+bool get_compatibility_mode(){
+  return compatibility_mode_on;
+}
+
+void set_compatibility_mode(bool on){
+  compatibility_mode_on = on;
+}
+
+void toggle_compatibility_mode(){
+  set_compatibility_mode(!get_compatibility_mode());
 }
