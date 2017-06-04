@@ -11,7 +11,7 @@
 #include "items.h"
 
 //Main
-int main(int argc, char** argv){
+int main(){
   //Setup
   int seed = time(NULL);
   printf("Seed: %d\n", seed);

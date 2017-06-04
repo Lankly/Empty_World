@@ -38,6 +38,20 @@ void tree_free(void *node){
   free(node);
 }
 
+void *tree_copy(void *node){
+  if(node == NULL){
+    return NULL;
+  }
+
+  tree_helper_t *as_helper = ((tree_helper_t *)node);
+  tree_helper_t *to_return = tree_insert(NULL, as_helper->elem, NULL);
+
+  to_return->left = tree_copy(as_helper->left);
+  to_return->right = tree_copy(as_helper->right);
+
+  return to_return;
+}
+
 void *tree_get_elem(void *node){
   if(node == NULL){
     return NULL;

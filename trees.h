@@ -24,6 +24,13 @@
 void tree_free(void *node);
 
 /**
+ * Creates a copy of the given tree.
+ * @param node A valid tree.
+ * @returns A valid tree that is identical to the given one.
+ */
+void *tree_copy(void *node);
+
+/**
  * Returns the element of a given node.
  */
 void *tree_get_elem(void *node);
@@ -39,11 +46,19 @@ void *tree_get_left(void *node);
 void *tree_get_right(void *node);
 
 /**
- * Inserts a given item into the given tree and balances it.
+ * Inserts a given item into the given tree and balances it. Will return a new
+ * tree if the root was NULL.
  *
  * Returns the new root of the tree after balancing.
  *
- * Does nothing if the comparator is NULL, or if the item was already inserted.
+ * Otherwise, does nothing if the comparator is NULL, or if the item was already
+ * inserted.
+ *
+ * @param root The desired tree to insert into.
+ * @param item The desired element to add.
+ * @param cmp The comparator function to use.
+ * @returns The root of the tree after insertion. Sometimes root may be
+ *          different than before insertion.
  */
 void *tree_insert(void *root, void *item, cmp func);
 

@@ -265,7 +265,7 @@ void dijkstra_add_value(dijkstra_t *d, int weight, int x, int y){
   d->cells[get_coord_in_arr(x, y, d->width)] = weight;
 }
 
-void calculate_dijkstra(dijkstra_t *d){
+void dijkstra_calculate(dijkstra_t *d){
   if(d == NULL || d->calculated){
     return;
   }
@@ -321,7 +321,7 @@ void calculate_dijkstra(dijkstra_t *d){
         }
         //West
         if(x < (d->width - 1)){
-          e = d->cells{cur_coord + 1];
+          e = d->cells[cur_coord + 1];
         }
         //Here
         h = d->cells[cur_coord];
@@ -415,16 +415,16 @@ void new_main_dungeon(map_t *m, int player_coord){
            && (ur_corner > player_coord || ll_corner < player_coord));
 
     //Draw the room
-    map_draw_box(m, get_coord_in_arr(x, y, m->width), w, h, TILE_FLOOR);
+    map_draw_box(m, get_coord_in_arr(x, y, m->width), w, h, TILE_STONE_FLOOR);
     
     //Draw corridor connection the rooms
     int cur_center = get_coord_in_arr((x + w) / 2, (y + h) / 2, m->width);
     if(prev_center > 0){
-      map_draw_line(m, cur_center, prev_center, TILE_CORRIDOR, true);
+      map_draw_line(m, cur_center, prev_center, TILE_STONE_CORRIDOR, true);
     }
 
     //Draw walls around the rooms
-    map_draw_walls(m, TILE_WALL);
+    map_draw_walls(m, TILE_STONE_WALL);
     
     prev_center = cur_center;
   }
@@ -475,34 +475,34 @@ void map_draw_circle(map_t *m, int c, int r, tile_t t){
   }
   
   //Extract coordinates
-  int x = r + c % m->width;
-  int y = c / m->width;
+  int x0 = c % m->width;
+  int y0 = c / m->width;
+  int x = r + x0;
+  int y = y0;
   int err = 0;
 
   if(x >= m->width){
     return;
   }
-  
+
   while (x >= y) {
-    putpixel(x0 + x, y0 + y);
-    putpixel(x0 + y, y0 + x);
-    putpixel(x0 - y, y0 + x);
-    putpixel(x0 - x, y0 + y);
-    putpixel(x0 - x, y0 - y);
-    putpixel(x0 - y, y0 - x);
-    putpixel(x0 + y, y0 - x);
-    putpixel(x0 + x, y0 - y);
+    m->tiles[get_coord_in_arr(x0 + x, y0 + y, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 + y, y0 + x, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 - y, y0 + x, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 - x, y0 + y, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 - x, y0 - y, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 - y, y0 - x, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 + y, y0 - x, m->width)] = t;
+    m->tiles[get_coord_in_arr(x0 + x, y0 - y, m->width)] = t;
     
     y += 1;
-    if (err <= 0)
-      {
-        err += 2*y + 1;
-      }
-    if (err > 0)
-      {
-        x -= 1;
-        err -= 2*x + 1;
-      }
+    if(err <= 0){
+      err += 2*y + 1;
+    }
+    if (err > 0){
+      x -= 1;
+      err -= 2*x + 1;
+    }
   }
 }
 
@@ -563,14 +563,14 @@ void map_draw_walls(map_t *m, tile_t t){
         continue;
       }
 
-      if(get_tile_at(m,    i + 1, j    ) == TILE_FLOOR
-         || get_tile_at(m, i + 1, j + 1) == TILE_FLOOR
-         || get_tile_at(m, i + 1, j - 1) == TILE_FLOOR
-         || get_tile_at(m, i    , j + 1) == TILE_FLOOR
-         || get_tile_at(m, i    , j - 1) == TILE_FLOOR
-         || get_tile_at(m, i - 1, j + 1) == TILE_FLOOR
-         || get_tile_at(m, i - 1, j    ) == TILE_FLOOR
-         || get_tile_at(m, i - 1, j - 1) == TILE_FLOOR){
+      if(get_tile_at(m,    i + 1, j    ) == TILE_STONE_FLOOR
+         || get_tile_at(m, i + 1, j + 1) == TILE_STONE_FLOOR
+         || get_tile_at(m, i + 1, j - 1) == TILE_STONE_FLOOR
+         || get_tile_at(m, i    , j + 1) == TILE_STONE_FLOOR
+         || get_tile_at(m, i    , j - 1) == TILE_STONE_FLOOR
+         || get_tile_at(m, i - 1, j + 1) == TILE_STONE_FLOOR
+         || get_tile_at(m, i - 1, j    ) == TILE_STONE_FLOOR
+         || get_tile_at(m, i - 1, j - 1) == TILE_STONE_FLOOR){
         m->tiles[j*m->width+i] = t;
       }
     }

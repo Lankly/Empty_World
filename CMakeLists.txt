@@ -11,6 +11,7 @@ add_executable(EmptyWorld
         helpers.c
         items.c
         lists.c
+        maps.c
         tiles.c
         trees.c
 )

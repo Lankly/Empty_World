@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "bodies.h"
+#include "creatures.h"
 #include "lists.h"
 
 /***************
@@ -75,6 +76,15 @@ body_t templates[PART_MAX];
 const char *images[IMAGE_MAX];
 
 
+/*****************************
+ * HELPER FUNCTION TEMPLATES * 
+ *****************************/
+
+body_t *body_new(){
+  return Calloc(1, sizeof(body_t));
+}
+
+
 /****************************
  * FUNCTION IMPLEMENTATIONS *
  ****************************/
@@ -123,6 +133,7 @@ void bodies_init(){
     .name = "Body"
   };
   templates[PART_WING] = (body_t){
+
     .name = "Wing"
   };
 
@@ -177,4 +188,32 @@ void bodies_init(){
     "   )\n"
     "_./\n"
     "\"";
+}
+
+/* BODY CREATION FUNCTIONS */
+
+body_t *new_body_by_species(species_t s){
+  body_t *to_return = body_new();
+
+  switch(s){
+    //TODO
+  case SPECIES_CANINE:
+  case SPECIES_DWARF:
+  case SPECIES_ELF:
+  case SPECIES_FELINE:
+  case SPECIES_HUMAN:
+  case SPECIES_RODENT:
+  default:
+    break;
+  };
+  
+  return to_return;
+}
+
+void body_free(body_t *b){
+  if(b == NULL){
+    return;
+  }
+
+  free(b);
 }
