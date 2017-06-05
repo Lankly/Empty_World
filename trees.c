@@ -240,6 +240,7 @@ void *tree_search(void *node, void *item, cmp func){
 /***********************************
  * HELPER FUNCTION IMPLEMENTATIONS *
  ***********************************/
+
 void *new_tree(){
   return Calloc(1, sizeof(tree_helper_t));
 }

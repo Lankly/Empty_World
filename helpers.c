@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "helpers.h"
+#include "colors.h"
 #include "creatures.h"
 #include "display.h"
 #include "items.h"
@@ -26,6 +27,15 @@ void quit(const char* error_msg){
   exit(1);
 }
 
+void game_init(){
+  display_init();        /* Has to come first or colors won't work. */
+  colors_init();
+  creatures_init();
+  items_init();
+  tile_data_init();
+  //maps_init();
+}
+
 int int_cmp(void *item1, void *item2){
   if(item1 == item2){
     return 0;
@@ -38,13 +48,6 @@ int int_cmp(void *item1, void *item2){
   }
 
   return (*((int *)item1)) - (*((int *)item2));
-}
-
-void game_init(){
-  creatures_init();
-  display_init();
-  items_init();
-  //maps_init();
 }
 
 dir_t rand_dir(){

@@ -47,7 +47,7 @@ void reseat_windows();
  * If no message is provided for write_to_alert_* then it will simply print out
  * the history from where cur_hist is.
  */
-void write_to_primary(int *chars);
+void write_to_primary(int *chars, int width, int height);
 void write_to_secondary(int *chars);
 void write_to_alert_area(int *msg);
 void write_to_alert_line(int *msg);
@@ -138,6 +138,8 @@ void change_panes_style(pane_style_t s){
       }
       break;
     }
+
+    wins = ll_next(wins);
   }
   
   ll_free(wins);
@@ -209,10 +211,10 @@ void refresh_pane(pane_t p){
   wrefresh(w);
 }
 
-void write_to_pane(pane_t p, int *text){ 
+void write_to_pane(pane_t p, int *text, int width, int height){
   switch(p){
   case PANE_PRIMARY:
-    write_to_primary(text);
+    write_to_primary(text, width, height);
     break;
   case PANE_SECONDARY:
     write_to_secondary(text);
@@ -329,7 +331,7 @@ void reseat_windows(){
   ll_free(wins);
 }
 
-void write_to_primary(int *chars){
+void write_to_primary(int *chars, int width, int height){
   wclear(primary);
   wmove(primary, 0, 0);
   
@@ -340,8 +342,15 @@ void write_to_primary(int *chars){
   int primary_area = primary_width * primary_height;
   
   for(int i = 0; chars[i] != 0 && i < primary_area; i++){
+    //If width and height was passed, center this.
+    /*if(width > 0 && width < primary_width && i % width == 0){
+      wmove(primary,
+            (primary_width - width) / 2,
+            (i / width) + ((primary_height - height) / 2));
+            }*/
+    
     //waddch wraps to next line if at right border, so this is fine
-    waddch(primary, i);
+    waddch(primary, chars[i]);
   }
 }
 

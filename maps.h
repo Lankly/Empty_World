@@ -87,6 +87,14 @@ bool teleport_creature(map_t *m, creature_t *c, int x, int y);
 /* DATA FUNCTIONS */
 
 /**
+ * Generates an array of characters with NCURSES color information based on the
+ * current state of the map.
+ * @param m A valid map.
+ * @returns A valid array of integers that NCURSES can read.
+ */
+int *map2display(map_t *m);
+
+/**
  * Returns the height of the map. Not the depth from the floor to the ceiling,
  * but the distance from the top y-coordinate to the bottom y-coordinate. Will
  * return -1 if the map was invalid.

@@ -34,6 +34,7 @@ typedef enum {
 
   /* TILE TYPES */
   TPROP_IS_CORRIDOR,
+  TPROP_IS_FLOOR,
   TPROP_IS_WALL,
 } tile_property_t;
 
@@ -43,6 +44,16 @@ typedef enum {
  ***********************/
 
 void tile_data_init();
+
+/* DATA FUNCTIONS */
+
+/**
+ * Returns the display character associated with the given tile as an integer
+ * with NCURSES color information.
+ * @param t A tile other than TILE_MAX.
+ * @returns An integer printable by NCURSES.
+ */
+int tile_get_display(tile_t t);
 
 /* PROPERTIES FUNCTIONS */
 

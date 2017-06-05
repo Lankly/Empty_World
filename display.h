@@ -101,8 +101,14 @@ void refresh_pane(pane_t p);
  *
  * STATUS will try to print as much as possible from chars, until it runs out of
  * room.
+ * @param p The pane to write to.
+ * @param text The ASCII characters that will be printed to the screen.
+ * @param width The maximum width of any particular line. Used only for PRIMARY.
+ *        Set to 0 to ignore.
+ * @param height The expected number of lines. Used only for PRIMARY.
+ *        Set to 0 to ignore.
  */
-void write_to_pane(pane_t p, int *text);
+void write_to_pane(pane_t p, int *text, int width, int height);
 
 
 /* Display Mode functions */

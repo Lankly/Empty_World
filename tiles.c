@@ -119,6 +119,24 @@ void tile_data_init(){
                       TPROP_IS_CORRIDOR);
 }
 
+/* DATA FUNCTIONS */
+
+int tile_get_display(tile_t t){
+  if(t == TILE_MAX){
+    return 0;
+  }
+
+  int display_color;
+  if(compatibility_mode_on()){
+    display_color = tile_data[t].display_color_alt;
+  }
+  else{
+    display_color = tile_data[t].display_color;
+  }
+  
+  return tile_data[t].display | COLOR_PAIR(display_color);
+}
+
 /* PROPERTIES FUNCTIONS */
 
 bool tile_has_property(tile_t t, tile_property_t p){

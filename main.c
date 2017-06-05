@@ -22,7 +22,6 @@ int main(){
   map_t *maps = map_new(&new_desert);
   map_add_creature(maps, player);
   
-  
   //Main Game Loop
   while(true){
 
@@ -36,14 +35,7 @@ int main(){
       {
 	creature_t *creature = ll_elem(cur);
 	if(creature != NULL){
-	  //If this creature is not out of move tokens, take turn.
-	  if(!creature_is_out_of_turns(creature)){
-	    creature_take_turn(creature, maps);
-	  }
-	  //Otherwise, skip the turn to reset them
-	  else{
-	    creature_take_break(creature);
-	  }
+          creature_take_turn(creature, maps);
 	}
       }
   }

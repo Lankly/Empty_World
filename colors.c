@@ -7,7 +7,7 @@
  * PRIVATE VARIABLES *
  *********************/
 
-bool compatibility_mode_on = false;
+bool compatibility_mode = false;
 
 
 /************************
@@ -36,7 +36,7 @@ void colors_init(){
 }
 
 int color_pair_dark_text(){
-  if(compatibility_mode_on){
+  if(compatibility_mode){
     return CP_WHITE_BLACK;
   }
   return CP_GREY_BLACK;
@@ -44,14 +44,14 @@ int color_pair_dark_text(){
 
 /* COMPATIBILITY MODE FUNCTIONS */
 
-bool get_compatibility_mode(){
-  return compatibility_mode_on;
+bool compatibility_mode_on(){
+  return compatibility_mode;
 }
 
 void set_compatibility_mode(bool on){
-  compatibility_mode_on = on;
+  compatibility_mode = on;
 }
 
 void toggle_compatibility_mode(){
-  set_compatibility_mode(!get_compatibility_mode());
+  set_compatibility_mode(!compatibility_mode_on());
 }

@@ -6,6 +6,7 @@
 #include "creatures.h"
 #include "bodies.h"
 #include "colors.h"
+#include "display.h"
 #include "helpers.h"
 #include "items.h"
 #include "lists.h"
@@ -24,6 +25,7 @@ struct creature_t{
   species_t species;
   int lvl;
   int x, y;
+  int display, display_color, display_color_alt;
 
   int health, stamina;
 
@@ -125,6 +127,15 @@ creature_t *new_creature_by_species(species_t s){
   creature_t *ret = new_creature();
 
   ret->body = new_body_by_species(s);
+
+  switch(s){
+  case SPECIES_HUMAN:
+    ret->display = '@';
+    break;
+  default:
+    ret->display = '?';
+  }
+  //Display color should be set elsewhere.
   
   return ret;
 }
@@ -224,7 +235,7 @@ bool has_extrinsic(creature_t *c, attribute_t a){
   return false;
 }
 
-/* Map-related functions */
+/* Data-related functions */
 
 int creature_get_coord(creature_t *c, map_t *m){
   if(c == NULL || m == NULL){
@@ -233,6 +244,24 @@ int creature_get_coord(creature_t *c, map_t *m){
 
   return get_coord_in_arr(c->x, c->y, map_get_width(m));
 }
+
+int creature_get_display(creature_t *c){
+  if(c == NULL){
+    return ' ';
+  }
+
+  int display_color;
+  if(compatibility_mode_on()){
+    display_color = c->display_color_alt;
+  }
+  else{
+    display_color = c->display_color;
+  }
+  
+  return c->display | COLOR_PAIR(display_color);
+}
+
+/* Map-related functions */
 
 dijkstra_t *creature_get_targets(creature_t *c, map_t *m){
   if(c == NULL || m == NULL){
@@ -280,7 +309,9 @@ void creature_take_break(creature_t *c){
     return;
   }
 
-  c->stamina = c->endurance * c->lvl;
+  c->stamina += c->endurance * c->lvl;
+
+  c->stamina = MIN(c->stamina, c->endurance * c->lvl * 3);
 }
 
 void creature_take_turn(creature_t *c, map_t *m){
@@ -290,7 +321,7 @@ void creature_take_turn(creature_t *c, map_t *m){
 
   //If stamina too low, wait and recover some.
   if(c->stamina < 0){
-    c->stamina += c->endurance + 10;
+    creature_take_break(c);
     return;
   }
 
@@ -363,9 +394,21 @@ creature_t *new_player(){
   
   creature_t *player = new_creature_by_species(s);
 
+  //Variables that we need to preserve before we overwrite with class.
   body_t *temp = player->body;
+  int disp = player->display;
+  
   memcpy(player, class_templates + c, sizeof(creature_t));
+
+  //Restore
   player->body = temp;
+  player->display = disp;
+  
+  player->lvl = 1;
+  player->display_color = CP_YELLOW_BLACK;
+  player->display_color_alt = CP_YELLOW_BLACK;
+
+  add_attribute(player, ATTR_IS_PLAYER);
   
   return player;
 }
@@ -383,6 +426,9 @@ void player_take_turn(creature_t *p, map_t *m){
     return;
   }
 
+  write_to_pane(PANE_PRIMARY, map2display(m)
+                , map_get_width(m), map_get_height(m));
+  
   //TODO
   getch();
 }

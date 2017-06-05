@@ -187,7 +187,7 @@ bool has_extrinsic(creature_t *c, attribute_t a);/* Damage-related functions */
  */
 void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
 
-/* Map-related functions */
+/* Data-related functions */
 
 /**
  * Returns an index into a 2-D representation of a map, representing the given
@@ -198,6 +198,16 @@ void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
  * @returns A index representing the creature's current coordinates, or -1.
  */
 int creature_get_coord(creature_t *c, map_t *m);
+
+/**
+ * Returns an integer representing the given creature with NCURSES color
+ * information. If the creature is NULL, returns ' ' instead.
+ * @param c A valid creature.
+ * @returns An integer that NCURSES can display.
+ */
+int creature_get_display(creature_t *c);
+
+/* Map-related functions */
 
 /**
  * Returns the coordinates of the most important thing that the given creature

@@ -10,6 +10,14 @@
 #include "tiles.h"
 #include "trees.h"
 
+/**********************
+ * USEFUL DEFINITIONS *
+ **********************/
+
+#define DEFAULT_TERM_HEIGHT 24
+#define DEFAULT_TERM_WIDTH 80
+
+
 /*********
  * TYPES *
  *********/
@@ -172,6 +180,36 @@ bool teleport_creature(map_t *m, creature_t *c, int x, int y){
 }
 
 /* DATA FUNCTIONS */
+
+int *map2display(map_t *m){
+  if(m == NULL){
+    return NULL;
+  }
+  
+  //Need to allocate all the tiles
+  int alloc = m->width * m->height;
+  //Plus the null-terminator
+  alloc++;
+  
+  int *to_return = Calloc(alloc, sizeof(int));
+
+  int cur_coord = 0;
+  for(int j = 0; j < m->height; j++){
+    for(int i = 0; i < m->width; i++){
+      to_return[cur_coord] =
+        tile_get_display(m->tiles[get_coord_in_arr(i, j, m->width)]);
+      
+      cur_coord++;
+    }
+  }
+
+  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
+    creature_t *cc = ll_elem(cur);
+    to_return[creature_get_coord(cc, m)] = creature_get_display(cc);
+  }
+  
+  return to_return;
+}
 
 int map_get_height(map_t *m){
   if(m == NULL){
@@ -477,7 +515,17 @@ void new_desert(map_t *base){
     return;
   }
 
-  //TODO
+  base->tiles = Calloc(DEFAULT_TERM_WIDTH * DEFAULT_TERM_HEIGHT, sizeof(int));
+  base->height = DEFAULT_TERM_HEIGHT;
+  base->width = DEFAULT_TERM_WIDTH;
+
+  int cur_coord = 0;
+  for(int j = 0; j < DEFAULT_TERM_HEIGHT; j++){
+    for(int i = 0; i < DEFAULT_TERM_WIDTH; i++){
+      base->tiles[cur_coord] = TILE_SAND_FLOOR;
+      cur_coord++;
+    }
+  }
   
   add_property(base, PROP_IS_DESERT);
 }

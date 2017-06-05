@@ -44,7 +44,7 @@ int color_pair_dark_text();
  * Returns the current compatibility mode settting. (On or Off).
  * @returns True if compatibility mode is on.
  */
-bool get_compatibility_mode();
+bool compatibility_mode_on();
 
 /**
  * Sets the compatibility mode.
