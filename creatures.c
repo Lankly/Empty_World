@@ -147,7 +147,10 @@ void add_attribute(creature_t *c, attribute_t a){
     return;
   }
 
-  c->attributes = tree_insert(c->attributes, &a, int_cmp);
+  attribute_t *heap_reference = Calloc(1, sizeof(attribute_t));
+  *heap_reference = a;
+  
+  c->attributes = tree_insert(c->attributes, heap_reference, int_cmp);
 }
 
 void add_attributes(creature_t *c, int num_attributes, ...){
@@ -172,7 +175,12 @@ void remove_attribute(creature_t *c, attribute_t a){
     return;
   }
 
-  c->attributes = tree_remove(c->attributes, &a, &int_cmp);
+  //Check if it's in the tree first
+  void *in_tree = tree_search(c->attributes, &a, &int_cmp);
+  if(in_tree != NULL){
+    c->attributes = tree_remove(c->attributes, &a, &int_cmp);
+    free(in_tree);
+  }
 }
 
 void remove_attributes(creature_t *c, int num_attributes, ...){
@@ -195,8 +203,14 @@ bool has_attribute(creature_t *c, attribute_t a){
   if(c == NULL){
     return false;
   }
+
+  attribute_t *tmp = Calloc(1, sizeof(attribute_t));
+  *tmp = a;
   
-  return tree_search(c->attributes, &a, int_cmp) != NULL;
+  bool to_return = tree_search(c->attributes, tmp, int_cmp) != NULL;
+  free(tmp);
+
+  return to_return;
 }
 
 bool has_attributes(creature_t *c, int num_attributes, ...){

@@ -47,7 +47,10 @@ int int_cmp(void *item1, void *item2){
     return 1;
   }
 
-  return (*((int *)item1)) - (*((int *)item2));
+  int first = *(int *)item1;
+  int second = *(int *)item2;
+  
+  return first - second;
 }
 
 dir_t rand_dir(){

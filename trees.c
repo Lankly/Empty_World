@@ -216,7 +216,7 @@ void *tree_search(void *node, void *item, cmp func){
     }
 
     //Otherwise, try the comparator function we were given
-    int res = func(item, cur_elem) == 0;
+    int res = func(item, cur_elem);
 
     //Same item
     if(res == 0){
