@@ -421,7 +421,7 @@ void add_properties(map_t *m, int num_properties, ...){
   va_start(args, num_properties);
 
   for(int i = 0; i < num_properties; i++){
-    property_t arg = va_arg(args, attribute_t);
+    property_t arg = va_arg(args, property_t);
 
     add_property(m, arg);
   }
