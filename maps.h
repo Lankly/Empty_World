@@ -245,6 +245,25 @@ void set_tile_at(map_t *m, int x, int y, tile_t new);
  */
 int map_get_nearest_wall(map_t *m, int x, int y);
 
+/**
+ * Same as map_xycoord_is_blocked, but takes in an index into an array
+ * representation of a 2-D space instead of an xy-coordinate pair.
+ * @param m A valid map.
+ * @param c A valid index into the given map.
+ */
+bool map_coord_is_blocked(map_t *m, int c);
+
+/**
+ * Determines whether or not the tile is blocked for physical things to pass
+ * through.
+ * @param m A valid map.
+ * @param x The x-coordinate on the map.
+ * @param y The y-coordinate on the map.
+ * @returns False if the space is open with no obstructions. True otherwise.
+ */
+bool map_xycoord_is_blocked(map_t *m, int x, int y);
+
+
 /* MAP GENERATORS */
 
 /**

@@ -34,6 +34,7 @@ void game_init(){
   items_init();
   tile_data_init();
   //maps_init();
+  noecho();
 }
 
 int int_cmp(void *item1, void *item2){

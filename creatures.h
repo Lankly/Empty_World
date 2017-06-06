@@ -200,6 +200,15 @@ void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
 int creature_get_coord(creature_t *c, map_t *m);
 
 /**
+ * Set's a given creature's coordinates. Does nothing if the creature is NULL,
+ * or if x or y is less than zero.
+ * @param c A valid creature.
+ * @param x The x-coordinate.
+ * @param y The y-coordinate.
+ */
+void creature_set_coord(creature_t *c, int x, int y);
+
+/**
  * Returns an integer representing the given creature with NCURSES color
  * information. If the creature is NULL, returns ' ' instead.
  * @param c A valid creature.

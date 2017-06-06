@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <curses.h>
+#include <limits.h>
 #include "creatures.h"
 #include "bodies.h"
 #include "colors.h"
@@ -62,6 +63,8 @@ struct creature_t{
   int intelligence;
   int agility;
   int luck;
+
+  dir_t facing;
   
   attribute_tree_t *attributes;
   body_t *body;
@@ -70,11 +73,40 @@ struct creature_t{
   title_t title;
 };
 
+typedef enum {
+  CMD_WAIT,
+  /* Directions */
+  CMD_UP,
+  CMD_DOWN,
+  CMD_LEFT,
+  CMD_RIGHT,
+  CMD_UP_LEFT,
+  CMD_UP_RIGHT,
+  CMD_DOWN_LEFT,
+  CMD_DOWN_RIGHT,
+  CMD_MAX
+} commands_t;
+
 
 /******************************
  * HELPER FUNCTION PROTOTYPES *
  ******************************/
 void move_creature(creature_t *c, map_t *m);
+
+/**
+ * Moves a given creature one tile in the given direction. If it fails, returns
+ * false.
+ * @param c A valid creature.
+ * @param m A valid map.
+ * @param dir A valid direction.
+ * @returns true if successful, false otherwise.
+ */
+bool creature_move_dir(creature_t *c, map_t *m, dir_t dir);
+
+/**
+ * Map all the commands to their default keys.
+ */
+void cmd_map_init();
 
 /**
  * These functions reevaluate certain attributes.
@@ -91,12 +123,17 @@ void reevaluate_hovering(creature_t *c);
  */
 creature_t class_templates[MAX_CLASS];
 
+/**
+ * To be used to figure out which command the user has just given.
+ */
+int cmd_map[CMD_MAX];
 
 /************************
  * FUNCTION DEFINITIONS *
  ************************/
 
 void creatures_init(){
+  cmd_map_init();
   class_templates[CLASS_PRIEST] = (creature_t){
     .charisma = 55,
     .perception = 55
@@ -257,6 +294,15 @@ int creature_get_coord(creature_t *c, map_t *m){
   }
 
   return get_coord_in_arr(c->x, c->y, map_get_width(m));
+}
+
+void creature_set_coord(creature_t *c, int x, int y){
+  if(c == NULL || x < 0 || y < 0){
+    return;
+  }
+
+  c->x = x;
+  c->y = y;
 }
 
 int creature_get_display(creature_t *c){
@@ -442,14 +488,58 @@ void player_take_turn(creature_t *p, map_t *m){
 
   write_to_pane(PANE_PRIMARY, map2display(m)
                 , map_get_width(m), map_get_height(m));
-  
-  //TODO
-  getch();
+
+  curs_set(0);
+  bool cmd_successful = false;
+  while(!cmd_successful){
+    int c = ERR;
+    while((c = getch()) == ERR);
+    if(c == cmd_map[CMD_WAIT]){
+      creature_take_break(p);
+      cmd_successful = true;
+    }
+    else if(c == cmd_map[CMD_UP]){
+      cmd_successful = creature_move_dir(p, m, DIR_UP);
+    }
+    else if(c == cmd_map[CMD_DOWN]){
+      cmd_successful = creature_move_dir(p, m, DIR_DOWN);
+    }
+    else if(c == cmd_map[CMD_LEFT]){
+      cmd_successful = creature_move_dir(p, m, DIR_LEFT);
+    }
+    else if(c == cmd_map[CMD_RIGHT]){
+      cmd_successful = creature_move_dir(p, m, DIR_RIGHT);
+    }
+    else if(c == cmd_map[CMD_UP_LEFT]){
+      cmd_successful = creature_move_dir(p, m, DIR_UL);
+    }
+    else if(c == cmd_map[CMD_UP_RIGHT]){
+      cmd_successful = creature_move_dir(p, m, DIR_UR);
+    }
+    else if(c == cmd_map[CMD_DOWN_LEFT]){
+      cmd_successful = creature_move_dir(p, m, DIR_LL);
+    }
+    else if(c == cmd_map[CMD_DOWN_RIGHT]){
+      cmd_successful = creature_move_dir(p, m, DIR_LR);
+    }
+  }
 }
 
 /*******************************
  * HELPER FUNCTION DEFINITIONS *
  *******************************/
+
+void cmd_map_init(){
+  cmd_map[CMD_WAIT] = '.';
+  cmd_map[CMD_UP] = '8';
+  cmd_map[CMD_DOWN] = '2';
+  cmd_map[CMD_LEFT] = '4';
+  cmd_map[CMD_RIGHT] = '6';
+  cmd_map[CMD_UP_LEFT] = '7';
+  cmd_map[CMD_UP_RIGHT] = '9';
+  cmd_map[CMD_DOWN_LEFT] = '1';
+  cmd_map[CMD_DOWN_RIGHT] = '3';
+}
 
 void move_creature(creature_t *c, map_t *m){
   dijkstra_t *priorities = dijkstra_new(m);
@@ -464,6 +554,59 @@ void move_creature(creature_t *c, map_t *m){
   int *weights = dijkstra_map(priorities);
   if(weights != NULL){
     //TODO: Determine which space is the best to move to.
+  }
+}
+
+bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
+  int check_coord = INT_MIN;
+  switch(dir){
+  case CMD_UP:
+    check_coord = get_coord_in_arr(c->x, c->y - 1, map_get_width(m));
+    c->facing = DIR_UP;
+    //fall-through
+  case CMD_DOWN:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x, c->y + 1, map_get_width(m));
+      c->facing = DIR_DOWN;
+    }
+  case CMD_LEFT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x - 1, c->y, map_get_width(m));
+      c->facing = DIR_LEFT;
+    }
+  case CMD_RIGHT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x + 1, c->y, map_get_width(m));
+      c->facing = DIR_RIGHT;
+    }
+  case CMD_UP_LEFT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x - 1, c->y - 1, map_get_width(m));
+      c->facing = DIR_UL;
+    }
+  case CMD_UP_RIGHT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c-> x + 1, c->y - 1, map_get_width(m));
+      c->facing = DIR_UR;
+    }
+  case CMD_DOWN_LEFT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x - 1, c->y + 1, map_get_width(m));
+      c->facing = DIR_LL;
+    }
+  case CMD_DOWN_RIGHT:
+    if(check_coord == INT_MIN){
+      check_coord = get_coord_in_arr(c->x + 1, c->y + 1, map_get_width(m));
+      c->facing = DIR_LR;
+    }
+    int map_width = map_get_width(m);
+    // -1 means that the coordinate was out-of-bounds
+    if(check_coord != -1 || !map_coord_is_blocked(m, check_coord)){
+      creature_set_coord(c, check_coord % map_width, check_coord / map_width);
+      return true;
+    }
+  default:
+    return false;
   }
 }
 

@@ -106,16 +106,6 @@ void map_draw_line(map_t *m, int c1, int c2, tile_t t, bool only_unknown);
  */
 void map_draw_walls(map_t *m, tile_t t);
 
-/**
- * Determines whether or not the tile is blocked for physical things to pass
- * through.
- * @param m A valid map.
- * @param x The x-coordinate on the map.
- * @param y The y-coordinate on the map.
- * @returns False if the space is open with no obstructions. True otherwise.
- */
-bool tile_is_blocked(map_t *m, int x, int y);
-
 /************************
  * FUNCTION DEFINITIONS *
  ************************/
@@ -395,7 +385,7 @@ bool teleport_item(map_t *m, item_t *i, int x, int y){
     return false;
   }
 
-  if(tile_is_blocked(m, x, y)){
+  if(map_xycoord_is_blocked(m, x, y)){
     return false;
   }
 
@@ -506,6 +496,35 @@ int map_get_nearest_wall(map_t *m, int x, int y){
   }
   
   return closest_index;
+}
+
+bool map_coord_is_blocked(map_t *m, int c){
+  if(c < 0){
+    return false;
+  }
+  
+  return map_xycoord_is_blocked(m, c % m->width, c / m->width);
+}
+
+bool map_xycoord_is_blocked(map_t *m, int x, int y){
+  if(m == NULL || !xycoord_is_valid(m, x, y)){
+    return false;
+  }
+
+  if(!tile_has_property(m->tiles[get_coord_in_arr(x, y, m->width)],TPROP_OPEN)){
+    return true;
+  }
+
+  int cur_coord = get_coord_in_arr(x, y, m->width);
+  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
+    creature_t *cur_creature = ll_elem(cur);
+
+    if(cur_creature != NULL && cur_coord == creature_get_coord(cur_creature,m)){
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /* MAP GENERATORS */
@@ -715,25 +734,4 @@ void map_draw_walls(map_t *m, tile_t t){
       }
     }
   }
-}
-
-bool tile_is_blocked(map_t *m, int x, int y){
-  if(m == NULL || !xycoord_is_valid(m, x, y)){
-    return false;
-  }
-
-  if(!tile_has_property(m->tiles[get_coord_in_arr(x, y, m->width)],TPROP_OPEN)){
-    return true;
-  }
-
-  int cur_coord = get_coord_in_arr(x, y, m->width);
-  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
-    creature_t *cur_creature = ll_elem(cur);
-
-    if(cur_creature != NULL && cur_coord == creature_get_coord(cur_creature,m)){
-      return true;
-    }
-  }
-
-  return false;
 }
