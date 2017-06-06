@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -683,7 +684,7 @@ void map_draw_line(map_t *m, int c1, int c2, tile_t t, bool only_unknown){
   
   float deltax = x2 - x1;
   float deltay = (y2 < y1) ? y1 - y2 : y2 - y1;
-  float deltaerr = (deltax == 0) ? 1 : abs(deltay / deltax);
+  float deltaerr = (deltax == 0) ? 1 : fabs(deltay / deltax);
   float error = deltaerr - 0.5;
   
   while( x1 < x2){
