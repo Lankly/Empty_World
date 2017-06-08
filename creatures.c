@@ -84,9 +84,16 @@ typedef enum {
   CMD_UP_RIGHT,
   CMD_DOWN_LEFT,
   CMD_DOWN_RIGHT,
+  /* Other */
+  CMD_EXTENDED,
   CMD_MAX
 } commands_t;
 
+typedef enum {
+  CMD_EXT_USE_HJKL,
+  CMD_EXT_USE_NUMPAD,
+  CMD_EXT_MAX
+} commands_extended_t;
 
 /******************************
  * HELPER FUNCTION PROTOTYPES *
@@ -109,11 +116,30 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir);
 void cmd_map_init();
 
 /**
+ * Will read in an extended command from the player and execute it if possible.
+ * @param p The player.
+ * @param m The map the player is on.
+ * @returns True if the command executed successfully and that command should
+ *          use up an entire turn.
+ */
+bool execute_extended(creature_t *p, map_t *m);
+
+/**
  * These functions reevaluate certain attributes.
  */
 void reevaluate_immobility(creature_t *c);
 void reevaluate_flying(creature_t *c);
 void reevaluate_hovering(creature_t *c);
+
+/**
+ * Either remaps every cmd passed to it to the given key or does nothing. The
+ * first command will be mapped to the first key, and so on.
+ * @param cmds The commands to remap.
+ * @param keys The keys that each command will map to.
+ * @param count The total number of commands and keys.
+ * @returns true if every command was able to be remapped.
+ */
+bool remap_keys(commands_t *cmds, int *keys, int count);
 
 /*********************
  * PRIVATE VARIABLES *
@@ -127,6 +153,8 @@ creature_t class_templates[MAX_CLASS];
  * To be used to figure out which command the user has just given.
  */
 int cmd_map[CMD_MAX];
+
+const char *ext_cmd_map[CMD_EXT_MAX];
 
 /************************
  * FUNCTION DEFINITIONS *
@@ -522,6 +550,9 @@ void player_take_turn(creature_t *p, map_t *m){
     else if(c == cmd_map[CMD_DOWN_RIGHT]){
       cmd_successful = creature_move_dir(p, m, DIR_LR);
     }
+    else if(c == cmd_map[CMD_EXTENDED]){
+      cmd_successful = execute_extended(p, m);
+    }
   }
 }
 
@@ -539,6 +570,46 @@ void cmd_map_init(){
   cmd_map[CMD_UP_RIGHT] = '9';
   cmd_map[CMD_DOWN_LEFT] = '1';
   cmd_map[CMD_DOWN_RIGHT] = '3';
+  cmd_map[CMD_EXTENDED] = '#';
+
+  ext_cmd_map[CMD_EXT_USE_HJKL] = "use-hjkl";
+  ext_cmd_map[CMD_EXT_USE_NUMPAD] = "use-numpad";
+}
+
+bool execute_extended(creature_t *p, map_t *m){
+  if(p == NULL || m == NULL){
+    return false;
+  }
+
+  bool done = false, to_return = false;
+  do{
+    char *input = get_input(1, (int[]){'#'}, NULL);
+
+    if(input == NULL){
+      continue;
+    }
+    
+    if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_HJKL])){
+      remap_keys((commands_t[]){
+          CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
+            CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
+        , (int []){'k', 'j', 'h', 'l', 'y', 'u', 'b', 'n'}
+        , 8);
+      done = true;
+    }
+    else if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_NUMPAD])){
+      remap_keys((commands_t[]){
+          CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
+            CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
+        , (int []){'8', '2', '4', '6', '7', '9', '1', '3'}
+        , 8);
+      done = true;
+    }
+
+    free(input);
+  }while(!done);
+  
+  return to_return;
 }
 
 void move_creature(creature_t *c, map_t *m){
@@ -656,4 +727,50 @@ void reevaluate_flying(creature_t *c){
   if(can_fly){
     add_attribute(c, ATTR_IS_IMMOBILE);
   }
+}
+
+bool remap_keys(commands_t *cmds, int *keys, int count){
+  if(cmds == NULL || keys == NULL || count < 1){
+    return false;
+  }
+
+  //Make sure that there are no duplicate keys being passed in.
+  for(int i = 0; i < count; i++){
+    for(int j = i + 1; j < count; j++){
+      if(keys[i] == keys[j]){
+        return false;
+      }
+    }
+  }
+  
+  //Before we make ANY changes, we need to check that ALL are possible.
+  for(int i = 0; i < count; i++){
+    int cur_key = keys[i];
+
+    //Check all commands for this key
+    for(int j = 0; j < CMD_MAX; j++){
+      if(cmd_map[j] == cur_key){
+        bool found = false;
+        
+        //Need to make sure it's not one of the cmds being remapped        
+        for(int k = 0; k < count; k++){
+          if(cmds[k] == (size_t)j){
+            found = true;
+            break;
+          }
+        }
+        
+        if(!found){
+          return false;
+        }
+      }
+    }
+  }
+
+  //Now actually do it
+  for(int i = 0; i < count; i++){
+    cmd_map[cmds[i]] = keys[i];
+  }
+  
+  return true;
 }

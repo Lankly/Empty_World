@@ -252,6 +252,42 @@ void display_init(){
   change_panes_style(STYLE_CLEAN_MERGED);
 }
 
+/* Input Functions */
+char *get_input(int max_len, int *prompt, char **autocomplete){
+  if(max_len < 1 || prompt == NULL){
+    return NULL;
+  }
+
+  char *to_return = Calloc(max_len + 1, sizeof(char));
+  
+  //Create a window to put the visuals in
+  int wx = 0, wy = 0, width = 0;
+  if(mode == MODE_CLASSIC){
+    getyx(primary, wy, wx);
+    width = primary_width;
+  }
+  else{
+    getyx(alert, wy, wx);
+    wy += alert_height;
+    width = alert_width;
+  }
+  WINDOW *temp = newwin(1, width, wy, wx);
+
+  //Start writing
+  curs_set(1);
+
+  wmove(temp, 0, 0);
+  waddch(temp, '#');
+  refresh();
+  
+  getch();
+
+  curs_set(0);
+
+  delwin(temp);  
+  return to_return;
+}
+
 
 /***********************************
  * HELPER FUNCTION IMPLEMENTATIONS *

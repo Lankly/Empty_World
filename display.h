@@ -110,7 +110,6 @@ void refresh_pane(pane_t p);
  */
 void write_to_pane(pane_t p, int *text, int width, int height);
 
-
 /* Display Mode functions */
 
 /**
@@ -137,5 +136,18 @@ void history_prev();
  * Like history_prev, but forward instead of backward.
  */
 void history_next();
+
+/* Input Functions */
+
+/**
+ * Prompts the user for input. If an autocomplete array of strings is provided,
+ * the prompt will display them in autocomplete style. Player input is limited
+ * to alphanumeric characters and spaces.
+ * @param max_len The maximum allowed length of returned input. Must be nonzero.
+ * @param prompt The prompt to display to the user.
+ * @param Array of autocomplete options. NULL allowed.
+ * @returns The user's input as a string.
+ */
+char *get_input(int max_len, int *prompt, char **autocomplete);
 
 #endif
