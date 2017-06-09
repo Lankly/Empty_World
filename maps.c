@@ -5,6 +5,7 @@
 #include <string.h>
 #include "maps.h"
 #include "creatures.h"
+#include "display.h"
 #include "helpers.h"
 #include "items.h"
 #include "lists.h"
@@ -535,13 +536,13 @@ void new_desert(map_t *base){
     return;
   }
 
-  base->tiles = Calloc(DEFAULT_TERM_WIDTH * DEFAULT_TERM_HEIGHT, sizeof(int));
-  base->height = DEFAULT_TERM_HEIGHT;
-  base->width = DEFAULT_TERM_WIDTH;
+  base->height = get_pane_height(PANE_PRIMARY);
+  base->width = get_pane_width(PANE_PRIMARY);
+  base->tiles = Calloc(base->height * base->width, sizeof(int));
 
   int cur_coord = 0;
-  for(int j = 0; j < DEFAULT_TERM_HEIGHT; j++){
-    for(int i = 0; i < DEFAULT_TERM_WIDTH; i++){
+  for(int j = 0; j < base->height; j++){
+    for(int i = 0; i < base->width; i++){
       base->tiles[cur_coord] = TILE_SAND_FLOOR;
       cur_coord++;
     }

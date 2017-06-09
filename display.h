@@ -110,6 +110,24 @@ void refresh_pane(pane_t p);
  */
 void write_to_pane(pane_t p, int *text, int width, int height);
 
+/* Data Functions */
+
+/**
+ * Returns the height of the working area inside a particular pane (so it
+ * doesn't include the borders).
+ * @param p The chosen pane.
+ * @returns An integer representing the height in number of characters.
+ */
+int get_pane_height(pane_t p);
+
+/**
+ * Returns the width of the working area inside a particular pane (so it
+ * doesn't include the borders).
+ * @param p The chosen pane.
+ * @returns An integer representing the width in number of characters.
+ */
+int get_pane_width(pane_t p);
+
 /* Display Mode functions */
 
 /**

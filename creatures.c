@@ -84,6 +84,8 @@ typedef enum {
   CMD_UP_RIGHT,
   CMD_DOWN_LEFT,
   CMD_DOWN_RIGHT,
+  /* Display */
+  CMD_CYCLE_DISPLAY_MODE,
   /* Other */
   CMD_EXTENDED,
   CMD_MAX
@@ -520,6 +522,7 @@ void player_take_turn(creature_t *p, map_t *m){
   curs_set(0);
   bool cmd_successful = false;
   while(!cmd_successful){
+    refresh();
     int c = ERR;
     while((c = getch()) == ERR);
     if(c == cmd_map[CMD_WAIT]){
@@ -550,6 +553,9 @@ void player_take_turn(creature_t *p, map_t *m){
     else if(c == cmd_map[CMD_DOWN_RIGHT]){
       cmd_successful = creature_move_dir(p, m, DIR_LR);
     }
+    else if(c == cmd_map[CMD_CYCLE_DISPLAY_MODE]){
+      change_panes_style(STYLE_CLEAN_MERGED);
+    }
     else if(c == cmd_map[CMD_EXTENDED]){
       cmd_successful = execute_extended(p, m);
     }
@@ -571,7 +577,7 @@ void cmd_map_init(){
   cmd_map[CMD_DOWN_LEFT] = '1';
   cmd_map[CMD_DOWN_RIGHT] = '3';
   cmd_map[CMD_EXTENDED] = '#';
-
+  cmd_map[CMD_CYCLE_DISPLAY_MODE] = '|';
   ext_cmd_map[CMD_EXT_USE_HJKL] = "use-hjkl";
   ext_cmd_map[CMD_EXT_USE_NUMPAD] = "use-numpad";
 }
@@ -671,8 +677,13 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
       c->facing = DIR_LR;
     }
     int map_width = map_get_width(m);
-    // -1 means that the coordinate was out-of-bounds
-    if(check_coord != -1 || !map_coord_is_blocked(m, check_coord)){
+    //-1 means that the coordinate was out-of-bounds on the left, right, and top
+    if(check_coord != -1
+       //Check for out-of-bounds on bottom
+       && check_coord < (map_width * map_get_height(m))
+       //Check for physically blocked tile
+       && !map_coord_is_blocked(m, check_coord)
+       ){
       creature_set_coord(c, check_coord % map_width, check_coord / map_width);
       return true;
     }

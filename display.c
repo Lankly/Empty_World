@@ -69,11 +69,11 @@ void remove_history();          /* Only call when full */
  * standard terminal size 80x24. The user can change them later.
  */
 int primary_width = 80;
-int primary_height = 22;   /* 24 - status_area_height = 22 */
+int primary_height = 20;   /* 24 - status_area_height */
 int secondary_width = 0;   /* Initially determined by terminal size */
 int alert_width = 0;
 int alert_height = 0;
-int status_height = 2;
+int status_height = 4;
 
 history_t *hist;
 history_t *cur_hist;       /* Where we currently are in the history */
@@ -87,6 +87,23 @@ WINDOW *WIN, *primary, *secondary, *alert, *alert_line, *status;
 /****************************
  * FUNCTION IMPLEMENTATIONS *
  ****************************/
+
+void display_init(){
+  mode = MODE_CLASSIC;
+
+  //Initialize all windows
+  WIN = initscr();
+  primary = newwin(primary_height, primary_width, 1, 1);
+  secondary = newwin(0, 0, 0, 0);
+  alert = newwin(0, 0, 0, 0);
+  alert_line = newwin(1, primary_width, 0, 0);
+  status = newwin(status_height, primary_width, 0, 0);
+
+  refresh();
+  
+  //Add a border and position them.
+  change_panes_style(STYLE_CLEAN);
+}
 
 void change_panes_style(pane_style_t s){
   winlist_t *wins = get_cur_windows();
@@ -139,6 +156,8 @@ void change_panes_style(pane_style_t s){
       break;
     }
 
+    wrefresh(cur_win);
+    
     wins = ll_next(wins);
   }
   
@@ -237,19 +256,37 @@ void write_to_pane(pane_t p, int *text, int width, int height){
   refresh_pane(p);
 }
 
-void display_init(){
-  mode = MODE_CLASSIC;
+/* Data Functions */
 
-  //Initialize all windows
-  WIN = initscr();
-  primary = newwin(primary_height, primary_width, 0, 0);
-  secondary = newwin(0, 0, 0, 0);
-  alert = newwin(0, 0, 0, 0);
-  alert_line = newwin(1, primary_width, 0, 0);
-  status = newwin(status_height, primary_width, 0, 0);
+int get_pane_height(pane_t p){
+  switch(p){
+  case PANE_PRIMARY:
+  case PANE_SECONDARY:
+    return primary_height - 2;
+  case PANE_ALERT:
+    return mode == MODE_CLASSIC ? 1 : alert_height - 2;
+  case PANE_STATUS:
+    return status_height - 2;
+  }
+  
+  //Impossible to get here
+  return -1;
+}
 
-  //Add a border and position them.
-  change_panes_style(STYLE_CLEAN_MERGED);
+int get_pane_width(pane_t p){
+  switch(p){
+  case PANE_PRIMARY:
+    return primary_width - 2 ;
+  case PANE_SECONDARY:
+    return secondary_width - 2;
+  case PANE_ALERT:
+    return alert_width - (mode == MODE_CLASSIC ? 0 : 2);
+  case PANE_STATUS:
+    return primary_width + secondary_width - 2;
+  }
+
+  //Impossible to get here
+  return -1;
 }
 
 /* Input Functions */
@@ -272,6 +309,7 @@ char *get_input(int max_len, int *prompt, char **autocomplete){
     width = alert_width;
   }
   WINDOW *temp = newwin(1, width, wy, wx);
+  refresh();
 
   //Start writing
   curs_set(1);
@@ -280,7 +318,13 @@ char *get_input(int max_len, int *prompt, char **autocomplete){
   waddch(temp, '#');
   refresh();
   
-  getch();
+  int ch = '\0';
+  while(ch != '\n'){
+    ch = getch();
+    if(ch != ERR){
+      waddch(temp, ch);
+    }
+  }
 
   curs_set(0);
 
@@ -368,8 +412,9 @@ void reseat_windows(){
 }
 
 void write_to_primary(int *chars, int width, int height){
-  wclear(primary);
-  wmove(primary, 0, 0);
+  //wclear(primary);
+  wrefresh(primary);
+  //  wmove(primary, 0, 0);
   
   if(chars == NULL){
     return;
@@ -379,11 +424,11 @@ void write_to_primary(int *chars, int width, int height){
   
   for(int i = 0; chars[i] != 0 && i < primary_area; i++){
     //If width and height was passed, center this.
-    /*if(width > 0 && width < primary_width && i % width == 0){
+    if(width > 0 && width < primary_width && i % width == 0){
       wmove(primary,
-            (primary_width - width) / 2,
-            (i / width) + ((primary_height - height) / 2));
-            }*/
+            (i / width) + ((primary_height - height) / 2),
+            (primary_width - width) / 2);
+    }
     
     //waddch wraps to next line if at right border, so this is fine
     waddch(primary, chars[i]);
