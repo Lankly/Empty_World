@@ -91,8 +91,10 @@ typedef enum {
   CMD_MAX
 } commands_t;
 
+/* KEEP THIS ALPHABETICAL BY MAPPING */
 typedef enum {
   CMD_EXT_USE_HJKL,
+  CMD_EXT_USE_KEYPAD,
   CMD_EXT_USE_NUMPAD,
   CMD_EXT_MAX
 } commands_extended_t;
@@ -552,7 +554,7 @@ void player_take_turn(creature_t *p, map_t *m){
       cmd_successful = creature_move_dir(p, m, DIR_LR);
     }
     else if(c == cmd_map[CMD_CYCLE_DISPLAY_MODE]){
-      change_panes_style(STYLE_CLEAN_MERGED);
+      cycle_display_mode();
     }
     else if(c == cmd_map[CMD_EXTENDED]){
       cmd_successful = execute_extended(p, m);
@@ -577,6 +579,7 @@ void cmd_map_init(){
   cmd_map[CMD_EXTENDED] = '#';
   cmd_map[CMD_CYCLE_DISPLAY_MODE] = '|';
   ext_cmd_map[CMD_EXT_USE_HJKL] = "use-hjkl";
+  ext_cmd_map[CMD_EXT_USE_KEYPAD] = "use-keypad";
   ext_cmd_map[CMD_EXT_USE_NUMPAD] = "use-numpad";
 }
 
@@ -602,6 +605,14 @@ bool execute_extended(creature_t *p, map_t *m){
         CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
           CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
       , (int []){'k', 'j', 'h', 'l', 'y', 'u', 'b', 'n'}
+      , 8);
+  }
+  //KEY_A1 ... KEY_C3 do not work in all terminal emulators.
+  else if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_KEYPAD])){
+    remap_keys((commands_t[]){
+        CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
+          CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
+      , (int []){ 0, 1, 2, 3, KEY_A1, KEY_A3, KEY_C1, KEY_C3 }
       , 8);
   }
   else if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_NUMPAD])){

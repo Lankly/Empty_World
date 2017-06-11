@@ -63,6 +63,11 @@ typedef enum pane_style_t{
  * FUNCTION PROTOTYPES *
  ***********************/
 
+/**
+ * Initializes internal display data. MUST be called before any other functions.
+ */
+void display_init();
+
 /* Pane functions */
 
 /**
@@ -128,17 +133,18 @@ int get_pane_height(pane_t p);
  */
 int get_pane_width(pane_t p);
 
-/* Display Mode functions */
-
-/**
- * Initializes internal display data. MUST be called before any other functions.
- */
-void display_init();
+/* Display Mode Functions */
 
 /**
  * Changes the current mode to the specified one.
  */
 void change_display_mode(display_mode_t d);
+
+/**
+ * Will change the current display mode to the next one in the enumeration, or
+ * wrap around back to the beginning of it.
+ */
+void cycle_display_mode();
 
 /* History Functions */
 

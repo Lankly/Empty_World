@@ -43,6 +43,11 @@ WINDOW *get_window(pane_t p);
 void reseat_windows();
 
 /**
+ * Simply calls wclear on all current panes.
+ */
+void clear_all_panes();
+
+/**
  * Helper functions for the write_to_pane(pane_t, int) function.
  *
  * If no message is provided for write_to_alert_* then it will simply print out
@@ -81,6 +86,7 @@ history_t *cur_hist;       /* Where we currently are in the history */
 int hist_len;
 
 display_mode_t mode;            /* The currently applied mode */
+pane_style_t style;             /* The currently applied style */
 
 WINDOW *WIN, *primary, *secondary, *alert, *alert_line, *status;
 
@@ -104,9 +110,11 @@ void display_init(){
   
   //Add a border and position them.
   change_panes_style(STYLE_CLEAN);
+  change_display_mode(MODE_EXPANDED);
 }
 
 void change_panes_style(pane_style_t s){
+  style = s;
   winlist_t *wins = get_cur_windows();
 
   //Need to put the windows in the spots where they should go
@@ -222,8 +230,6 @@ void resize_pane(pane_t p, int additional_width, int additional_height){
   //Changes might have also been made to the status pane and alert line
   wresize(status, status_height, overall_width);
   wresize(alert_line, 1, primary_width);
-
-  reseat_windows();
 }
 
 void refresh_pane(pane_t p){
@@ -262,8 +268,9 @@ void write_to_pane(pane_t p, int *text, int width, int height){
 int get_pane_height(pane_t p){
   switch(p){
   case PANE_PRIMARY:
-  case PANE_SECONDARY:
     return primary_height - 2;
+  case PANE_SECONDARY:
+    return primary_height - 2 + (mode == MODE_EXPANDED ? alert_height : 0);
   case PANE_ALERT:
     return mode == MODE_CLASSIC ? 1 : alert_height - 2;
   case PANE_STATUS:
@@ -290,7 +297,73 @@ int get_pane_width(pane_t p){
   return -1;
 }
 
+/* Display Mode Functions */
+
+void change_display_mode(display_mode_t d){
+  mode = d;
+  clear_all_panes();
+
+  //Get current terminal size
+  size_t maxx, maxy;
+  getmaxyx(stdscr, maxy, maxx);
+  
+  //Arbitrary limits (in percentages)
+  //Panels will be capped at these maximums.
+  double max_secondary_width = .15;
+  double max_alert_height = .15;
+  //Arbitrary limits (in number of tiles)
+  //Panels must meet these minimums or become 0.
+  size_t min_secondary_width = 8;
+  size_t min_alert_height = 4;
+
+  //Translate percentages to number of tiles
+  //Secondary
+  if((maxx - primary_width) >= min_secondary_width){
+    max_secondary_width = maxx * max_secondary_width;
+  }
+  else{
+    max_secondary_width = 0;
+  }
+  //Alert
+  if((maxy - primary_height - status_height) >= min_alert_height){
+    max_alert_height = maxy * max_alert_height;
+  }
+  else{
+    max_alert_height = 0;
+  }
+
+
+  /* Set sizes */ 
+  if(d == MODE_CLASSIC){
+    secondary_width = 0;
+    alert_height = 0;
+  }
+  else{
+    secondary_width = MIN(maxx - primary_width, max_secondary_width);
+    alert_height = MIN(maxy - primary_height - status_height, max_alert_height);
+    
+    if(d == MODE_DETAIL){
+      alert_width = primary_width + secondary_width;
+    }
+    else{ // d == MODE_EXPANDED
+      alert_width = primary_width;
+    }
+  }
+  
+  change_panes_style(style);
+}
+
+void cycle_display_mode(){
+  if(mode < MODE_EXPANDED){
+    change_display_mode(mode + 1);
+  }
+  else{
+    change_display_mode(0);
+  }
+}
+
 /* Input Functions */
+
 char *get_input(int max_len, int *prompt, char **autocomplete){
   if(max_len < 1 || prompt == NULL){
     return NULL;
@@ -403,11 +476,12 @@ winlist_t *get_cur_windows(){
   winlist_t *ret = ll_insert(NULL, primary);
   ret = ll_insert(ret, status);
 
-  if(mode != MODE_CLASSIC){
-    ret = ll_insert(ret, alert);
+  if(mode == MODE_CLASSIC){
+    ret = ll_insert(ret, alert_line);
   }
   else{
-    ret = ll_insert(ret, alert_line);
+    ret = ll_insert(ret, alert);
+    ret = ll_insert(ret, secondary);
   }
   
   return ret;
@@ -454,23 +528,37 @@ void reseat_windows(){
             centerx - overall_width / 2);
     }
     else if(cur_win == secondary){
+      wresize(cur_win, get_pane_height(PANE_SECONDARY) + 2, secondary_width);
       mvwin(cur_win,
             centery - overall_height / 2,
             centerx - overall_width / 2 + primary_width);
     }
     else if(cur_win == alert){
+      wresize(cur_win, alert_height, alert_width);
       mvwin(cur_win,
             centery - overall_height / 2 + primary_height,
             centerx - overall_width / 2);
     }
     else if(cur_win == status){
+      wresize(cur_win, status_height, primary_width + secondary_width);
       mvwin(cur_win,
             centery - overall_height / 2 + primary_height + alert_height,
             centerx - overall_width / 2);
     }
+    wrefresh(cur_win);
   }
 
   ll_free(wins);
+}
+
+void clear_all_panes(){
+  winlist_t *wins = get_cur_windows();
+
+  for(winlist_t *cur = wins; cur != NULL; cur = ll_next(cur)){
+    WINDOW *win = ll_elem(cur);
+
+    wclear(win);
+  }
 }
 
 void write_to_primary(int *chars, int width, int height){
