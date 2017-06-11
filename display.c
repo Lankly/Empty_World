@@ -379,8 +379,9 @@ char *get_input(int max_len, int *prompt, char **autocomplete){
     width = get_pane_width(PANE_PRIMARY);
   }
   else{
-    getyx(alert, wy, wx);
+    getbegyx(alert, wy, wx);
     wy += alert_height;
+    wy++; wx++;
     width = alert_width;
   }
   WINDOW *temp = newwin(1, width, wy, wx);
