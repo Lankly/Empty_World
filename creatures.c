@@ -515,13 +515,11 @@ void player_take_turn(creature_t *p, map_t *m){
   if(p == NULL || !has_attribute(p, ATTR_IS_PLAYER) || m == NULL){
     return;
   }
-
-  write_to_pane(PANE_PRIMARY, map2display(m)
-                , map_get_width(m), map_get_height(m));
-
-  curs_set(0);
+  
   bool cmd_successful = false;
   while(!cmd_successful){
+    write_to_pane(PANE_PRIMARY, map2display(m)
+                  , map_get_width(m), map_get_height(m));
     refresh();
     int c = ERR;
     while((c = getch()) == ERR);
@@ -529,16 +527,16 @@ void player_take_turn(creature_t *p, map_t *m){
       creature_take_break(p);
       cmd_successful = true;
     }
-    else if(c == cmd_map[CMD_UP]){
+    else if(c == cmd_map[CMD_UP] || c == KEY_UP){ /* Arrow keys are special */
       cmd_successful = creature_move_dir(p, m, DIR_UP);
     }
-    else if(c == cmd_map[CMD_DOWN]){
+    else if(c == cmd_map[CMD_DOWN] || c == KEY_DOWN){
       cmd_successful = creature_move_dir(p, m, DIR_DOWN);
     }
-    else if(c == cmd_map[CMD_LEFT]){
+    else if(c == cmd_map[CMD_LEFT] || c == KEY_LEFT){
       cmd_successful = creature_move_dir(p, m, DIR_LEFT);
     }
-    else if(c == cmd_map[CMD_RIGHT]){
+    else if(c == cmd_map[CMD_RIGHT] || c == KEY_RIGHT){
       cmd_successful = creature_move_dir(p, m, DIR_RIGHT);
     }
     else if(c == cmd_map[CMD_UP_LEFT]){
@@ -587,34 +585,41 @@ bool execute_extended(creature_t *p, map_t *m){
     return false;
   }
 
-  bool done = false, to_return = false;
-  do{
-    char *input = get_input(1, (int[]){'#'}, NULL);
+  //Need extended commands list in heap-form
+  char **autocomplete = Calloc(CMD_EXT_MAX, sizeof(char *));
+  for(size_t i = 0; i < CMD_EXT_MAX; i++){
+    size_t cur_len = strlen(ext_cmd_map[i]);
+    autocomplete[i] = Calloc(cur_len + 1, sizeof(char));
+    memcpy(autocomplete[i], ext_cmd_map[i], cur_len);
+  }
 
-    if(input == NULL){
-      continue;
-    }
-    
-    if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_HJKL])){
-      remap_keys((commands_t[]){
-          CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
-            CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
-        , (int []){'k', 'j', 'h', 'l', 'y', 'u', 'b', 'n'}
-        , 8);
-      done = true;
-    }
-    else if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_NUMPAD])){
-      remap_keys((commands_t[]){
-          CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
-            CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
-        , (int []){'8', '2', '4', '6', '7', '9', '1', '3'}
-        , 8);
-      done = true;
-    }
-
-    free(input);
-  }while(!done);
   
+  bool to_return = false;
+  char *input = get_input(16, (int[]){'#', ' ', 0}, autocomplete);
+    
+  if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_HJKL])){
+    remap_keys((commands_t[]){
+        CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
+          CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
+      , (int []){'k', 'j', 'h', 'l', 'y', 'u', 'b', 'n'}
+      , 8);
+  }
+  else if(!strcmp(input, ext_cmd_map[CMD_EXT_USE_NUMPAD])){
+    remap_keys((commands_t[]){
+        CMD_UP, CMD_DOWN, CMD_LEFT, CMD_RIGHT,
+          CMD_UP_LEFT, CMD_UP_RIGHT, CMD_DOWN_LEFT, CMD_DOWN_RIGHT}
+      , (int []){'8', '2', '4', '6', '7', '9', '1', '3'}
+      , 8);
+  }
+
+  //Free things
+  free(input);
+  for(size_t i = 0; i < CMD_EXT_MAX; i++){
+    free(autocomplete[i]);
+  }
+  free(autocomplete);
+
+  //Return whether or not this action should occupy the player's turn.
   return to_return;
 }
 

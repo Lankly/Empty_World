@@ -34,7 +34,12 @@ void game_init(){
   items_init();
   tile_data_init();
   //maps_init();
-  noecho();
+
+  //ncurses
+  cbreak();                    /* Disable line buffering */
+  curs_set(0);                 /* Make cursor invisible */
+  noecho();                    /* getch() will not print characters */
+  keypad(stdscr, true);        /* getch() will get token correctly */
 }
 
 int int_cmp(void *item1, void *item2){

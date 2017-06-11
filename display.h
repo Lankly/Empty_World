@@ -162,8 +162,9 @@ void history_next();
  * the prompt will display them in autocomplete style. Player input is limited
  * to alphanumeric characters and spaces.
  * @param max_len The maximum allowed length of returned input. Must be nonzero.
- * @param prompt The prompt to display to the user.
- * @param Array of autocomplete options. NULL allowed.
+ * @param prompt The prompt to display to the user. Must end with a 0.
+ * @param Array of autocomplete options. NULL allowed. If not NULL, last pointer
+ *        must be NULL.
  * @returns The user's input as a string.
  */
 char *get_input(int max_len, int *prompt, char **autocomplete);

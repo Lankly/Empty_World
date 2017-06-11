@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <curses.h>
 #include "display.h"
 #include "colors.h"
@@ -300,8 +301,9 @@ char *get_input(int max_len, int *prompt, char **autocomplete){
   //Create a window to put the visuals in
   int wx = 0, wy = 0, width = 0;
   if(mode == MODE_CLASSIC){
-    getyx(primary, wy, wx);
-    width = primary_width;
+    getbegyx(primary, wy, wx);
+    wy++; wx++;
+    width = get_pane_width(PANE_PRIMARY);
   }
   else{
     getyx(alert, wy, wx);
@@ -309,23 +311,83 @@ char *get_input(int max_len, int *prompt, char **autocomplete){
     width = alert_width;
   }
   WINDOW *temp = newwin(1, width, wy, wx);
-  refresh();
 
-  //Start writing
+  //Visible cursor (for typing)
   curs_set(1);
 
-  wmove(temp, 0, 0);
-  waddch(temp, '#');
-  refresh();
-  
   int ch = '\0';
   while(ch != '\n'){
-    ch = getch();
-    if(ch != ERR){
-      waddch(temp, ch);
+    wclear(temp);
+    wmove(temp, 0, 0);
+    
+    size_t i = 0, cur_len = strlen(to_return), prompt_len = 0;
+    bool found = false;
+
+    //Print out prompt
+    for(i = 0; prompt[i] != 0; i++){
+      waddch(temp, prompt[i] | COLOR_PAIR(CP_GREEN_BLACK));
+      prompt_len++;
+    }
+        
+    //Print out what we've got so far
+    for(i = 0; i < cur_len; i++){
+      if(i < strlen(to_return)){
+	waddch(temp, to_return[i] | COLOR_PAIR(CP_GREEN_BLACK));
+      }
+      else{
+        break;
+      }
+    }
+
+    //Predict what they want
+    if(autocomplete != NULL){
+      
+      //Loop through all the autocomplete options
+      for(i = 0; autocomplete[i] != NULL && !found; i++){
+        
+	//For each, examine for similarity to what's been typed
+	for(size_t j = 0; j < cur_len && autocomplete[i][j] != '\0'; j++){
+
+          if(autocomplete[i][j] != to_return[j]){break;}
+
+          //If everything typed so far is equal to a command, autocomplete
+	  if(j == cur_len - 1){
+	    wmove(temp, 0, prompt_len + cur_len);
+
+            for(size_t k = j + 1; k < strlen(autocomplete[i]); k++){
+	      waddch(temp, autocomplete[i][k] | COLOR_PAIR(CP_GREY_BLACK));
+	    }
+
+            found = true;
+            i--;
+            break;
+	  }
+	}
+      }
+    }
+
+    wmove(temp, 0, prompt_len + cur_len);
+    wrefresh(temp);
+
+    do{ch = getch();}while(ch == ERR);
+
+    //special case for backspace
+    if((ch == KEY_BACKSPACE || ch == 127) && cur_len > 0){
+      to_return[cur_len - 1] = '\0';
+    }
+    else if(cur_len <= (size_t)max_len){
+      //do not add \n
+      if(ch != '\n' && (isalnum(ch) || ch == ' ' || ch=='-')){
+	to_return[cur_len] = ch;
+      }
+      //Add autocomplete if enter is hit and we found a match
+      else if(ch == '\n' && found){
+        memcpy(to_return, autocomplete[i], strlen(autocomplete[i]));
+      }
     }
   }
 
+  //Set cursor back to invisible
   curs_set(0);
 
   delwin(temp);  
