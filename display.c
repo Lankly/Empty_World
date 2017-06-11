@@ -300,8 +300,8 @@ int get_pane_width(pane_t p){
 /* Display Mode Functions */
 
 void change_display_mode(display_mode_t d){
-  mode = d;
   clear_all_panes();
+  mode = d;
 
   //Get current terminal size
   size_t maxx, maxy;
@@ -559,6 +559,7 @@ void clear_all_panes(){
     WINDOW *win = ll_elem(cur);
 
     wclear(win);
+    wrefresh(win);
   }
 }
 
