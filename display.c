@@ -60,6 +60,13 @@ void write_to_alert_line(int *msg);
 void write_to_status(int *stats);
 
 /**
+ * These functions help determine if the screen is large enough to accomodate
+ * larger display modes.
+ */
+void calculate_secondary_width();
+void calculate_alert_height();
+
+/**
  * Helper functions for writing to the alert panes. They will automatically
  * update hist and cur_hist to the newest item, as well as incrementing
  * history_len if necessary. Does nothing if chars is NULL.
@@ -110,7 +117,16 @@ void display_init(){
   
   //Add a border and position them.
   change_panes_style(STYLE_CLEAN);
-  change_display_mode(MODE_EXPANDED);
+
+  //Set the mode to EXPANDED if the screen can accomodate
+  calculate_secondary_width();
+  calculate_alert_height();
+  if(secondary_width > 0 && alert_height > 0){
+    change_display_mode(MODE_EXPANDED);
+  }
+  else{
+    secondary_width = 0; alert_height = 0;
+  }
 }
 
 void change_panes_style(pane_style_t s){
@@ -303,35 +319,8 @@ void change_display_mode(display_mode_t d){
   clear_all_panes();
   mode = d;
 
-  //Get current terminal size
-  size_t maxx, maxy;
-  getmaxyx(stdscr, maxy, maxx);
-  
-  //Arbitrary limits (in percentages)
-  //Panels will be capped at these maximums.
-  double max_secondary_width = .15;
-  double max_alert_height = .15;
-  //Arbitrary limits (in number of tiles)
-  //Panels must meet these minimums or become 0.
-  size_t min_secondary_width = 8;
-  size_t min_alert_height = 4;
-
-  //Translate percentages to number of tiles
-  //Secondary
-  if((maxx - primary_width) >= min_secondary_width){
-    max_secondary_width = maxx * max_secondary_width;
-  }
-  else{
-    max_secondary_width = 0;
-  }
-  //Alert
-  if((maxy - primary_height - status_height) >= min_alert_height){
-    max_alert_height = maxy * max_alert_height;
-  }
-  else{
-    max_alert_height = 0;
-  }
-
+  calculate_secondary_width();
+  calculate_alert_height();
 
   /* Set sizes */ 
   if(d == MODE_CLASSIC){
@@ -339,9 +328,6 @@ void change_display_mode(display_mode_t d){
     alert_height = 0;
   }
   else{
-    secondary_width = MIN(maxx - primary_width, max_secondary_width);
-    alert_height = MIN(maxy - primary_height - status_height, max_alert_height);
-    
     if(d == MODE_DETAIL){
       alert_width = primary_width + secondary_width;
     }
@@ -540,6 +526,12 @@ void reseat_windows(){
             centery - overall_height / 2 + primary_height,
             centerx - overall_width / 2);
     }
+    else if(cur_win == alert_line){
+      wresize(cur_win, 1, get_pane_width(PANE_PRIMARY));
+      mvwin(cur_win,
+            centery - overall_height / 2 + 1,
+            centerx - overall_width / 2 + 1);
+    }
     else if(cur_win == status){
       wresize(cur_win, status_height, primary_width + secondary_width);
       mvwin(cur_win,
@@ -611,8 +603,7 @@ void write_to_secondary(int *chars){
 
 void write_to_alert_area(int *msg){
   add_history(msg);
-  wclear(alert);
-  wmove(alert, 0, 0);
+  wmove(alert, 1, 1);
 
   for(; cur_hist != NULL; cur_hist = ll_next(cur_hist)){
     int *cur_str = ll_elem(cur_hist);
@@ -636,9 +627,10 @@ void write_to_alert_area(int *msg){
 }
 
 void write_to_alert_line(int *msg){
+  return;
   add_history(msg);
   wclear(alert_line);
-  wmove(alert_line, 0, 0);
+  wrefresh(alert_line);
 
   if(cur_hist == NULL){
     return;
@@ -654,13 +646,12 @@ void write_to_alert_line(int *msg){
     
     if(i != 0 && i == (i % (primary_width - more_len - 1))){
       waddstr(alert_line, more_msg);
-      getch();
-      wmove(alert_line, 0, 0);
-      wclrtoeol(alert_line);
     }
 
     waddch(alert_line, cur_str[i]);
   }
+
+  wrefresh(alert_line);
 }
 
 void write_to_status(int *msg){
@@ -688,6 +679,55 @@ void write_to_status(int *msg){
   while(i < (primary_width + secondary_width)){
     waddch(status, example_space);
   }
+}
+
+void calculate_secondary_width(){
+  //Arbitrary limits
+  //Panel will be capped at this maximum percentage.
+  double max_secondary_width = .15;
+  //Panel must meet this minimum tile count or become 0.
+  int min_secondary_width = 8;
+
+
+  //Get current terminal size
+  int maxx, maxy;
+  getmaxyx(stdscr, maxy, maxx);
+  maxy = *(size_t *)(&maxy);
+  
+  //Translate percentages to number of tiles
+  if((maxx - primary_width) >= min_secondary_width){
+    max_secondary_width = (double)maxx * max_secondary_width;
+  }
+  else{
+    max_secondary_width = 0;
+  }
+
+  secondary_width = MIN(maxx - primary_width, max_secondary_width);
+}
+
+void calculate_alert_height(){
+  //Arbitrary limits
+  //Panel will be capped at this maximum percentage.
+  double max_alert_height = .15;
+  //Panel must meet this minimum tile count or become 0.
+  int min_alert_height = 4;
+
+
+  //Get current terminal size
+  int maxx, maxy;
+  getmaxyx(stdscr, maxy, maxx);
+  maxx = *(size_t *)(&maxx);
+
+  
+  //Translate percentages to number of tiles
+  if((maxy - primary_height - status_height) >= min_alert_height){
+    max_alert_height = (double)maxy * max_alert_height;
+  }
+  else{
+    max_alert_height = 0;
+  }
+
+  alert_height = MIN(maxy - primary_height - status_height, max_alert_height);
 }
 
 void add_history(int *msg){

@@ -501,6 +501,8 @@ creature_t *new_player(){
   player->display_color_alt = CP_YELLOW_BLACK;
 
   add_attribute(player, ATTR_IS_PLAYER);
+
+  write_to_pane(PANE_ALERT, (int[]){ 'H', 'e', 'l', 'l', 'o', '!', 0 }, 0, 0);
   
   return player;
 }
