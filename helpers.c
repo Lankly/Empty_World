@@ -1,6 +1,7 @@
-#include <curses.h>
-#include <math.h>
 #include <stdlib.h>
+#include <curses.h>
+#include <limits.h>
+#include <math.h>
 #include "helpers.h"
 #include "colors.h"
 #include "creatures.h"
@@ -40,6 +41,7 @@ void game_init(){
   curs_set(0);                 /* Make cursor invisible */
   noecho();                    /* getch() will not print characters */
   keypad(stdscr, true);        /* getch() will get token correctly */
+  timeout(500);                /* getch timeout of half second */
 }
 
 int int_cmp(void *item1, void *item2){
@@ -73,4 +75,11 @@ int get_coord_in_arr(int x, int y, int width){
 
 double dist(int x1, int y1, int x2, int y2){
   return sqrt(x1*x2 + y1*y2);
+}
+
+unsigned int hash(unsigned int n) {
+    n = ((n >> 16) ^ n) * 0x45d9f3b;
+    n = ((n >> 16) ^ n) * 0x45d9f3b;
+    n = (n >> 16) ^ n;
+    return n;
 }

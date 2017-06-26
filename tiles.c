@@ -2,14 +2,19 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 #include "tiles.h"
 #include "colors.h"
+#include "display.h"
 #include "trees.h"
 
 /*********
  * TYPES *
  *********/
+
 BTREE(property_tree_t)
+
+typedef int (*get_display_func)(int, int);
 
 typedef struct {
   int display;
@@ -18,6 +23,7 @@ typedef struct {
   int hardness;                 /* Scale of 0 to 100*/
   char* exam_text;
   property_tree_t *properties;
+  get_display_func disp_func;  /* Should pass in x, y, current time */
 } tile_data_t;
 
 
@@ -47,6 +53,19 @@ void tile_add_property(tile_t t, tile_property_t p);
  */
 void tile_add_properties(tile_t t, int num_properties, ...);
 
+/**
+ * Returns the display character for the given tile, and its correct color
+ * scheme.
+ * @param t Any tile other than TILE_MAX
+ * @returns An integer printable by ncurses. 
+ */
+int tile_get_default_display(tile_t t);
+
+/* Tile animation functions */
+
+int get_sand_floor_display(int x, int y);
+
+
 /************************
  * FUNCTION DEFINITIONS *
  ************************/
@@ -72,14 +91,8 @@ void tile_data_init(){
   tile_data[TILE_SAND_FLOOR] = (tile_data_t){
     .display = '.',
     .exam_text = "It is loose sand.\n",
-    .hardness = 5
-  };
-  tile_add_properties(TILE_SAND_FLOOR, 2, TPROP_OPEN, TPROP_TRANSPARENT);
-  
-  tile_data[TILE_SAND_FLOOR_ALT] = (tile_data_t){
-    .display = ',',
-    .exam_text = tile_data[TILE_SAND_FLOOR].exam_text,
-    .hardness = tile_data[TILE_SAND_FLOOR].hardness
+    .hardness = 5,
+    .disp_func = get_sand_floor_display
   };
   tile_add_properties(TILE_SAND_FLOOR, 2, TPROP_OPEN, TPROP_TRANSPARENT);
 
@@ -121,20 +134,16 @@ void tile_data_init(){
 
 /* DATA FUNCTIONS */
 
-int tile_get_display(tile_t t){
-  if(t == TILE_MAX){
+int tile_get_display(tile_t t, int x, int y){
+  if( t == TILE_MAX){
     return 0;
   }
 
-  int display_color;
-  if(compatibility_mode_on()){
-    display_color = tile_data[t].display_color_alt;
-  }
-  else{
-    display_color = tile_data[t].display_color;
+  if(tile_data[t].disp_func != NULL){
+    return (tile_data[t].disp_func)(x, y);
   }
   
-  return tile_data[t].display | COLOR_PAIR(display_color);
+  return tile_get_default_display(t);
 }
 
 /* PROPERTIES FUNCTIONS */
@@ -167,4 +176,53 @@ void tile_add_properties(tile_t t, int num_properties, ...){
   }
   
   va_end(args);
+}
+
+int tile_get_default_display(tile_t t){
+  if(t == TILE_MAX){
+    return 0;
+  }
+
+  int display_color;
+  if(compatibility_mode_on()){
+    display_color = tile_data[t].display_color_alt;
+  }
+  else{
+    display_color = tile_data[t].display_color;
+  }
+  
+  return tile_data[t].display | COLOR_PAIR(display_color);
+}
+
+/* Tile animation functions */
+
+int get_sand_floor_display(int x, int y){
+  /* Constants */
+  int primary_width = get_pane_width(PANE_PRIMARY);
+  int primary_height = get_pane_height(PANE_PRIMARY);
+  int num_waves = 4;
+  int wave_width = primary_width / num_waves;
+  int head_radius_min = 1;
+  int head_radius_max = 4;
+  int wave_head = '~';
+  int standing_sand = '.';
+  
+  /* Calculated */
+  int cur_time = time(NULL);
+  int cur_column = x / wave_width;
+  int cur_wave_id = cur_time / wave_width - cur_column;
+  unsigned int cur_wave_hash = hash(cur_wave_id);
+  int wave_head_y = cur_wave_hash % primary_height ;
+  int head_radius = MAX(head_radius_min, cur_wave_hash % (head_radius_max + 1));
+  int wave_head_top = wave_head_y - head_radius;
+  int wave_head_bottom = wave_head_y + head_radius;
+  int column_index = x % wave_width;
+
+  //Return anything in the wave head
+  if(column_index == cur_time % wave_width
+     && (y >= wave_head_top && y <= wave_head_bottom)){
+    return wave_head;
+  }
+  
+  return standing_sand;
 }

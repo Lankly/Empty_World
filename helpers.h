@@ -86,4 +86,13 @@ int get_coord_in_arr(int x, int y, int width);
  */
 double dist(int x1, int y1, int x2, int y2);
 
+/**
+ * Hashes the given integer. 
+ * Stolen from https://stackoverflow.com/a/12996028
+ * @param n Any integer.
+ * @returns A random-looking integer based on that integer that is the same
+ *          every time this function is called with that integer.
+ */
+unsigned int hash(unsigned int n);
+
 #endif

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <curses.h>
 #include <limits.h>
+#include <time.h>
 #include "creatures.h"
 #include "bodies.h"
 #include "colors.h"
@@ -492,9 +493,13 @@ creature_t *new_player(){
   
   memcpy(player, class_templates + c, sizeof(creature_t));
 
-  //Restore
+  //Restore those variables
   player->body = temp;
   player->display = disp;
+
+  //Set location (middle of screen, which is okay on desert)
+  player->x = get_pane_width(PANE_PRIMARY) / 2;
+  player->y = get_pane_height(PANE_PRIMARY) / 2;
   
   player->lvl = 1;
   player->display_color = CP_YELLOW_BLACK;
@@ -522,11 +527,22 @@ void player_take_turn(creature_t *p, map_t *m){
   
   bool cmd_successful = false;
   while(!cmd_successful){
+    //Need to do the write once here in addition to below, or it will lag
     write_to_pane(PANE_PRIMARY, map2display(m)
                   , map_get_width(m), map_get_height(m));
     refresh();
-    int c = ERR;
-    while((c = getch()) == ERR);
+    
+    int c = ERR, last_second = time(NULL);
+    while((c = getch()) == ERR){
+      int cur_time = time(NULL);
+      if(cur_time != last_second){
+        last_second = cur_time;
+        write_to_pane(PANE_PRIMARY, map2display(m)
+                      , map_get_width(m), map_get_height(m));
+        refresh();
+      }
+    }
+    
     if(c == cmd_map[CMD_WAIT]){
       creature_take_break(p);
       cmd_successful = true;

@@ -30,7 +30,7 @@ typedef enum {
   TPROP_OPEN,        /* Tile can be passed through by solid beings. */
   TPROP_STOPME,      /* Tile stops automove. */
   TPROP_TRANSPARENT, /* Tile can be easily seen through. Default is Opaque. */
-  TPROP_TRANSLUCENT, /* Tile can be only partially seen through. */
+  TPROP_TRANSLUCENT, /* Tile can be only be partially seen through. */
 
   /* TILE TYPES */
   TPROP_IS_CORRIDOR,
@@ -49,11 +49,14 @@ void tile_data_init();
 
 /**
  * Returns the display character associated with the given tile as an integer
- * with NCURSES color information.
+ * with NCURSES color information. The coordinate information is not necessary
+ * if the tile is not animated.
  * @param t A tile other than TILE_MAX.
+ * @param x The x-coordinate of the tile on its map.
+ * @param y The y-coordinate of the tile on its map.
  * @returns An integer printable by NCURSES.
  */
-int tile_get_display(tile_t t);
+int tile_get_display(tile_t t, int x, int y);
 
 /* PROPERTIES FUNCTIONS */
 

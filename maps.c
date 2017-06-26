@@ -189,7 +189,7 @@ int *map2display(map_t *m){
   for(int j = 0; j < m->height; j++){
     for(int i = 0; i < m->width; i++){
       to_return[cur_coord] =
-        tile_get_display(m->tiles[get_coord_in_arr(i, j, m->width)]);
+        tile_get_display(m->tiles[get_coord_in_arr(i, j, m->width)], i, j);
       
       cur_coord++;
     }

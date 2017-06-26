@@ -684,7 +684,7 @@ void write_to_status(int *msg){
 void calculate_secondary_width(){
   //Arbitrary limits
   //Panel will be capped at this maximum percentage.
-  double max_secondary_width = .15;
+  double max_secondary_width = .2;
   //Panel must meet this minimum tile count or become 0.
   int min_secondary_width = 8;
 
