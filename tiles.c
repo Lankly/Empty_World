@@ -214,6 +214,7 @@ int get_sand_floor_display(int x, int y){
   int cur_column = x / wave_width;
   int cur_wave_id = cur_time / wave_width - cur_column;
   unsigned int cur_wave_hash = hash(cur_wave_id);
+  unsigned int tile_hash = hash(x * y + 1);
   int wave_head_y = cur_wave_hash % primary_height;
   int wave_head_i = cur_time % wave_width;
   int head_radius = MAX(head_radius_min, cur_wave_hash % (head_radius_max + 1));
@@ -224,13 +225,13 @@ int get_sand_floor_display(int x, int y){
   //Return anything in the wave head
   if(column_index == wave_head_i
      && (y >= wave_head_top && y <= wave_head_bottom)){
-    return rand() % 3 ? wave_head1 : wave_head2;
+    return tile_hash % 3 ? wave_head1 : wave_head2;
   }
   //Return anything in the debris
   else if((column_index == (wave_head_i - 1))
           && ((y > wave_head_bottom && y <= (wave_head_bottom + debris_radius))
               || (y < wave_head_top && y >= (wave_head_top - debris_radius)))){
-    return rand() % 2 ? wave_debris1 : wave_debris2;
+    return tile_hash % 2 ? wave_debris1 : wave_debris2;
   }
   //Also the debris
   else if((column_index == wave_width - 1) && wave_head_i == 0){
@@ -246,9 +247,9 @@ int get_sand_floor_display(int x, int y){
     
     if((y > wave_head_bottom && y <= (wave_head_bottom + debris_radius))
        || (y < wave_head_top && y >= (wave_head_top - debris_radius))){
-      return rand() % 2 ? wave_debris1 : wave_debris2;
+      return tile_hash % 2 ? wave_debris1 : wave_debris2;
     }
   }
   
-  return hash(x * y + 1) % 12 ? standing_sand1 : standing_sand2;
+  return tile_hash % 12 ? standing_sand1 : standing_sand2;
 }
