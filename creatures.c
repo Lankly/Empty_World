@@ -329,6 +329,22 @@ int creature_get_coord(creature_t *c, map_t *m){
   return get_coord_in_arr(c->x, c->y, map_get_width(m));
 }
 
+int creature_get_xcoord(creature_t *c){
+  if(c == NULL){
+    return -1;
+  }
+
+  return c->x;
+}
+
+int creature_get_ycoord(creature_t *c){
+  if(c == NULL){
+    return -1;
+  }
+
+  return c->y;
+}
+
 void creature_set_coord(creature_t *c, int x, int y){
   if(c == NULL || x < 0 || y < 0){
     return;
@@ -717,7 +733,7 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
       c->facing = DIR_LR;
     }
     int map_width = map_get_width(m);
-    //-1 means that the coordinate was out-of-bounds on the left, right, and top
+    // -1 means the coordinate was out-of-bounds on the left, right, and top
     if(check_coord != -1
        //Check for out-of-bounds on bottom
        && check_coord < (map_width * map_get_height(m))
@@ -727,6 +743,13 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
       creature_set_coord(c, check_coord % map_width, check_coord / map_width);
       return true;
     }
+
+    // If we got here, it means we were at an edge, so try to change maps.
+    map_t *new_map = move_creature_to_adjacent_map(m, c, dir);
+    if(new_map != m){
+      return true;
+    }
+    
     //fall-through
   default:
     return false;

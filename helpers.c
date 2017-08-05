@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <curses.h>
 #include <limits.h>
 #include <math.h>
@@ -44,23 +45,6 @@ void game_init(){
   timeout(500);                /* getch timeout of half second */
 }
 
-int int_cmp(void *item1, void *item2){
-  if(item1 == item2){
-    return 0;
-  }
-  if(item1 == NULL){
-    return -1;
-  }
-  if(item2 == NULL){
-    return 1;
-  }
-
-  int first = *(int *)item1;
-  int second = *(int *)item2;
-  
-  return first - second;
-}
-
 dir_t rand_dir(){
   return rand() % DIR_COUNT;
 }
@@ -82,4 +66,28 @@ unsigned int hash(unsigned int n) {
     n = ((n >> 16) ^ n) * 0x45d9f3b;
     n = (n >> 16) ^ n;
     return n;
+}
+
+/* Comparators */
+
+int addr_cmp(void *item1, void *item2){
+  int int_size = sizeof(int);
+  return (((uintptr_t)item1) % int_size) - (((uintptr_t)item2) % int_size);
+}
+
+int int_cmp(void *item1, void *item2){
+  if(item1 == item2){
+    return 0;
+  }
+  if(item1 == NULL){
+    return -1;
+  }
+  if(item2 == NULL){
+    return 1;
+  }
+
+  int first = *(int *)item1;
+  int second = *(int *)item2;
+  
+  return first - second;
 }

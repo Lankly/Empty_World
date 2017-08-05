@@ -50,13 +50,6 @@ void *Calloc(size_t items, size_t size);
 void quit(const char* error_msg);
 
 /**
- * A comparator for integers.
- * @param item1 The first item for comparison. Must point to an integer.
- * @param item2 The second item for comparison. Must point to an integer.
- */
-int int_cmp(void *item1, void *item2);
-
-/**
  * Sets up the game, including the player.
  */
 void game_init();
@@ -94,5 +87,25 @@ double dist(int x1, int y1, int x2, int y2);
  *          every time this function is called with that integer.
  */
 unsigned int hash(unsigned int n);
+
+/* Comparators */
+
+/**
+ * A comparator for integers.
+ * @param item1 The first item for comparison. Must point to an integer.
+ * @param item2 The second item for comparison. Must point to an integer.
+ * @returns An integer indicating whether item1 was larger (>0), smaller(<0), or
+ *          equal to item 2 (0).
+ */
+int int_cmp(void *item1, void *item2);
+
+/**
+ * A comparator for addresses.
+ * @param item1 The first item for comparison. Can be anything, even NULL.
+ * @param item2 The first item for comparison. Can be anything, even NULL.
+ * @returns An integer indicating whether item1 was larger (>0), smaller(<0), or
+ *          equal to item 2 (0).
+ */
+int addr_cmp(void *item1, void *item2);
 
 #endif

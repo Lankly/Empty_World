@@ -195,9 +195,23 @@ void creature_take_damage(creature_t *c, int amount, dmg_type_t t);
  * is required for the conversion of the xy pair into a 1-D index.
  * @param c A valid creature.
  * @param m A valid map.
- * @returns A index representing the creature's current coordinates, or -1.
+ * @returns An index representing the creature's current coordinates, or -1.
  */
 int creature_get_coord(creature_t *c, map_t *m);
+
+/**
+ * Returns the given creature's x-coordinate for the map it's currently on.
+ * @param c A valid creature.
+ * @returns The x-coordinate, or -1.
+ */
+int creature_get_xcoord(creature_t *c);
+
+/**
+ * Returns the given creature's y-coordinate for the map it's currently on.
+ * @param c A valid creature.
+ * @returns The y-coordinate, or -1.
+ */
+int creature_get_ycoord(creature_t *c);
 
 /**
  * Set's a given creature's coordinates. Does nothing if the creature is NULL,

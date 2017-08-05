@@ -83,6 +83,9 @@ void *ll_remove(void *ll, void *item, cmp func){
   if(ll == NULL || item == NULL){
     return ll;
   }
+  if(func == NULL){
+    func = addr_cmp;
+  }
 
   //If it's the first node
   if(func(((ll_helper_t *)ll)->elem, item) == 0){

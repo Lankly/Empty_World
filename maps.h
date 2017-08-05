@@ -73,6 +73,24 @@ void map_add_creatures(map_t *m, int num_creatures, ...);
 clist_t *map_get_creatures(map_t *m);
 
 /**
+ * Removes a given creature from a given map.
+ * @param m A valid map.
+ * @param c A valid creature on that map.
+ */
+void map_remove_creature(map_t *m, creature_t *c);
+
+/**
+ * Attemps to move a creature to a map adjacent to the given one. The direction
+ * provided determines which map to go to.
+ * @param m A valid map.
+ * @param c A valid creature on that map.
+ * @param d A valid direction.
+ * @returns A reference to the map the creature was moved to. NULL if the
+ *          creature was not moved.
+ */
+map_t *move_creature_to_adjacent_map(map_t *m, creature_t *c, dir_t d);
+
+/**
  * Teleports a given creature to the given coordinates on the given map. If the
  * creature or map is NULL, if the coordinates are out of bounds, or if the
  * space is blocked, does not move the creature and returns false;

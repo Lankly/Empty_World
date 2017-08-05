@@ -160,6 +160,130 @@ clist_t *map_get_creatures(map_t *m){
   return m->creatures;
 }
 
+void map_remove_creature(map_t *m, creature_t *c){
+  if(m == NULL){
+    return;
+  }
+  m->creatures = ll_remove(m->creatures, c, NULL);
+}
+
+map_t *move_creature_to_adjacent_map(map_t *m, creature_t *c, dir_t d){
+  if(m == NULL || c == NULL){
+    return NULL;
+  }
+
+  // Creature won't stay on this map, so move it
+  map_remove_creature(m, c);
+
+  //These are what the creature's new coordinates will be.
+  int c_x = creature_get_xcoord(c), c_y = creature_get_ycoord(c);
+  int new_x = c_x, new_y = c_y;
+  
+  map_t *return_map = m;
+      
+  switch(d){
+    /* Simple cases - Up, down, left, right */
+  case DIR_UP:
+    if(m->north != NULL){
+      new_y = m->north->height - 1;
+      return_map = m->north;
+    }
+    break;
+  case DIR_DOWN:
+    if(m->south != NULL){
+      new_y = 0;
+      return_map = m->south;
+    }
+    break;
+  case DIR_LEFT:
+    if(m->west != NULL){
+      new_x = m->west->width - 1;
+      return_map = m->west;
+    }
+    break;
+  case DIR_RIGHT:
+    if(m->east != NULL){
+      new_x = 0;
+      return_map = m->east;
+    }
+    break;
+    /* More complex cases - the diagonals:
+     *
+     * Each case will check both that there is a map to go to and that it's the
+     * same as the alternate path to get there.
+     */
+  case DIR_UL:
+    if(m->north != NULL){
+      if(m->north->west == NULL
+         || (m->west != NULL && m->north->west != m->west->north)){
+        break;
+      }
+
+      new_x = m->north->west->width - 1;
+      new_y = m->north->west->height - 1;
+      
+      return_map = m->north->west;
+    }
+    break;
+  case DIR_UR:
+    if(m->north != NULL){
+      if(m->north->east == NULL
+         || (m->east != NULL && m->north->east != m->east->north)){
+        break;
+      }
+
+      new_x = 0;
+      new_y = m->north->east->height - 1;
+      
+      return_map = m->north->east;
+    }
+    break;
+  case DIR_LL:
+    if(m->south != NULL){
+      if(m->south->west == NULL
+         || (m->west != NULL && m->south->west != m->west->south)){
+        break;
+      }
+
+      new_x = m->south->east->width - 1;
+      new_y = 0;
+      
+      return_map = m->south->west;
+    }
+    break;
+    break;
+  case DIR_LR:
+    if(m->south != NULL){
+      if(m->south->east == NULL
+         || (m->east != NULL && m->south->east != m->east->south)){
+        break;
+      }
+
+      new_x = 0;
+      new_y = 0;
+      
+      return_map = m->south->east;
+    }
+    break;
+    /* Any other directions are not supported at this time */
+  default:
+    break;
+  }
+
+  // Check that the space can be moved into
+  if(map_xycoord_is_blocked(return_map, new_x, new_y)){
+    return_map = m;
+    new_x = c_x;
+    new_y = c_y;
+  }
+  
+  // If the creature did not actually change maps, readd it to the original
+  map_add_creature(m, c);
+  creature_set_coord(c, new_x, new_y);
+  
+  return return_map;
+}
+
 bool teleport_creature(map_t *m, creature_t *c, int x, int y){
   if(m == NULL || c == NULL || x < 0 || y < 0){
     return false;
@@ -540,7 +664,11 @@ void new_desert(map_t *base){
   base->height = get_pane_height(PANE_PRIMARY);
   base->width = get_pane_width(PANE_PRIMARY);
   base->tiles = Calloc(base->height * base->width, sizeof(int));
-
+  base->north = base;
+  base->south = base;
+  base->east = base;
+  base->west = base;
+  
   int cur_coord = 0;
   for(int j = 0; j < base->height; j++){
     for(int i = 0; i < base->width; i++){
