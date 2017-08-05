@@ -680,31 +680,37 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
       check_coord = get_coord_in_arr(c->x, c->y + 1, map_get_width(m));
       c->facing = DIR_DOWN;
     }
+    //fall-through
   case CMD_LEFT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c->x - 1, c->y, map_get_width(m));
       c->facing = DIR_LEFT;
     }
+    //fall-through
   case CMD_RIGHT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c->x + 1, c->y, map_get_width(m));
       c->facing = DIR_RIGHT;
     }
+    //fall-through
   case CMD_UP_LEFT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c->x - 1, c->y - 1, map_get_width(m));
       c->facing = DIR_UL;
     }
+    //fall-through
   case CMD_UP_RIGHT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c-> x + 1, c->y - 1, map_get_width(m));
       c->facing = DIR_UR;
     }
+    //fall-through
   case CMD_DOWN_LEFT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c->x - 1, c->y + 1, map_get_width(m));
       c->facing = DIR_LL;
     }
+    //fall-through
   case CMD_DOWN_RIGHT:
     if(check_coord == INT_MIN){
       check_coord = get_coord_in_arr(c->x + 1, c->y + 1, map_get_width(m));
@@ -721,6 +727,7 @@ bool creature_move_dir(creature_t *c, map_t *m, dir_t dir){
       creature_set_coord(c, check_coord % map_width, check_coord / map_width);
       return true;
     }
+    //fall-through
   default:
     return false;
   }

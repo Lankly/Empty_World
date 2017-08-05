@@ -158,7 +158,11 @@ bool tile_has_property(tile_t t, tile_property_t p){
  *******************************/
 
 void tile_add_property(tile_t t, tile_property_t p){
-  tile_data[t].properties = tree_insert(tile_data[t].properties, &p, &int_cmp);
+  tile_property_t *heap_reference = Calloc(1, sizeof(tile_property_t));
+  *heap_reference = p;
+  
+  tile_data[t].properties =
+    tree_insert(tile_data[t].properties, heap_reference, int_cmp);
 }
 
 void tile_add_properties(tile_t t, int num_properties, ...){

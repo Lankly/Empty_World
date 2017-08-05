@@ -501,32 +501,33 @@ int map_get_nearest_wall(map_t *m, int x, int y){
 }
 
 bool map_coord_is_blocked(map_t *m, int c){
-  if(c < 0){
+  if(m == NULL || !coord_is_valid(m, c)){
     return false;
   }
-  
-  return map_xycoord_is_blocked(m, c % m->width, c / m->width);
+
+  // First, check that the tile can be passed at all
+  if(!tile_has_property(m->tiles[c], TPROP_OPEN)){
+    return true;
+  }
+
+  // Then, check to see if a creature is blocking that tile
+  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
+    creature_t *cur_creature = ll_elem(cur);
+
+    if(cur_creature != NULL && c == creature_get_coord(cur_creature,m)){
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool map_xycoord_is_blocked(map_t *m, int x, int y){
   if(m == NULL || !xycoord_is_valid(m, x, y)){
     return false;
   }
-
-  if(!tile_has_property(m->tiles[get_coord_in_arr(x, y, m->width)],TPROP_OPEN)){
-    return true;
-  }
-
-  int cur_coord = get_coord_in_arr(x, y, m->width);
-  for(clist_t *cur = m->creatures; cur != NULL; cur = ll_next(cur)){
-    creature_t *cur_creature = ll_elem(cur);
-
-    if(cur_creature != NULL && cur_coord == creature_get_coord(cur_creature,m)){
-      return true;
-    }
-  }
-
-  return false;
+  
+  return map_coord_is_blocked(m, get_coord_in_arr(x, y, m->width));
 }
 
 /* MAP GENERATORS */
