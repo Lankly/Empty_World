@@ -213,56 +213,131 @@ map_t *move_creature_to_adjacent_map(map_t *m, creature_t *c, dir_t d){
      * same as the alternate path to get there.
      */
   case DIR_UL:
-    if(m->north != NULL){
-      if(m->north->west == NULL
-         || (m->west != NULL && m->north->west != m->west->north)){
-        break;
+      // If in the upper left-hand corner
+      if(c_x == 0 && c_y == 0){
+        if(m->north != NULL){
+          if(m->north->west == NULL
+             || (m->west != NULL && m->north->west != m->west->north)){
+            break;
+          }
+        
+          new_x = m->north->west->width - 1;
+          new_y = m->north->west->height - 1;
+        
+          return_map = m->north->west;
+        }
       }
-
-      new_x = m->north->west->width - 1;
-      new_y = m->north->west->height - 1;
-      
-      return_map = m->north->west;
-    }
+      // If at west border
+      else if(c_x == 0){
+        if(m->west != NULL){
+          new_x = m->west->width - 1;
+          new_y--;
+          return_map = m->west;
+        }
+      }
+      // At north border
+      else{
+        if(m->north != NULL){
+          new_x--;
+          new_y = m->north->height - 1;
+          return_map = m->west;
+        }
+      }
     break;
   case DIR_UR:
-    if(m->north != NULL){
-      if(m->north->east == NULL
-         || (m->east != NULL && m->north->east != m->east->north)){
-        break;
-      }
+      // If in the upper right-hand corner
+      if(c_x == (m->width - 1) && c_y == 0){
+        if(m->north != NULL){
+          if(m->north->east == NULL
+             || (m->east != NULL && m->north->east != m->east->north)){
+            break;
+          }
 
-      new_x = 0;
-      new_y = m->north->east->height - 1;
+          new_x = 0;
+          new_y = m->north->east->height - 1;
       
-      return_map = m->north->east;
-    }
+          return_map = m->north->east;
+        }
+      }
+      // If at the east border
+      else if(c_x == (m->width - 1)){
+        if(m->east != NULL){
+          new_x = 0;
+          new_y--;
+          return_map = m->east;
+        }
+      }
+      // At north border
+      else{
+        if(m->north != NULL){
+          new_x++;
+          new_y = m->north->height - 1;
+          return_map = m->north;
+        }
+      }
     break;
   case DIR_LL:
-    if(m->south != NULL){
-      if(m->south->west == NULL
-         || (m->west != NULL && m->south->west != m->west->south)){
-        break;
+    // If in the lower left-hand corner
+    if(c_x == 0 && c_y == (m->height - 1)){
+      if(m->south != NULL){
+        if(m->south->west == NULL
+           || (m->west != NULL && m->south->west != m->west->south)){
+          break;
+        }
+        
+        new_x = m->south->east->width - 1;
+        new_y = 0;
+        
+        return_map = m->south->west;
       }
-
-      new_x = m->south->east->width - 1;
-      new_y = 0;
-      
-      return_map = m->south->west;
+    }
+    // If at the west border
+    else if(c_x == 0){
+      if(m->west != NULL){
+        new_x = m->west->width - 1;
+        new_y++;
+        return_map = m->west;
+      }
+    }
+    // If at the south border
+    else{
+      if(m->south != NULL){
+        new_x--;
+        new_y = 0;
+        return_map = m->south;
+      }
     }
     break;
-    break;
   case DIR_LR:
-    if(m->south != NULL){
-      if(m->south->east == NULL
-         || (m->east != NULL && m->south->east != m->east->south)){
-        break;
-      }
+    // If in the lower right-hand corner
+    if(c_x == (m->width - 1) && c_y == (m->height - 1)){
+      if(m->south != NULL){
+        if(m->south->east == NULL
+           || (m->east != NULL && m->south->east != m->east->south)){
+          break;
+        }
 
-      new_x = 0;
-      new_y = 0;
+        new_x = 0;
+        new_y = 0;
       
-      return_map = m->south->east;
+        return_map = m->south->east;
+      }
+    }
+    // If at the east border
+    else if(c_x == (m->width - 1)){
+      if(m->east != NULL){
+        new_x = 0;
+        new_y++;
+        return_map = m->east;
+      }
+    }
+    // If at the south border
+    else{
+      if(m->south != NULL){
+        new_x++;
+        new_y = 0;
+        return_map = m->south;
+      }
     }
     break;
     /* Any other directions are not supported at this time */
